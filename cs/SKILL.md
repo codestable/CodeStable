@@ -42,7 +42,7 @@ CodeStable 把开发活动建模成 **7 个实体 + 3 个流程**，所有产物
 ├── requirements/    需求实体（"为什么要有这个能力"，只记现状）
 ├── architecture/    架构实体（"系统现在长什么样"，只记现状）
 ├── roadmap/         规划层（"接下来怎么做这块大需求 + 模块切 + 接口定"）
-├── features/        新增能力 spec 聚合根（design / impl / accept）
+├── features/        新增能力 spec 聚合根（design / impl / review / accept）
 ├── issues/          修 bug spec 聚合根（report / analyze / fix）
 ├── refactors/       重构 spec 聚合根（beta）
 ├── audits/          审计实体（主动扫描发现清单，不定修）
@@ -51,7 +51,7 @@ CodeStable 把开发活动建模成 **7 个实体 + 3 个流程**，所有产物
 
 **三条流程**：
 
-- **新增能力**：`cs-feat-design` → `cs-feat-impl` → `cs-feat-accept`（想法模糊先 `cs-brainstorm` 分诊）
+- **新增能力**：`cs-feat-design` → `cs-feat-impl` → `cs-feat-review` → `cs-feat-accept`（想法模糊先 `cs-brainstorm` 分诊）
 - **修 bug**：`cs-issue-report` → `cs-issue-analyze` → `cs-issue-fix`
 - **重构**（beta）：`cs-refactor` / `cs-refactor-ff`
 

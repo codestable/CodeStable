@@ -1,6 +1,6 @@
 ---
 name: cs-feat-accept
-description: feature 流程阶段 3——验收闭环：对照 design 核实现 + 回写 architecture / requirement / roadmap，最后产出 {slug}-acceptance.md。触发：用户说"功能写完了验收一下"、"做最后检查"、"准备 merge"、"出验收报告"。前置依赖 cs-feat-impl 完成。
+description: feature 流程阶段 3——验收闭环：对照 design 核实现 + review 报告 + 回写 architecture / requirement / roadmap，最后产出 {slug}-acceptance.md。触发：用户说"功能写完了验收一下"、"做最后检查"、"准备 merge"、"出验收报告"。前置依赖 cs-feat-impl 完成且 cs-feat-review 通过。
 ---
 
 # cs-feat-accept
@@ -49,8 +49,9 @@ description: feature 流程阶段 3——验收闭环：对照 design 核实现 
 1. **代码确实实现到位**——git status / 最近提交看到本功能改动，否则退回 implement
 2. **方案 doc 完整**——frontmatter `doc_type=feature-design` / `feature` 一致 / `status=approved` / `summary` 非空 / `tags` ≥ 2；标准 design 第 0/1/2/3 节 + 第 4 节已填写
 3. **`{slug}-checklist.yaml`**——存在且 `feature` 一致；`steps` 全 `done`（有 `pending` 退回 implement）；`checks` 非空全 `pending`
-4. **上下文读全**——方案 doc 全文（重点：第 1 节明确不做、2.1 接口示例、2.2 流程级约束、2.3 挂载点、第 3 节场景）+ checklist + implement 完成汇报里的基线预检 / step 证据 / 实际交付物索引 / 知识回写候选 + 第 4 节提到的所有架构 doc + 本次代码改动（git log / diff）
-5. **断点恢复**——`{slug}-acceptance.md` 已存在且部分填好 → 从下一个未完成节继续，跳过 checks 中已 `passed` 的项；汇报"上次做到第 X 节，从第 Y 节继续"
+4. **`{slug}-review.md`**——存在且 frontmatter `doc_type=feature-review`、`status=passed`；没有 unresolved `blocking` findings。缺失 → 先跑 `cs-feat-review`；有 blocking → 退回 `cs-feat-impl` review-fix；status 不是 passed → 不进入验收
+5. **上下文读全**——方案 doc 全文（重点：第 1 节明确不做、2.1 接口示例、2.2 流程级约束、2.3 挂载点、第 3 节场景）+ checklist + review 报告（findings / residual risk / Test And QA Focus）+ implement 完成汇报里的基线预检 / step 证据 / 实际交付物索引 / 知识回写候选 + 第 4 节提到的所有架构 doc + 本次代码改动（git log / diff）
+6. **断点恢复**——`{slug}-acceptance.md` 已存在且部分填好 → 从下一个未完成节继续，跳过 checks 中已 `passed` 的项；汇报"上次做到第 X 节，从第 Y 节继续"
 
 **Fastforward design 验收报告映射表**：
 
@@ -126,6 +127,10 @@ Fastforward 方案没有挂载点清单 → 现场 grep 盘点本次改动命中
 
 **前端改动必须浏览器肉眼验证**（typecheck 通过不代表用户用起来对）：
 - [ ] UI 区域 X：浏览器验证 OK / 截图链接
+
+**review 报告重点复核**：
+- [ ] `{slug}-review.md` 第 4 节 Test And QA Focus 已逐条覆盖
+- [ ] `{slug}-review.md` 第 5 节 residual risk 已逐条处理 / 明确留作用户确认遗留
 
 ## 4. 术语一致性
 
@@ -253,6 +258,7 @@ final audit 发现任何缺口：
 ## 退出条件
 
 - [ ] 验收报告 9 节都填完
+- [ ] review 报告存在且 `status=passed`，无 unresolved blocking findings
 - [ ] 第 1/2 节核对全部勾选，无未处理偏差（含挂载点 grep + 拔除沙盘推演）
 - [ ] 第 3 节场景核对全部勾选，前端已浏览器验证
 - [ ] 第 4 节术语一致性无遗漏

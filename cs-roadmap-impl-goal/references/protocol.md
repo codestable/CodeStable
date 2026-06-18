@@ -1,6 +1,6 @@
 # CodeStable Roadmap Goal 执行协议
 
-本文件复制到 `.codestable/roadmap/{slug}/goal-protocol.md` 后，由 `/goal` 会话读取。它描述如何按一个已确认的 roadmap 执行包，逐个完成 feature 的实现与验收。
+本文件复制到 `.codestable/roadmap/{slug}/goal-protocol.md` 后，由 `/goal` 会话读取。它描述如何按一个已确认的 roadmap 执行包，逐个完成 feature 的实现、代码审查与验收。
 
 ## 先读文件
 
@@ -86,10 +86,32 @@ Evidence required: <证据列表>
 - 每步做清洁度检查。
 - 失败时走本文“失败恢复”。
 
-### 3. 执行 cs-feat-accept
+### 3. 执行 cs-feat-review
+
+按 `cs-feat-review` 规则执行：
+
+- 读取 design、checklist、实现证据、`git status --short`、`git diff` 和相关代码。
+- 只读审查；不要在 review 阶段直接修代码。
+- 写 `{feature-slug}-review.md`。
+- 输出 blocking / important / nit / suggestion / learning / praise / residual-risk 分级。
+- 把 review 的 Test And QA Focus 留给 acceptance 复核。
+
+如果有 blocking findings，打印：
+
+```text
+CS_ROADMAP_GOAL_REVIEW_FIX
+Feature: <slug>
+Findings: <REV 编号列表>
+Next: cs-feat-impl review-fix then rerun cs-feat-review
+```
+
+然后按 `cs-feat-impl` 的 review-fix 模式只修 blocking findings，修完回到本节重跑 `cs-feat-review`。review 未 passed 时不能进入 acceptance。
+
+### 4. 执行 cs-feat-accept
 
 按 `cs-feat-accept` 规则执行：
 
+- 先确认 `{feature-slug}-review.md` 存在、`status=passed`，且没有 unresolved blocking findings。
 - 填 acceptance 报告。
 - 把 checklist checks 从 `pending` 更新为 `passed`；失败项先标 `failed`，修复并重验后再改 `passed`。
 - 更新 checklist 时只改目标 `steps` 或 `checks` 块，避免用全文件批量替换把 `steps.status` 和 `checks.status` 混在一起。
@@ -98,7 +120,7 @@ Evidence required: <证据列表>
 - 按 roadmap / roadmap_item 回写 items.yaml 和 roadmap 主文档。
 - 做 feature 级最终审计。
 
-### 4. Feature 验证标记
+### 5. Feature 验证标记
 
 打印：
 
@@ -106,6 +128,7 @@ Evidence required: <证据列表>
 CS_ROADMAP_GOAL_FEATURE_VERIFY
 Feature: <slug>
 Implementation: pass|fail
+Review: pass|fail
 Acceptance: pass|fail
 Commands: <命令退出码摘要>
 Deliverables: <present|missing 摘要>
@@ -118,8 +141,9 @@ Knowledge candidates: <候选|none>
 
 1. 把 goal-state 当前 feature 状态改为 `accepted`。
 2. 把 current_feature 指向下一条。
-3. 确认 feature checklist 中所有 steps 都是 `done`、所有 checks 都是 `passed`。
-4. 打印：
+3. 确认 feature review 报告存在且 `status=passed`，没有 unresolved blocking findings。
+4. 确认 feature checklist 中所有 steps 都是 `done`、所有 checks 都是 `passed`。
+5. 打印：
 
 ```text
 CS_ROADMAP_GOAL_FEATURE_DONE
@@ -132,7 +156,7 @@ Feature <slug> accepted. State updated.
 
 ## 失败恢复
 
-适用于实现标准、验收 checks、必跑命令、交付物、清洁度。
+适用于实现标准、review blocking 修复、验收 checks、必跑命令、交付物、清洁度。
 
 ### 第一次失败：诊断并重试
 
@@ -227,15 +251,16 @@ Commands to re-run: <去重命令列表>
 
 1. 重读 roadmap 主文档和 items.yaml。
 2. 确认每个 item 都是 `done`，或有理由 `dropped`。
-3. 重读每个 feature 的 design / checklist / acceptance。
+3. 重读每个 feature 的 design / checklist / review / acceptance。
 4. 去重重跑必跑命令（成本过高时说明跳过原因）。
 5. 从仓库事实核验交付物：文件、配置 key、schema、路由、文档、roadmap 状态。
 6. 检查完整工作区：tracked / staged / unstaged / untracked。
 7. 检查全 run 清洁度。
 8. 统计 `re-verified` 和 `trust-prior-verify`；截图 / 手工项不能重跑时记为 trust-prior。
-9. 确认 architecture / requirement / roadmap 回写存在。
-10. 确认知识候选已处理、明确延后或列给用户。
-11. 做 learning reflection：从整个 goal 的失败恢复、最终审计补强、设计/实现反复、跨 feature 约束中筛选可复用经验。
+9. 确认每个 review 报告都 passed，且没有 unresolved blocking findings。
+10. 确认 architecture / requirement / roadmap 回写存在。
+11. 确认知识候选已处理、明确延后或列给用户。
+12. 做 learning reflection：从整个 goal 的失败恢复、最终审计补强、设计/实现/review 反复、跨 feature 约束中筛选可复用经验。
 
 打印：
 

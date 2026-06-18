@@ -1,0 +1,4 @@
+interface:
+  display_name: "CodeStable Feature Review"
+  short_description: "本地 feature 代码审查 gate"
+  default_prompt: "使用 $cs-feat-review 对已实现的 feature 做本地代码审查，并输出 review 报告。"

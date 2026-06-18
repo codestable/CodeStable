@@ -1,6 +1,6 @@
 ---
 name: cs-feat-design
-description: feature 流程阶段 1——为新功能起草 {slug}-design.md 作为后续实现和验收的唯一输入，拍板后抽出 checklist。触发：用户说"开始设计方案"、"写 design doc"、"准备实现 XX"，前提是已知道做什么、为谁、怎么算成功。
+description: feature 流程阶段 1——为新功能起草 {slug}-design.md 作为后续实现、代码审查和验收的唯一输入，拍板后抽出 checklist。触发：用户说"开始设计方案"、"写 design doc"、"准备实现 XX"，前提是已知道做什么、为谁、怎么算成功。
 ---
 
 # cs-feat-design
@@ -9,7 +9,7 @@ description: feature 流程阶段 1——为新功能起草 {slug}-design.md 作
 
 开始任何判断或动作前，先读取 `.codestable/attention.md`；缺失则视为骨架不完整，提示先补齐或运行 `cs-onboard`，不要回退到外部 AI 入口文件。
 
-这一阶段的产出是一份方案文件 `{slug}-design.md`，加上从中抽出的行动清单 `{slug}-checklist.yaml`。这两份东西后面会被两个阶段消费——implement 照着推进、acceptance 照着核对，所以这里写错或写漏，下游就跟着错。
+这一阶段的产出是一份方案文件 `{slug}-design.md`，加上从中抽出的行动清单 `{slug}-checklist.yaml`。这两份东西后面会被三个阶段消费——implement 照着推进、review 照着审查、acceptance 照着核对，所以这里写错或写漏，下游就跟着错。
 
 > 共享路径和命名约定看 `.codestable/reference/shared-conventions.md`。本阶段一般 feature 目录已经由 brainstorm 创建好了；没有的话在这一步建。
 
@@ -21,7 +21,7 @@ description: feature 流程阶段 1——为新功能起草 {slug}-design.md 作
 
 **设计原则**：design 不是实现前的散文说明，而是后续实现和验收的可执行契约。它必须把"做好"翻译成可观察证据，把 steps 切成独立可验证单元，把风险和依赖前置暴露，并在交给用户前做一次自我批判，修掉含糊标准、混合步骤和薄弱依赖。
 
-**推进原则**：design 要把后续执行需要的"操作手册"写到位：当前基线怎么确认、每步完成后看什么证据、哪些命令必须重跑、哪些交付物要真实落盘、失败时回到哪个契约修。否则 implement 只能临场判断，acceptance 也只能相信实现汇报。
+**推进原则**：design 要把后续执行需要的"操作手册"写到位：当前基线怎么确认、每步完成后看什么证据、哪些命令必须重跑、哪些交付物要真实落盘、失败时回到哪个契约修。否则 implement 只能临场判断，review 没有稳定契约可审，acceptance 也只能相信实现汇报。
 
 ---
 
