@@ -20,7 +20,7 @@ python3 .codestable/tools/search-yaml.py --dir {目录} [--filter key=value]... 
 
 - `key=value`：字段精确匹配（大小写不敏感）
 - `key~=value`：字符串字段子串匹配；列表字段元素包含匹配
-- `key=a|b|c` / `key~=a|b|c`：同一字段多个候选值，候选之间是 OR；在 PowerShell / Bash 中请给整个 filter 加引号，例如 `--filter "doc_type=decision|explore|learning"`
+- `key=a|b|c` / `key~=a|b|c`：同一字段多个候选值，候选之间是 OR；在 PowerShell / Bash 中请给整个 filter 加引号，例如 `--filter "status=approved|draft"`
 
 ### 排序语法
 
@@ -30,57 +30,39 @@ python3 .codestable/tools/search-yaml.py --dir {目录} [--filter key=value]... 
 
 ### 常用命令
 
-沉淀类文档统一在 `.codestable/compound/`，用 `doc_type` 字段区分四个子技能的产物，内部还有各自的细分字段：
+`search-yaml.py` 用于扫**带 frontmatter 的产物**——feature spec / issue spec / requirements / adrs / guides / library-docs。
+
+`.codestable/compound/` 由 `cs-keep` 写纯 markdown（无 frontmatter），**不用 search-yaml**，直接 grep：
 
 ```bash
-# 按 doc_type 筛选
-python3 .codestable/tools/search-yaml.py --dir .codestable/compound --filter doc_type=learning
-python3 .codestable/tools/search-yaml.py --dir .codestable/compound --filter "doc_type=decision|explore|learning" --filter status=active
-python3 .codestable/tools/search-yaml.py --dir .codestable/compound --filter doc_type=decision --filter status=active
-python3 .codestable/tools/search-yaml.py --dir .codestable/compound --filter doc_type=trick --filter status=active
-python3 .codestable/tools/search-yaml.py --dir .codestable/compound --filter doc_type=explore --filter status=active
+grep -r "关键词" .codestable/compound/
+grep -rl "prisma" .codestable/compound/   # 只列文件名
+ls -lt .codestable/compound/ | head        # 看最近沉淀
+```
 
-# doc_type + 子技能内部细分字段
-python3 .codestable/tools/search-yaml.py --dir .codestable/compound --filter doc_type=learning --filter track=pitfall
-python3 .codestable/tools/search-yaml.py --dir .codestable/compound --filter doc_type=decision --filter category=constraint
-python3 .codestable/tools/search-yaml.py --dir .codestable/compound --filter doc_type=trick --filter type=pattern
-python3 .codestable/tools/search-yaml.py --dir .codestable/compound --filter doc_type=explore --filter type=question
+带 frontmatter 的目录用 search-yaml：
 
-# 按 tag（列表元素包含匹配）
-python3 .codestable/tools/search-yaml.py --dir .codestable/compound --filter tags~=prisma
-
-# 全文搜索
-python3 .codestable/tools/search-yaml.py --dir .codestable/compound --query "shadow database"
-
-# 按领域/框架/语言筛选
-python3 .codestable/tools/search-yaml.py --dir .codestable/compound --filter doc_type=decision --filter area=frontend
-python3 .codestable/tools/search-yaml.py --dir .codestable/compound --filter doc_type=trick --filter framework~=vue
-python3 .codestable/tools/search-yaml.py --dir .codestable/compound --filter doc_type=trick --filter language=typescript
-
+```bash
 # 搜索 feature 方案 doc
 python3 .codestable/tools/search-yaml.py --dir .codestable/features --filter doc_type=feature-design --filter status=approved
 
-# 输出控制
-python3 .codestable/tools/search-yaml.py --dir .codestable/compound --filter doc_type=decision --filter status=active --full
-python3 .codestable/tools/search-yaml.py --dir .codestable/compound --filter tags~=llm --json
-
 # 按时间排序
-python3 .codestable/tools/search-yaml.py --dir .codestable/compound --sort-by date --order desc                     # 最近归档的在前
-python3 .codestable/tools/search-yaml.py --dir .codestable/library-docs --sort-by last_reviewed --order asc         # 最久没 review 的在前（找陈旧文档）
-python3 .codestable/tools/search-yaml.py --dir .codestable/guides --filter status=current --sort-by last_reviewed --order asc
+python .codestable/tools/search-yaml.py --dir .codestable/library-docs --sort-by last_reviewed --order asc         # 最久没 review 的在前（找陈旧文档）
+python .codestable/tools/search-yaml.py --dir .codestable/guides --filter status=current --sort-by last_reviewed --order asc
+
+# 输出控制
+python .codestable/tools/search-yaml.py --dir .codestable/features --filter status=approved --full
+python .codestable/tools/search-yaml.py --dir .codestable/features --filter tags~=llm --json
 ```
 
 ### 典型使用场景
 
 | 场景 | 命令建议 |
 |---|---|
-| feature-design 开始前查已有归档 | 搜 `.codestable/compound` 目录，按 `--query "{关键词}"` 全文搜；要分类看就加 `--filter "doc_type=learning\|trick\|decision\|explore"` |
-| issue-analyze 根因分析前查历史 | 搜 `.codestable/compound` `--filter doc_type=learning --filter track=pitfall`、再搜 `--filter doc_type=trick --filter type=library`，按相关组件/框架过滤 |
-| 归档落盘后查重叠 | 搜 `.codestable/compound --query "{关键词}" --json`，看有无语义重叠 |
-| 新人了解项目规约 | `--dir .codestable/compound --filter doc_type=decision --filter status=active` |
-| 按技术栈浏览技巧 | `--dir .codestable/compound --filter doc_type=trick --filter language={语言} --filter status=active` |
+| feature-design 开始前查 compound 已有沉淀 | `grep -r "{关键词}" .codestable/compound/` |
+| issue-analyze 根因分析前查历史 | `grep -rl "{关键词}" .codestable/compound/` 再人工挑相关的看 |
+| cs-keep 落盘前查重叠 | `grep -rl "{关键词}" .codestable/compound/`，命中就先看那条决定更新还是新写 |
 | 找最久没 review 的库文档 / 指南 | `--dir {目录} --filter status=current --sort-by last_reviewed --order asc` |
-| 看最近沉淀了哪些经验 | `--dir .codestable/compound --filter doc_type=learning --sort-by date --order desc` |
 
 ---
 

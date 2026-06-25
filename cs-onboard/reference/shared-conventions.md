@@ -13,12 +13,17 @@ onboard 完成后骨架（`cs-onboard` 负责搭建）：
 ```
 .codestable/
 ├── attention.md           CodeStable 技能启动必读的项目注意事项
-├── requirements/          能力愿景层（"用户需要什么、系统提供什么能力来满足"，过去/现在/未来）
-│   ├── VISION.md           中心索引（按 status 分组，每条带 pitch 一句话）
-│   └── {slug}.md           一个能力一份，扁平（cs-req 产出）
-├── architecture/          架构中心目录（"用什么结构实现"，只记现状）
-│   ├── ARCHITECTURE.md    总入口（索引 + 关键架构决定）
-│   └── {type}-{slug}.md   子系统 / 模块 doc（cs-arch 产出）
+├── requirements/          能力愿景 + 领域模型 + 决策记录
+│   ├── VISION.md           能力中心索引（cs-req 维护）
+│   ├── {slug}.md           一个能力一份，扁平（cs-req 产出）
+│   ├── CONTEXT.md          领域术语表（cs-domain lazy 创建；多 context 时被 CONTEXT-MAP.md 替代）
+│   ├── CONTEXT-MAP.md      多 context 拓扑入口（cs-domain，仅多 context 时存在）
+│   ├── adrs/               架构决策记录（cs-domain，lazy 创建）
+│   │   └── NNN-{slug}.md   Nygard 四节 + 状态机 frontmatter
+│   └── {ctx}/              子 context 子目录（仅多 context 时存在）
+│       ├── CONTEXT.md      子 context 术语
+│       ├── adrs/           子 context 特定 ADR
+│       └── {capability}.md 归属本 context 的能力
 ├── roadmap/               规划层（"接下来怎么做这块大需求 + 模块怎么切 + 接口怎么定"）
 │   └── {slug}/            一个大需求一个子目录（cs-roadmap 产出）
 │       ├── {slug}-roadmap.md   主文档：背景 / 范围 / 模块拆分 / 接口契约 / 子 feature 清单 / 排期
@@ -52,9 +57,9 @@ onboard 完成后骨架（`cs-onboard` 负责搭建）：
 │       ├── {slug}-refactor-design.md
 │       ├── {slug}-checklist.yaml
 │       └── {slug}-apply-notes.md
-├── compound/              沉淀类文档统一目录
-│   └── YYYY-MM-DD-{doc_type}-{slug}.md
-│                          doc_type ∈ {learning, trick, decision, explore}
+├── compound/              沉淀类文档统一目录（cs-keep 产出）
+│   └── YYYY-MM-DD-{slug}.md
+│                          纯 markdown，无 frontmatter，grep 检索
 ├── brainstorm/            brainstorm 阶段 spike 实验代码区（cs-brainstorm 临时产出）
 │   └── {slug}/            一次 spike 一个子目录，文件名随意
 │                          验完不强制清理，结论回写到对应 brainstorm note
@@ -67,21 +72,16 @@ onboard 完成后骨架（`cs-onboard` 负责搭建）：
 - 需求文档：`requirements/{slug}.md`（能力愿景，不带日期前缀，扁平不分组）；中心索引 `requirements/VISION.md`
 - roadmap：`roadmap/{slug}/`（不带日期前缀，平铺不嵌套）
 - feature / issue / refactor 目录：带日期前缀 `YYYY-MM-DD-{slug}`
-- 沉淀类：`compound/YYYY-MM-DD-{doc_type}-{slug}.md`，日期用**归档当天**
-- 架构 doc：`architecture/{type}-{slug}.md`（长效，不带日期前缀）；总入口固定 `ARCHITECTURE.md`
+- 沉淀类：`compound/YYYY-MM-DD-{slug}.md`，日期用**归档当天**，纯 markdown 无 frontmatter（cs-keep 产出）
+- 领域术语：`requirements/CONTEXT.md`（单 context）或 `requirements/{ctx}/CONTEXT.md`（多 context）；cs-domain lazy 创建
+- 架构决策：`requirements/adrs/NNN-{slug}.md`（系统级）或 `requirements/{ctx}/adrs/NNN-{slug}.md`（子 context）；3 位编号，cs-domain 产出
 - 项目注意事项入口固定为 `.codestable/attention.md`，所有 CodeStable 子技能启动前必须读取；不再兼容 `AGENTS.md` / `CLAUDE.md` 等外部入口
 
-### 架构 doc 分组规则（同类聚合）
+### 单 context ↔ 多 context 拓扑
 
-`architecture/` 下用文件名第一段作 type 标记：`ui-chat.md` 和 `ui-events.md` 同 `ui` 类。**所有架构 doc 必须 `{type}-{slug}.md`**——只有一份的也要带合理 type 段（如 `cli-entry.md`），否则未来同类出现时聚合不了。
-
-**触发**：某 type 在 `architecture/` 根目录达到 ≥6 份时（即新加第 6 份那次），把这一类全部收进同名子目录。
-
-**收入后**：去掉 type 前缀。`ui-chat.md` → `ui/chat.md`。
-
-**只升不降**：删到 ≤5 份也不折回平铺。
-
-**触发时谁负责**：`cs-arch` 的 `backfill` / `update` 模式在 Phase 6 落盘前主动检查并搬迁；命中阈值时这次操作要把"本次新加 / 改的 + 已有同类全部"一起搬，并同步改 `ARCHITECTURE.md` 链接（搬迁本身要在 Phase 5 给用户 review，不偷偷做）。`check` 模式不主动搬迁，但发现 ≥6 仍平铺时在报告末尾列为观察项。
+- `requirements/CONTEXT-MAP.md` 存在 → 多 context 模式：术语和 ADR 按子 context 分目录
+- 只有 `requirements/CONTEXT.md` → 单 context：术语和 ADR 平铺在 `requirements/` 下
+- 升级路径见 `cs-domain` 的"单 → 多 context 升级"节
 
 ### 改目录结构
 
@@ -97,16 +97,9 @@ onboard 完成后骨架（`cs-onboard` 负责搭建）：
 
 **issue spec**：report / analysis / fix-note 共用 `doc_type` / `issue` / `status` / `tags`。`severity` / `root_cause_type` / `path` 由对应阶段按需补。
 
-**归档类（compound）**：
+**归档类（compound）**：由 `cs-keep` 统一产出，写到 `.codestable/compound/YYYY-MM-DD-{slug}.md`。纯 markdown，**无 frontmatter**。三段足够：背景 / 结论 / 证据。检索靠 grep。
 
-- learning / trick / decision / explore 四类**统一写入 `.codestable/compound/`**
-- 每个文档 frontmatter 顶部带 `doc_type`（learning / trick / decision / explore）作跨子技能归属判定
-- 文件名 `YYYY-MM-DD-{doc_type}-{slug}.md`——日期打头便于 `ls` 排序，type 段在中间便于 grep
-- 各子技能在 `doc_type` 之外保留专属 frontmatter（learning 的 `track` / trick 的 `type` / decision 的 `category` / explore 的 `type`）
-- 各子技能只认自己的 `doc_type` 不读写别家
-- `status` 等通用字段语义和本文件保持一致
-
-**外部读者文档**（guidedoc / libdoc）：frontmatter 由各自子技能定义。无特殊说明：`draft` = 待 review，`current` = 当前有效，`outdated` = 代码已变更待同步。
+**外部读者文档**（cs-doc-tutorial / cs-doc-api）：frontmatter 由各自子技能定义。无特殊说明：`draft` = 待 review，`current` = 当前有效，`outdated` = 代码已变更待同步。
 
 **写作约束**：子技能提字段时优先写"额外字段"或"阶段状态变化"，不重复展开整套通用字段。
 
@@ -116,7 +109,7 @@ onboard 完成后骨架（`cs-onboard` 负责搭建）：
 
 - 是 feature 工作流的唯一执行清单
 - 由 `cs-feat-design` 在 draft design 成型后先生成 `steps` + `checks`，供 `cs-feat-design-review` 和用户 review；用户确认后随 design 一起进入实现
-- `cs-feat-ff` **不生成** checklist（也不写 design / acceptance），是跳过 spec 流程直接写代码的超轻量通道；唯一留下的痕迹是动手后回写的 `{slug}-ff-note.md`（轻量回顾，参与 scoped-commit、可被 cs-arch / cs-req backfill 检索到）
+- `cs-feat-ff` **不生成** checklist（也不写 design / acceptance），是跳过 spec 流程直接写代码的超轻量通道；唯一留下的痕迹是动手后回写的 `{slug}-ff-note.md`（轻量回顾，参与 scoped-commit、可被 cs-req / cs-domain backfill 检索到）
 
 `steps` 的粒度是 **编排-计算分离维度的切片策略**——按"先编排骨架、后计算节点、最后持久化与测试"写（最简 Workflow 先行 → 逐个节点填充），**不下沉到 file:line / 函数级**。具体改哪个文件由 implement 阶段决定。
 
@@ -181,26 +174,23 @@ planned  → dropped      （cs-roadmap update 模式，用户决定不做时改
 
 **feature-acceptance** 收尾按顺序判断：
 
-1. `cs-learn`：沉淀经验
-2. `cs-decide`：长期约束 / 选型
-3. `cs-guide`：开发者 / 用户指南
-4. `cs-libdoc`：公开 API 参考
-5. `cs-docs-neat`：阶段 / 里程碑收尾时同步 `.codestable/`、README/docs、`CLAUDE.md` / `AGENTS.md` 和 agent 记忆
-6. `scoped-commit`
+1. `cs-keep`：沉淀坑点 / 技巧 / 长期约束 / 选型
+2. `cs-doc-tutorial`：开发者 / 用户指南
+3. `cs-doc-api`：公开 API 参考
+4. `cs-docs-neat`：阶段 / 里程碑收尾时同步 `.codestable/`、README/docs、`CLAUDE.md` / `AGENTS.md` 和 agent 记忆
+5. `scoped-commit`
 
 **issue-fix** 收尾按顺序判断：
 
-1. `cs-learn`：坑点
-2. `cs-decide`：暴露的长期约束
-3. `cs-docs-neat`：修复暴露了文档、agent 入口或记忆不一致时做全局整理
-4. `scoped-commit`
+1. `cs-keep`：沉淀坑点或暴露的长期约束
+2. `cs-docs-neat`：修复暴露了文档、agent 入口或记忆不一致时做全局整理
+3. `scoped-commit`
 
-**feature-ff** 收尾按顺序判断（比标准 acceptance 短，没有 architecture / req 回写动作）：
+**feature-ff** 收尾按顺序判断（比标准 acceptance 短，没有 req 回写动作）：
 
-1. `cs-learn`：动手过程暴露的坑
-2. `cs-decide`：动手过程拍板的长期约束
-3. `cs-docs-neat`：快速改动影响 README/docs 或 agent 入口时同步
-4. `scoped-commit`
+1. `cs-keep`：动手过程暴露的坑或拍板的长期约束
+2. `cs-docs-neat`：快速改动影响 README/docs 或 agent 入口时同步
+3. `scoped-commit`
 
 **roadmap** 收尾按顺序判断：
 
@@ -215,7 +205,7 @@ planned  → dropped      （cs-roadmap update 模式，用户决定不做时改
 
 acceptance / issue-fix 走完后把本次产物提交为一个 commit：
 
-- **范围**：本次工作改到的代码 + 相关 spec 文档 + 本次实际更新过的架构 doc + 本次实际更新过的 roadmap items.yaml / 主文档
+- **范围**：本次工作改到的代码 + 相关 spec 文档 + 本次实际更新过的 CONTEXT.md / ADR / req doc + 本次实际更新过的 roadmap items.yaml / 主文档
 - **不该进**：和本次工作无关的顺手修改；属于"下次另起 feature / issue"的扩大范围
 - **提交前确认**：用户没明确同意不要 `git commit`
 - **commit message**：一句话说清"做了什么"，不贴 spec 目录路径
@@ -228,30 +218,22 @@ acceptance / issue-fix 走完后把本次产物提交为一个 commit：
 
 feature-design / issue-analyze / issue-fix 动手前到 `.codestable/compound/` 搜已有沉淀：
 
-- 总是先搜 `architecture/` 和 `compound/`
-- 在 `compound/` 用 `doc_type` 过滤（learning / trick / decision / explore）
-- 搜到的结果只作参考输入，不盲目套用——可能已 `outdated` 或不适合当前上下文
-- 搜到和当前方向冲突的 decision → **必须**正面回应"为什么仍然这么做"或调整方向
-
-子技能只补本阶段查询命令。完整搜索语法看 `.codestable/reference/tools.md`。
+- 总是先搜 `requirements/CONTEXT.md`、`requirements/adrs/`、`compound/`
+- `compound/` 直接 `grep -r "关键词" .codestable/compound/`（纯 markdown，无 schema）
+- 搜到的结果只作参考输入，不盲目套用——可能已过时或不适合当前上下文
+- 搜到和当前方向冲突的决策类沉淀 → **必须**正面回应"为什么仍然这么做"或调整方向
 
 ---
 
-## 6. 归档类子技能共享守护规则
+## 6. cs-keep 守护规则
 
-`cs-learn` / `cs-trick` / `cs-decide` / `cs-explore` 共享下面这组规则。子技能正文只写特有反模式，通用看这里：
+`cs-keep` 写 compound 时遵守：
 
-1. **只增不删**——已归档除非被明确取代（`status=superseded`）否则不删；理由丢失成本极高
-2. **宁缺毋滥**——用户说不出理由的节直接省略，不要 AI 编造
-3. **不替用户写实质内容**——AI 负责起草结构和串联语言，实质结论必须来自用户或可追溯的代码证据
-4. **attention.md 检查**——写完后若沉淀暴露出"每次启动都该知道"的一两行硬约束，提示用户用 `cs-note` 追加到 `.codestable/attention.md`；不要直接改外部 AI 入口
-5. **起草前先查重叠**——动手写前用 `search-yaml.py --query` 查语义相近的旧文档。命中就把候选列给用户在三条路径里选：
-   - **更新已有**（默认优先）：沿用原文件名和原创建日期，**不新建**；frontmatter 补 `updated: YYYY-MM-DD`；超出小修在文末加"YYYY-MM-DD 更新"简述
-   - **supersede**：旧文档保留原文，`status: superseded` + `superseded-by: {新文件名}`，正文顶部加 `**[已取代]** 见 {新 slug}`；新文档 frontmatter 带 `supersedes: {旧文件名}`
-   - **确实是不同主题**：新建，文末"相关文档"列出已有那条说明区别
-6. **识别用户意图是"改已有"还是"记新的"**——用户说"改 / 更新 / 修订 / 补充 {某条}"、明确指向某条旧文档、或话题高度重合时默认走"更新已有"，不要闷头新建。分不清就问。
-
-各子技能只认自己的 `doc_type`，不读写别家产物。
+1. **宁缺毋滥**——用户说不出理由的内容直接省略，不要 AI 编造
+2. **不替用户写实质内容**——AI 负责起草结构和串联语言，实质结论必须来自用户或可追溯的代码证据
+3. **attention.md 检查**——写完若沉淀暴露出"每次启动都该知道"的一两行硬约束，提示用户用 `cs-note` 追加到 `.codestable/attention.md`
+4. **起草前先 grep 查重叠**——`grep -r "关键词" .codestable/compound/`。命中相近旧文档就问用户：更新已有 / 新写一份。默认优先更新已有，沿用原文件名，文末加"YYYY-MM-DD 更新"。
+5. **识别用户意图是"改已有"还是"记新的"**——用户说"改 / 更新 / 补充 {某条}"或话题高度重合时默认走"更新已有"，不要闷头新建。分不清就问。
 
 ---
 

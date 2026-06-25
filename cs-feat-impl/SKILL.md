@@ -120,7 +120,7 @@ design 给的 `steps` 是 paradigm 维度切片（编排骨架 → 计算节点 
 
   **不要合并到下一步**——一旦混在一起，行为变更和结构变更就分不开，出问题回滚不到干净中间态
 - 如果 2.5 结论是"不做"但写到中途反射检查触发了拆分信号 → 走下面"反射检查"那条路径（停下来 → 和用户对齐 → 能 provable 解决就追加独立 step），**不要绕过用户确认偷偷追加**
-- 如果 2.5 末尾有"建议沉淀的 convention"段：implement 阶段**不主动归档**——只在重组目录跑通且行为零改动确认后，在汇报里带一句"design 2.5 建议沉淀的 convention 已就绪，等 acceptance 阶段确认是否走 cs-decide"，把决定权交给 acceptance / 用户
+- 如果 2.5 末尾有"建议沉淀的 convention"段：implement 阶段**不主动归档**——只在重组目录跑通且行为零改动确认后，在汇报里带一句"design 2.5 建议沉淀的 convention 已就绪，等 acceptance 阶段确认是否走 cs-keep"，把决定权交给 acceptance / 用户
 
 ---
 

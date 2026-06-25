@@ -101,4 +101,4 @@ issue 工作流在"看到问题"和"动手改代码"之间塞缓冲：
 - `.codestable/reference/system-overview.md` — CodeStable 体系总览
 - `.codestable/reference/shared-conventions.md` — 跨阶段共享口径
 - `.codestable/attention.md` — CodeStable 启动注意事项和项目硬约束
-- `.codestable/architecture/ARCHITECTURE.md` — 根因分析时可能要查
+- `.codestable/requirements/CONTEXT.md` + `requirements/adrs/` — 根因分析时可能要查的领域术语与拍板决策

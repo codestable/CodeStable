@@ -15,7 +15,7 @@ description: 一份好的 requirement doc 长什么样——供 cs-req 起草时
 - **用户故事顶在最前面**，每条要能想象出一个具体处境。
 - **为什么需要 / 怎么解决 各一段短的**，不上课、不展开。
 - **边界用列表**，至少写一条"它不管什么"。
-- **不写实现细节**——"通过 X 接口调用 Y 服务"这种挪到 architecture doc。
+- **不写实现细节**——"通过 X 接口调用 Y 服务"这种结构性决策走 ADR（cs-domain）。
 - **frontmatter 的 `pitch`** 要去技术化、一句话、读者没上下文也能看懂，以后当宣传词用。
 
 ---
@@ -85,4 +85,4 @@ tags: [debug, ai-assist]
 
 > 通过调用代码检索服务和 Git 日志分析模块，对报错日志进行上下文推理……
 
-这是 architecture doc 的事，从 requirement 里删掉。
+这是结构性决策，走 ADR（cs-domain），从 requirement 里删掉。

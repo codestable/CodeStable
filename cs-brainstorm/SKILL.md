@@ -34,7 +34,7 @@ brainstorm 是"讨论层"统一入口。
 
 每次都做：
 
-1. **扫一眼仓库**——先读 `.codestable/attention.md`；Glob `.codestable/` 发现 architecture / features / roadmap / brainstorms / compound / requirements，读架构总入口、看已有 feature 和 roadmap 和 brainstorm、搜 compound 看有没有相关坑（`--filter doc_type=learning`）；Grep 用户描述里的关键词防术语冲突。缺 attention.md 视为骨架不完整，不回退读外部 AI 入口
+1. **扫一眼仓库**——先读 `.codestable/attention.md`；Glob `.codestable/` 发现 features / roadmap / brainstorms / compound / requirements，读 `requirements/CONTEXT.md` 拿术语、扫 `requirements/adrs/` 看已拍板决策、看已有 feature 和 roadmap 和 brainstorm、`grep -r` 关键词 compound/ 看有没有相关坑；Grep 用户描述里的关键词防术语冲突。缺 attention.md 视为骨架不完整，不回退读外部 AI 入口
 2. **是不是接续之前的工作**：
    - `features/` 下有名字相近的 brainstorm？`roadmap/` 下有相近子目录？`brainstorms/` 下有相关创意记录？
    - 没有 → 当新讨论
@@ -131,6 +131,16 @@ case 1 / case 3 也能借这个动作（不强求落 brainstorm note），逻辑
 - **一次只问一个问题**——抛三五个用户只回最容易答的
 - **先给选项再提问**——能用 2-4 个具体有区别度的选项让用户挑就别让 TA 自由作文
 - **不要主动把话题拉回"用户感知层面"**——用户想聊库 / Schema / 接口 / 选型就跟着聊；AI 自己别主动开技术细节话题填时间，但用户开了的话题就认真陪聊。某问题的答案得看代码 → 按需读代码再带回对话
+
+---
+
+## 横切：拍板了结构性决策？
+
+任何 case 下，讨论过程中只要拍板了符合 **ADR 3 判据**（难回退 + 不显然 + 真实权衡）的结构性决策——典型如选了某个库 / 模块拆分方式 / 跨模块通信模式 / 一个稳定的"我们不做 X"——提示用户：
+
+> 这条决策听起来该写一条 ADR（难回退 + 选了具体方案）。要不要现在走 `cs-domain` 落一条 ADR？
+
+用户决定。**不在 brainstorm 里直接写 ADR**，由 cs-domain 处理。
 
 ---
 

@@ -12,31 +12,30 @@ Filter syntax (--filter flag, repeatable, AND logic):
   key~=a|b      Substring/list match against any candidate value (OR)
 
 Usage examples:
-  # Search .codestable/compound (learning / trick / decision / explore docs share this dir)
-  python3 .codestable/tools/search-yaml.py --dir .codestable/compound --filter doc_type=learning --filter track=pitfall
-  python3 .codestable/tools/search-yaml.py --dir .codestable/compound --filter "doc_type=decision|explore|learning"
-  python3 .codestable/tools/search-yaml.py --dir .codestable/compound --filter doc_type=trick --filter tags~=prisma
-  python3 .codestable/tools/search-yaml.py --dir .codestable/compound --filter doc_type=decision --filter status=active --full
+  # Search feature specs by status
+  python .codestable/tools/search-yaml.py --dir .codestable/features --filter doc_type=feature-design --filter status=approved
 
-  # Full-text search in body + frontmatter values
-  python3 .codestable/tools/search-yaml.py --dir .codestable/compound --query "shadow database"
+  # Filter by tag (list element match) and full-text search body + frontmatter values
+  python .codestable/tools/search-yaml.py --dir .codestable/features --filter tags~=prisma
+  python .codestable/tools/search-yaml.py --dir .codestable/features --query "shadow database"
 
   # JSON output for AI agent consumption
-  python3 .codestable/tools/search-yaml.py --dir .codestable/compound --filter doc_type=learning --filter track=knowledge --json
+  python .codestable/tools/search-yaml.py --dir .codestable/issues --filter status=open --json
 
   # Sort by a frontmatter date field (works on any ISO-8601 date string, YAML date, or sortable value)
-  python3 .codestable/tools/search-yaml.py --dir .codestable/library-docs --sort-by last_reviewed --order asc   # oldest first (stalest)
-  python3 .codestable/tools/search-yaml.py --dir .codestable/compound --sort-by date --order desc              # newest first
+  python .codestable/tools/search-yaml.py --dir .codestable/library-docs --sort-by last_reviewed --order asc   # oldest first (stalest)
+
+  # NOTE: .codestable/compound/ is plain markdown (no frontmatter) — use grep instead:
+  #   grep -r "keyword" .codestable/compound/
 
   # Works on any yaml-frontmatter markdown directory
-  python3 .codestable/tools/search-yaml.py --dir docs/decisions --filter status=accepted
-  python3 .codestable/tools/search-yaml.py --dir content/posts --filter tags~=python --query "asyncio"
+  python .codestable/tools/search-yaml.py --dir docs/decisions --filter status=accepted
+  python .codestable/tools/search-yaml.py --dir content/posts --filter tags~=python --query "asyncio"
 """
 
 import argparse
 import json
 import sys
-from datetime import date, datetime
 from pathlib import Path
 
 try:
@@ -151,7 +150,7 @@ class Filter:
             raise argparse.ArgumentTypeError(
                 f"Invalid filter expression {raw!r}. "
                 "Use 'key=value' for exact match or 'key~=value' for substring/list-contains match. "
-                "Use pipes for OR values, e.g. 'doc_type=decision|explore|learning'."
+                "Use pipes for OR values, e.g. 'status=approved|draft'."
             )
 
     def matches(self, meta: dict) -> bool:
@@ -256,13 +255,7 @@ def print_json(results: list[dict], full: bool) -> None:
         if not full and len(body) > 400:
             body = body[:400] + "…"
         output.append({"file": doc["file"], "meta": doc["meta"], "body": body})
-    print(json.dumps(output, ensure_ascii=False, indent=2, default=_json_default))
-
-
-def _json_default(value):
-    if isinstance(value, (date, datetime)):
-        return value.isoformat()
-    return str(value)
+    print(json.dumps(output, ensure_ascii=False, indent=2))
 
 
 # ---------------------------------------------------------------------------

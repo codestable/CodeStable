@@ -9,7 +9,7 @@ description: feature 流程的超轻量通道——不写 design / checklist 直
 
 开始任何判断或动作前，先读取 `.codestable/attention.md`；缺失则视为骨架不完整，提示先补齐或运行 `cs-onboard`，不要回退到外部 AI 入口文件。
 
-用户让你做小功能时本来 AI 就会直接动手——这个技能**不改变这件事**。它只做一件事：动手前把项目里已沉淀的 CodeStable 知识指给你，按需搜一下，写出来的代码就比裸写多一层保护；动手后回写一份**最简的 `{slug}-ff-note.md`** 让这次工作可追溯、可被 cs-arch / cs-req backfill 看到、能纳入 scoped-commit 提交。
+用户让你做小功能时本来 AI 就会直接动手——这个技能**不改变这件事**。它只做一件事：动手前把项目里已沉淀的 CodeStable 知识指给你，按需搜一下，写出来的代码就比裸写多一层保护；动手后回写一份**最简的 `{slug}-ff-note.md`** 让这次工作可追溯、可被 cs-req / cs-domain backfill 看到、能纳入 scoped-commit 提交。
 
 很轻：没有 design doc / checklist / 验收清单 / 动手前的用户确认。看完指引，该读代码读、该写代码写、写完回写一段话。
 
@@ -19,14 +19,13 @@ description: feature 流程的超轻量通道——不写 design / checklist 直
 
 Glob `.codestable/` 发现可用目录和文档，按需取用：
 
-- **`architecture/`** — ARCHITECTURE.md 总入口 + 子系统 doc。改跨模块的东西前看一眼避免违反边界
-- **`compound/`** — learning / trick / decision / explore 四类沉淀：
+- **`requirements/CONTEXT.md`** — 领域术语；用项目术语命名，不自己造名
+- **`requirements/adrs/`** — 已拍板的架构决策；改跨模块的东西前 grep 相关 adr 避免违反
+- **`compound/`** — 沉淀的坑点 / 技巧 / 调研：
   ```bash
-  python .codestable/tools/search-yaml.py --dir .codestable/compound --filter doc_type=learning --query "关键词"
-  python .codestable/tools/search-yaml.py --dir .codestable/compound --filter doc_type=decision --query "关键词"
-  python .codestable/tools/search-yaml.py --dir .codestable/compound --filter doc_type=trick --query "关键词"
+  grep -r "关键词" .codestable/compound/
   ```
-- **`requirements/`** — 有相关 req 时读边界
+- **`requirements/{slug}.md`** — 有相关 req 时读边界
 - **`features/`** — 有同类 feature 时参考其 design
 - **`reference/`** — shared-conventions.md / tools.md
 
@@ -36,8 +35,8 @@ Glob `.codestable/` 发现可用目录和文档，按需取用：
 
 动手前问 2 个问题：
 
-1. **这块代码以前有人栽过跟头吗？** → 搜 `compound/` 的 learning
-2. **这块代码有没有已经拍板的写法约束？** → 搜 `compound/` 的 decision + 看 `architecture/` 相关子系统
+1. **这块代码以前有人栽过跟头吗？** → `grep -r "关键词" .codestable/compound/`
+2. **这块代码有没有已经拍板的写法约束？** → 看 `requirements/adrs/` 相关 ADR + grep `compound/` 找写法沉淀
 
 命中就把结论融进实现（**按约束来写**，不是抄）。没命中按自己判断写很正常。搜不到换几个关键词再试。
 
@@ -170,7 +169,7 @@ tags: [...]
 
 - **不写 design doc / checklist / acceptance**——这就是 fastforward 的意义。要写就去 `cs-feat-design`
 - **不跟用户确认方案**——用户让你做小功能就是不想等你开会
-- **不在 `.codestable/` 里留 `{slug}-ff-note.md` 之外的新文件**——除非发现值得沉淀的坑 / 技巧，另起对话用 `cs-learn` / `cs-trick` 写
+- **不在 `.codestable/` 里留 `{slug}-ff-note.md` 之外的新文件**——除非发现值得沉淀的坑 / 技巧，另起对话用 `cs-keep` 写
 
 ---
 
@@ -180,7 +179,7 @@ tags: [...]
 
 - 改动涉及 3 个以上子系统
 - 需要引入新术语或和现有术语冲突
-- 要动 `.codestable/architecture/` 既定的模块边界
+- 要打破 `.codestable/requirements/adrs/` 既定的模块边界 ADR
 - 用户追加的要求让范围翻倍
 
 切回方式：触发 `cs-feat-design`。已写的代码在 design 里标"已部分实现"即可。
@@ -206,10 +205,8 @@ tags: [...]
 
 按 `shared-conventions.md` 第 3 节"feature-ff"收尾推荐顺序逐项一句话提示（用户"不用"立即跳过）：
 
-1. 暴露的坑 → "沉淀 learning？（`cs-learn`）"
-2. 拍板的长期约束 → "归档决定？（`cs-decide`）"
-3. 快速改动影响 README/docs、`CLAUDE.md` / `AGENTS.md` 或 agent 记忆 → "做一轮文档与记忆整理吗？（`cs-docs-neat`）"
-4. 最后问是否代为 scoped-commit
+1. 暴露的坑或拍板的长期约束 → "沉淀到 compound？（`cs-keep`）"
+2. 最后问是否代为 scoped-commit
 
 ---
 

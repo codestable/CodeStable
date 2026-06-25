@@ -124,5 +124,5 @@ status: open
 ### 架构偏离
 - [ ] 分层泄漏：上层直接调下层实现细节、绕过中间层
 - [ ] 模块隐式耦合：跨模块直接 import 内部文件（非公开 API）
-- [ ] 与 `.codestable/architecture/` 记录不一致
+- [ ] 与 `.codestable/requirements/adrs/` 已拍板决策不一致
 - [ ] 约定违背：命名 / 目录结构 / 错误处理模式与项目约定不符

@@ -12,19 +12,19 @@ no required external dependencies (falls back to builtin parser if PyYAML unavai
 
 Usage examples:
   # Validate all .md files under codestable/features
-  python3 codestable/tools/validate-yaml.py --dir codestable/features
+  python codestable/tools/validate-yaml.py --dir codestable/features
 
   # Validate a single file
-  python3 codestable/tools/validate-yaml.py --file codestable/features/2026-04-11-auth/auth-design.md
+  python codestable/tools/validate-yaml.py --file codestable/features/2026-04-11-auth/auth-design.md
 
   # Check that required fields exist in frontmatter
-  python3 codestable/tools/validate-yaml.py --dir codestable/features --require doc_type --require status
+  python codestable/tools/validate-yaml.py --dir codestable/features --require doc_type --require status
 
   # JSON output for programmatic consumption
-  python3 codestable/tools/validate-yaml.py --dir docs/api --json
+  python codestable/tools/validate-yaml.py --dir docs/api --json
 
-  # Validate the libdoc manifest
-  python3 codestable/tools/validate-yaml.py --file docs/api/manifest.yaml --yaml-only
+  # Validate the doc-api manifest
+  python codestable/tools/validate-yaml.py --file docs/api/manifest.yaml --yaml-only
 """
 
 import argparse

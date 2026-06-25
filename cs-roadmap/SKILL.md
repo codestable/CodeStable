@@ -17,9 +17,9 @@ description: 把"大到塞不进单个 feature"的需求做成完整事前规划
 
 三块**一起**作为这块大需求所有子 feature 的共同约束——每条子 feature 进 `cs-feat-design` 时，roadmap 第 2 块的接口契约就是它的**硬约束输入**（不能违反，要改先回 roadmap update）。
 
-**为什么 roadmap 承载架构方案不放进 `architecture/`**：`cs-arch` 守"只记现状不记计划"。前瞻性架构方案属于"还没落地、可能还会变"的事前规划，放进 architecture 会污染那份系统地图。等子 feature 真正落地，对应接口由 `cs-feat-accept` 提炼回 `architecture/`——roadmap 完成过渡使命后归档。
+**为什么 roadmap 不直接写 ADR**：ADR（`requirements/adrs/`）记的是"已经拍板的稳定结构性决策"，roadmap 记的是"还没落地、可能还会变"的前瞻性接口契约。等子 feature 真正落地、对应接口稳定后，由 `cs-feat-accept` 盘点出来的领域影响触发 `cs-domain` 写 ADR——roadmap 完成过渡使命后归档。
 
-**为什么单独一层**：requirements 记"要什么"（愿景）、architecture 记"怎么搭"（结构）、roadmap 记"怎么分步实现"（执行）。把执行规划塞进愿景或结构文档会把"要什么"和"打算怎么实现"混起来——查不到系统真实能力，计划改一下又得改两份文档。
+**为什么单独一层**：requirements 记"要什么 + 怎么定义术语 + 拍板了哪些决策"（愿景 + 领域），roadmap 记"怎么分步实现"（执行）。把执行规划塞进 requirements 会把"要什么"和"打算怎么实现"混起来。
 
 **为什么文件夹不是单文件**：拆解过程会产生草稿 / 调研 / 方案对比 / 白板转述，塞一份 md 会乱又舍不得删。每个 roadmap 一个子目录，主文档对外口径，旁边 `drafts/` 随便堆。
 
@@ -38,7 +38,7 @@ description: 把"大到塞不进单个 feature"的需求做成完整事前规划
 - 已有 roadmap 加新子 feature / 改依赖 / 调顺序 / 标废弃
 - feature-design 发现要做的事实际是多个 feature 集合，先退回拆
 
-不适用：单 feature 能装下 → `cs-feat`；描述能力"是什么、边界" → `cs-req`；描述系统"结构怎么搭" → `cs-arch`；拍板长期规约 / 选型 → `cs-decide`。
+不适用：单 feature 能装下 → `cs-feat`；描述能力"是什么、边界" → `cs-req`；拍板长期规约 / 架构选型 / 加术语 → `cs-domain`；操作性沉淀 → `cs-keep`。
 
 ---
 
@@ -81,10 +81,10 @@ description: 把"大到塞不进单个 feature"的需求做成完整事前规划
 
 ### Phase 2：读取材料
 
-**共同必读**：`.codestable/attention.md` + 用户素材 + `roadmap/` 其他 roadmap（防重复）+ `requirements/` 相关 req + `architecture/` 相关 doc。
+**共同必读**：`.codestable/attention.md` + 用户素材 + `roadmap/` 其他 roadmap（防重复）+ `requirements/` 相关 req + `requirements/CONTEXT.md` + `requirements/adrs/` 相关 ADR。
 
 **按情况读**：
-- 相关 compound 沉淀：`python .codestable/tools/search-yaml.py --dir .codestable/compound --query "{大需求关键词}"`
+- 相关 compound 沉淀：`grep -r "{大需求关键词}" .codestable/compound/`
 - 已有相关 feature 方案
 - 项目可用验证命令 / 已知基线：从 `.codestable/attention.md`、架构 doc、历史 acceptance、README / package scripts / CI 配置里找 build / typecheck / lint / test / e2e / 浏览器验证入口。roadmap 不直接跑完整命令，但要知道后续每条 feature 靠什么验证
 
@@ -240,7 +240,7 @@ feature-design 发现接口契约不合理 / 漏了 / 描述不准 → **回 `cs
 | 方向 | 关系 |
 |---|---|
 | `cs-req` 配合 | req 记"为什么有这个能力"、roadmap 记"打算怎么分步做出来"。大需求下可能多份 req；缺 req 提示用户先 `cs-req` |
-| `cs-arch` 配合 | architecture 记现状、roadmap 记若干步。读 arch 理解现状但不改它 |
+| `cs-domain` 配合 | adrs/ 记已拍板决策、roadmap 记前瞻接口契约。读 ADR 理解现状但不改它 |
 | `cs-feat` 下游 | 每条子 feature 是未来一次 feature 流程的种子；起头时 design frontmatter 带 `roadmap` / `roadmap_item` |
 | `cs-feat-accept` 回写方 | acceptance 自动改 items.yaml 为 `done`，本技能只定义格式不负责回写 |
 | `cs-roadmap-impl-goal` 下游 | 用户确认 roadmap 后，可把所有子 feature design 和后续 impl / review / QA / accept 编排成可恢复的 goal |

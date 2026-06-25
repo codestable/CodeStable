@@ -48,14 +48,12 @@ def init_browser(host='127.0.0.1', port=18765, wait=True):
     _driver = TMWebDriver(host=host, port=port)
     if wait:
         for i in range(20):
-            time.sleep(1)
             sess = _driver.get_all_sessions()
             if len(sess) > 0:
                 break
+            time.sleep(1)
         if len(_driver.get_all_sessions()) == 0:
             _log("[CS] Warning: No browser tabs connected. Make sure the extension is installed.")
-        elif len(_driver.get_all_sessions()) == 1:
-            time.sleep(3)
     return _driver
 
 
@@ -101,10 +99,13 @@ def web_execute_js(script, switch_tab_id=None, no_monitor=False, wait_selector=N
             suggestion: Hint about what happened (e.g. "页面无明显变化")
     """
     driver = get_driver()
-    if len(driver.get_all_sessions()) == 0:
+    sessions = driver.get_all_sessions()
+    if len(sessions) == 0:
         return {"status": "error", "msg": "No browser tabs available. Is the extension connected?"}
     if switch_tab_id:
         driver.default_session_id = switch_tab_id
+    elif driver.default_session_id is None and sessions:
+        driver.default_session_id = str(sessions[0].get('id'))
     if wait_selector:
         wait_js = f'await new Promise((resolve, reject) => {{ const start = Date.now(); const check = () => {{ const el = document.querySelector({json.dumps(wait_selector)}); if (el) return resolve(el); if (Date.now() - start > {wait_ms}) return reject(new Error("Timeout waiting for: " + {json.dumps(wait_selector)})); setTimeout(check, 200); }}; check(); }});'
         script = wait_js + '\n' + script
@@ -147,6 +148,8 @@ def web_scan(tabs_only=False, switch_tab_id=None, text_only=False, size_only=Fal
         return {"status": "error", "msg": "No browser tabs available. Is the extension connected?"}
     if switch_tab_id:
         driver.default_session_id = switch_tab_id
+    elif driver.default_session_id is None and sessions:
+        driver.default_session_id = str(sessions[0].get('id'))
     if wait_selector:
         wait_result = simphtml.execute_js_rich(
             f'await new Promise((resolve, reject) => {{ const start = Date.now(); const check = () => {{ const el = document.querySelector({json.dumps(wait_selector)}); if (el) return resolve(el); if (Date.now() - start > {wait_ms}) return reject(new Error("Timeout waiting for: " + {json.dumps(wait_selector)})); setTimeout(check, 200); }}; check(); }});',
