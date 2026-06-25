@@ -12,21 +12,21 @@ Filter syntax (--filter flag, repeatable, AND logic):
   key~=a|b      Substring/list match against any candidate value (OR)
 
 Usage examples:
-  # Search .codestable/compound (learning / trick / decision / explore docs share this dir)
-  python .codestable/tools/search-yaml.py --dir .codestable/compound --filter doc_type=learning --filter track=pitfall
-  python .codestable/tools/search-yaml.py --dir .codestable/compound --filter "doc_type=decision|explore|learning"
-  python .codestable/tools/search-yaml.py --dir .codestable/compound --filter doc_type=trick --filter tags~=prisma
-  python .codestable/tools/search-yaml.py --dir .codestable/compound --filter doc_type=decision --filter status=active --full
+  # Search feature specs by status
+  python .codestable/tools/search-yaml.py --dir .codestable/features --filter doc_type=feature-design --filter status=approved
 
-  # Full-text search in body + frontmatter values
-  python .codestable/tools/search-yaml.py --dir .codestable/compound --query "shadow database"
+  # Filter by tag (list element match) and full-text search body + frontmatter values
+  python .codestable/tools/search-yaml.py --dir .codestable/features --filter tags~=prisma
+  python .codestable/tools/search-yaml.py --dir .codestable/features --query "shadow database"
 
   # JSON output for AI agent consumption
-  python .codestable/tools/search-yaml.py --dir .codestable/compound --filter doc_type=learning --filter track=knowledge --json
+  python .codestable/tools/search-yaml.py --dir .codestable/issues --filter status=open --json
 
   # Sort by a frontmatter date field (works on any ISO-8601 date string, YAML date, or sortable value)
   python .codestable/tools/search-yaml.py --dir .codestable/library-docs --sort-by last_reviewed --order asc   # oldest first (stalest)
-  python .codestable/tools/search-yaml.py --dir .codestable/compound --sort-by date --order desc              # newest first
+
+  # NOTE: .codestable/compound/ is plain markdown (no frontmatter) — use grep instead:
+  #   grep -r "keyword" .codestable/compound/
 
   # Works on any yaml-frontmatter markdown directory
   python .codestable/tools/search-yaml.py --dir docs/decisions --filter status=accepted
@@ -150,7 +150,7 @@ class Filter:
             raise argparse.ArgumentTypeError(
                 f"Invalid filter expression {raw!r}. "
                 "Use 'key=value' for exact match or 'key~=value' for substring/list-contains match. "
-                "Use pipes for OR values, e.g. 'doc_type=decision|explore|learning'."
+                "Use pipes for OR values, e.g. 'status=approved|draft'."
             )
 
     def matches(self, meta: dict) -> bool:

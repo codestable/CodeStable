@@ -2,26 +2,7 @@
 
 本文件提供 `cs-onboard` 使用的骨架模板。
 
-## 1. `.codestable/architecture/ARCHITECTURE.md` 占位模板
-
-```markdown
-# {项目名} 架构总入口
-
-> 状态：骨架（待填充）
-> 创建日期：YYYY-MM-DD
-
-## 1. 项目简介
-
-## 2. 核心概念 / 术语表
-
-## 3. 子系统 / 模块索引
-
-## 4. 关键架构决定
-
-## 5. 已知约束 / 硬边界
-```
-
-## 2. `.codestable/attention.md` 最小模板
+## `.codestable/attention.md` 最小模板
 
 attention.md 是 CodeStable 技能启动必读的项目注意事项入口。onboard 创建最小骨架，不替项目 owner 填实质内容；后续短规则由 `cs-note` 追加。
 

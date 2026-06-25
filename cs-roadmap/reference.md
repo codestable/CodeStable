@@ -129,7 +129,7 @@ payload: { user_id: str, role: str, changed_at: ISO8601 }
 
 起草 / 刷新过程中发现、本 roadmap 不处理的事情交给用户决定：
 
-- `architecture/X.md` 对 Y 的描述已过时，建议另起 architecture update
+- `requirements/adrs/NNN.md` 中的 Y 决策已过时，建议另起一条 ADR superseded
 - requirement-Z 的边界和本 roadmap 第 5 条冲突，建议先对齐 req
 
 ## 8. 变更日志（update 模式）

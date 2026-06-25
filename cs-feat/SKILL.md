@@ -112,4 +112,4 @@ brainstorm 是讨论层独立入口，会分诊：case 1（清楚 → 直接 des
 - `.codestable/reference/system-overview.md` — CodeStable 体系总览
 - `.codestable/reference/shared-conventions.md` — 跨阶段共享口径、目录结构、checklist 生命周期
 - `.codestable/attention.md` — CodeStable 启动注意事项和项目硬约束
-- 项目架构总入口 — 方案设计阶段需要查
+- `.codestable/requirements/CONTEXT.md` + `requirements/adrs/` — 方案设计阶段需要查的领域术语与拍板决策

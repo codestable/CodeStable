@@ -1,6 +1,6 @@
-# libdoc 参考模板
+# doc-api 参考模板
 
-本文件提供 `cs-libdoc` 使用的 manifest、条目文档模板和源码提取清单。
+本文件提供 `cs-doc-api` 使用的 manifest、条目文档模板和源码提取清单。
 
 ## 1. `manifest.yaml` 格式
 

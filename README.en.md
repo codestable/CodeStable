@@ -95,12 +95,12 @@ CodeStable models real coding work as **6 entities** and **3 flows**.
 
 | Entity | Slug | What it does |
 |------|------|--------|
-| **Requirement** | requirements | Original user stories, the discussion and trade-offs at the time. The escape hatch — when code rots, you can throw it all out and let AI regenerate from these |
-| **Architecture** | architecture | What the system's orchestration layer looks like to deliver the requirements. Concise, unified, **for humans to read** — not for AI to talk to itself |
+| **Requirement** | requirements | User stories + domain glossary (CONTEXT.md) + architecture decisions (ADRs). The escape hatch — when code rots, you can throw it all out and let AI regenerate from these |
 | **Roadmap** | roadmap | "I want a permission system" — too big to throw at AI as a feature; cut it into a roadmap and advance step by step |
 | **Feature** | feature | The actual engineering execution. Human and AI collaborate, jointly responsible for design / implementation / acceptance |
 | **Issue** | issue | The bug list after release. AI and human solve it together |
-| **Compound** | compound | The compounding-engineering knowledge base — pitfalls, good practices, technical decisions |
+| **Refactor** | refactor | Cleanup process when code rots (beta) |
+| **Compound** | compound | The compounding-engineering knowledge base — pitfalls, tricks, investigation notes |
 
 ### 3 flows
 
@@ -118,8 +118,8 @@ CodeStable models real coding work as **6 entities** and **3 flows**.
 <tr><th>Group</th><th>Skill</th><th>Purpose</th></tr>
 <tr><td><b>Root entry</b></td><td><code>cs</code></td><td>Unified entry — introduces the system and routes open-ended intents to the right cs-* skill. Call it when you don't know which one fits</td></tr>
 <tr><td><b>Onboard</b></td><td><code>cs-onboard</code></td><td>Bring CodeStable into a new repo or one with scattered docs</td></tr>
-<tr><td rowspan="2"><b>Requirement & architecture</b></td><td><code>cs-req</code></td><td>Curate / accumulate raw requirement docs</td></tr>
-<tr><td><code>cs-arch</code></td><td>Draft or update architecture docs under <code>codestable/architecture/</code></td></tr>
+<tr><td rowspan="2"><b>Requirement & domain</b></td><td><code>cs-req</code></td><td>Curate / accumulate capability vision docs</td></tr>
+<tr><td><code>cs-domain</code></td><td>Maintain <code>requirements/CONTEXT.md</code> glossary + <code>requirements/adrs/</code> architecture decisions (3-criteria gate + Nygard 4 sections) + single/multi context topology</td></tr>
 <tr><td><b>Roadmap</b></td><td><code>cs-roadmap</code></td><td>Up-front planning for a big chunk of work: high-level design + interface contracts + sub-feature breakdown</td></tr>
 <tr><td><b>Discussion entry</b></td><td><code>cs-brainstorm</code></td><td>Triage when ideas are still fuzzy: route to design / continue in a feature / hand off to roadmap</td></tr>
 <tr><td rowspan="5"><b>Feature flow</b></td><td><code>cs-feat</code></td><td>Sub-flow entry for new features</td></tr>
@@ -133,11 +133,9 @@ CodeStable models real coding work as **6 entities** and **3 flows**.
 <tr><td><code>cs-issue-fix</code></td><td>Targeted fix + verification + write fix-note</td></tr>
 <tr><td rowspan="2"><b>Refactor flow</b></td><td><code>cs-refactor</code></td><td>(beta) Main refactor flow</td></tr>
 <tr><td><code>cs-refactor-ff</code></td><td>(beta) Light refactor lane</td></tr>
-<tr><td rowspan="3"><b>Knowledge sink</b></td><td><code>cs-learn</code></td><td>Sink pitfalls / good practices into learning docs</td></tr>
-<tr><td><code>cs-trick</code></td><td>Curate reusable patterns / library usage as prescriptive references</td></tr>
-<tr><td><code>cs-decide</code></td><td>Record settled tech choices, architectural decisions, long-term constraints as permanent docs</td></tr>
-<tr><td rowspan="2"><b>Explore & docs</b></td><td><code>cs-explore</code></td><td>Targeted code exploration; sink "ask → read → conclude" into evidence</td></tr>
-<tr><td><code>cs-guide</code> / <code>cs-libdoc</code></td><td>Outward-facing developer guides / library reference docs</td></tr>
+<tr><td><b>Knowledge sink</b></td><td><code>cs-keep</code></td><td>Sink pitfalls / tricks / decisions / exploration into <code>compound/</code> as plain markdown, searched via grep</td></tr>
+<tr><td rowspan="2"><b>Outward docs</b></td><td><code>cs-doc-tutorial</code></td><td>Outward-facing dev / user guides (task-oriented: how to use X to do Y)</td></tr>
+<tr><td><code>cs-doc-api</code></td><td>API reference reverse-engineered from source (entry-by-entry, parts lookup)</td></tr>
 </table>
 
 ---
@@ -170,9 +168,10 @@ CodeStable's skills aren't a single linear pipeline — they're **layered + even
 ═══════════════════════════════════════════════════════════════════════
  Layer 1 · Long-lived archive ("what the system looks like now")
 ───────────────────────────────────────────────────────────────────────
-   cs-req   ──▶ codestable/requirements/{slug}.md
-   cs-arch  ──▶ codestable/architecture/ARCHITECTURE.md
-                                       └─ {type}-{slug}.md (subsystems)
+   cs-req     ──▶ codestable/requirements/{slug}.md       capability vision
+   cs-domain  ──▶ codestable/requirements/CONTEXT.md      domain glossary
+                  codestable/requirements/adrs/NNN-*.md   ADRs (3-criteria gate)
+                  CONTEXT-MAP.md present → nest per bounded context
 ═══════════════════════════════════════════════════════════════════════
                               │
                               ▼
@@ -222,13 +221,11 @@ CodeStable's skills aren't a single linear pipeline — they're **layered + even
 ═══════════════════════════════════════════════════════════════════════
  Cross-cut · Knowledge sink (compounding engineering)
 ───────────────────────────────────────────────────────────────────────
-   cs-learn   ──▶ ┐
-   cs-trick   ──▶ ├─▶ codestable/compound/YYYY-MM-DD-{doc_type}-{slug}.md
-   cs-decide  ──▶ │     doc_type ∈ { learning, trick, decision, explore }
-   cs-explore ──▶ ┘
+   cs-keep ──▶ codestable/compound/YYYY-MM-DD-{slug}.md
+                  plain markdown, no frontmatter, grep to search
                    ↑
-          Next cs-arch / cs-feat-design / cs-issue-analyze
-          reads back compound/ so experience is reused
+          Next cs-feat-design / cs-issue-analyze
+          greps compound/ so experience is reused
 ═══════════════════════════════════════════════════════════════════════
 ```
 
@@ -247,12 +244,17 @@ After `/cs-onboard`, a `codestable/` directory appears at your project root — 
 ```
 your-project/
 ├── codestable/
-│   ├── requirements/                     # Requirement entities ("why this capability exists")
-│   │   └── {slug}.md                     # One file per capability, flat (no grouping)
-│   │
-│   ├── architecture/                     # Architecture entities ("what structure delivers it")
-│   │   ├── ARCHITECTURE.md               # Architecture entry point / index
-│   │   └── {type}-{slug}.md              # Subsystem architecture doc (auto-grouped at ≥6 of same type)
+│   ├── requirements/                     # Requirement + domain model (cs-req / cs-domain co-maintain)
+│   │   ├── VISION.md                     # Capability index
+│   │   ├── {slug}.md                     # One file per capability, flat (no grouping)
+│   │   ├── CONTEXT.md                    # Domain glossary (cs-domain, lazy)
+│   │   ├── CONTEXT-MAP.md                # Multi-context topology (only for multi-context projects)
+│   │   ├── adrs/                         # Architecture decisions (cs-domain, lazy)
+│   │   │   └── NNN-{slug}.md             # Nygard 4 sections + status machine
+│   │   └── {ctx}/                        # Bounded-context subdir (only multi-context)
+│   │       ├── CONTEXT.md
+│   │       ├── adrs/
+│   │       └── {capability}.md
 │   │
 │   ├── roadmap/                          # Roadmaps ("how we plan to walk next")
 │   │   └── {slug}/
@@ -281,8 +283,8 @@ your-project/
 │   │       └── {slug}-apply-notes.md
 │   │
 │   ├── compound/                         # Knowledge sink (compounding engineering), unified directory
-│   │   └── YYYY-MM-DD-{doc_type}-{slug}.md
-│   │       # doc_type ∈ {learning, trick, decision, explore}
+│   │   └── YYYY-MM-DD-{slug}.md
+│   │       # plain markdown, no frontmatter, grep to search (cs-keep)
 │   │
 │   ├── tools/                            # Cross-workflow shared scripts (released by onboard)
 │   └── reference/                        # Shared reference docs (released by onboard)
@@ -296,9 +298,9 @@ your-project/
 **Key points:**
 
 - All artifacts aggregate under `codestable/`, so "how did we handle that feature / bug last time" is three seconds away
-- `requirements/` and `architecture/` are **long-lived archives** (current state only); `roadmap/` is the **planning layer** (what's next) — deliberately separated
+- `requirements/` is the **long-lived archive** (capability vision + domain glossary CONTEXT.md + decisions adrs/); `roadmap/` is the **planning layer** (what's next) — deliberately separated
 - `features/` `issues/` `refactors/` use `YYYY-MM-DD-{slug}/` to bundle all related specs in one directory, no crossing
-- `compound/` is the **single** knowledge sink directory — learning / trick / decision / explore are distinguished by the `doc_type` field, not by sub-directories. Easier to search
+- `compound/` is the **single** knowledge sink directory — plain markdown, no frontmatter, searched via `grep -r`. Easy to write, easy to find
 - `reference/` is copied in by `cs-onboard` from the skill package; to change shared conventions, edit the templates under `cs-onboard/reference/` — new projects pick up the new version on onboard
 
 ### Hard constraint
