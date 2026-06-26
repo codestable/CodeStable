@@ -14,6 +14,7 @@ description: 横切代码审查 gate——任何流程（feature / issue / refac
 审查目标不是追求完美代码，而是确认本次改动没有降低系统代码健康，并且确实朝对应 spec（design / fix-note / refactor-design / 用户确认范围）的目标前进。能自动格式化或 lint 的问题不要手工阻塞；会影响正确性、维护性、安全、性能、可测试性、需求满足或后续验收可信度的问题必须指出。
 
 > 共享路径与命名约定看 `.codestable/reference/shared-conventions.md` 第 0 节。
+> 报告语言：code review 报告正文默认用**中文**（见 `.codestable/attention.md` 报告语言节）；frontmatter / yaml 字段不翻译。
 
 ## 进入来源（横切）
 

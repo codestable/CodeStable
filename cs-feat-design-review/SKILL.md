@@ -14,6 +14,7 @@ description: feature design 人工确认前的方案审查 gate。对照 {slug}-
 目标不是替用户做产品判断，而是确认这份 design 已经具备让用户有效 review 和让下游稳定执行的条件：需求边界可核对、名词层和编排层有代码事实支撑、steps 可独立验证、checks 能回到 design 证据、风险 / 基线 / 交付物 / 清洁度可被后续 implement、code review、QA 和 acceptance 消费。
 
 > 共享路径与命名约定看 `.codestable/reference/shared-conventions.md`。feature design 的具体结构以目标 `{slug}-design.md` / `{slug}-checklist.yaml` 和项目内共享口径为准。
+> 报告语言：plan review / design-review 报告正文默认用**中文**（见 `.codestable/attention.md` 报告语言节）；frontmatter / yaml 字段不翻译。
 
 ---
 

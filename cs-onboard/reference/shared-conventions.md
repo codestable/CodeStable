@@ -259,10 +259,10 @@ feature-design / issue-analyze / issue-fix 动手前到 `.codestable/compound/` 
 
 ## 8. 报告语言策略
 
-- CodeStable 技能不在技能说明里硬编码报告语言；所有人读报告的正文语言以 `.codestable/attention.md` 的项目规则为准。
-- attention 未写报告语言策略时，使用 owner 当前对话语言。
+- CodeStable 所有落盘产出的正文**默认用中文**：plan / design、plan review / design-review、code review、QA、验收、issue、refactor、roadmap、goal、compound 等所有人读报告都用中文表达。
+- 默认语言以 `.codestable/attention.md` 的「报告语言」节为准（onboard 模板默认中文）；只有 attention 显式改写默认语言时才以 attention 为准。
+- 机器状态（YAML / JSON / `state.yaml` / frontmatter 字段）保持机读格式不翻译，不从不同语言的叙述反推状态。
 - 默认只写 canonical 报告文件；只有 attention 明确要求多语言副本时，才额外写 `{name}.{lang}.md`。
-- 机器状态以 YAML / JSON / `state.yaml` 为准，不从不同语言的叙述反推状态。
 
 ## 9. 执行约定与 worktree
 

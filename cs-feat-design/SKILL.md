@@ -12,6 +12,7 @@ description: feature 流程阶段 1——为新功能起草 {slug}-design.md 和
 这一阶段的产出是一份方案文件 `{slug}-design.md`，加上从中抽出的行动清单 `{slug}-checklist.yaml`，以及人审前的 `{slug}-design-review.md`。这些东西后面会被 implement / code review / QA / acceptance 消费，所以这里写错或写漏，下游就跟着错。
 
 > 共享路径和命名约定看 `.codestable/reference/shared-conventions.md`。本阶段一般 feature 目录已经由 brainstorm 创建好了；没有的话在这一步建。
+> 报告语言：design / plan 正文默认用**中文**（见 `.codestable/attention.md` 报告语言节）；frontmatter / yaml 字段不翻译。
 
 本阶段有三个入口：
 
