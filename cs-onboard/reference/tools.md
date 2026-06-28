@@ -32,7 +32,7 @@ python .codestable/tools/search-yaml.py --dir {目录} [--filter key=value]... [
 
 `search-yaml.py` 用于扫**带 frontmatter 的产物**——feature spec / issue spec / requirements / adrs / guides / library-docs。
 
-`.codestable/compound/` 由 `cs-keep` 写纯 markdown（无 frontmatter），**不用 search-yaml**，直接 grep：
+`.codestable/compound/` 由 `cs-keep` 写纯 markdown（无 frontmatter），**不用 search-yaml**，用全文检索即可——grep / ripgrep / 框架自带搜索都行，下例以 grep 示意：
 
 ```bash
 grep -r "关键词" .codestable/compound/

@@ -31,7 +31,7 @@ CodeStable 把开发活动建模成**两根正交的轴**，产物聚在 `.codes
 | 用户说 / 想做 | 路由 |
 |---|---|
 | 没有 `.codestable/` | **先 `cs-onboard`** |
-| 想法模糊 / "先聊聊" / "没想清楚" | `cs-brainstorm` |
+| 想法模糊 / "先聊聊" / "没想清楚" | `cs-clarify` |
 | 新功能 / "加个 X"（已清楚） | 直接写（`cs-code`）；大到塞不下 → `cs-epic` |
 | BUG / 报错 / "这里不对" / 文档错 | `cs-issue`（tag bug） |
 | 重构 / 优化（行为不变） | `cs-issue`（tag refactor） |
@@ -48,10 +48,10 @@ CodeStable 把开发活动建模成**两根正交的轴**，产物聚在 `.codes
 
 ## 几种要留心的
 
-- **大需求被误当 feature**："我想要一个权限系统 / 通知中心"一眼做不完一个功能 → `cs-epic`（或 `cs-brainstorm` 先分诊）
+- **大需求被误当 feature**："我想要一个权限系统 / 通知中心"一眼做不完一个功能 → `cs-epic`（或 `cs-clarify` 先分诊）
 - **"改一下 X"但 X 是已有功能**：先问 bug（现在表现错了）还是需求变更（表现没错策略变了）——bug → `cs-issue`；需求变更 → 直接写 + 关闭时回写 `cs-context`
 - **进行中的工作**：扫到相关 issue/epic 已存在 → 问"接着做这个吗？"
-- **沉淀两入口**：独立 markdown（坑点 / 选型，grep 检索）→ `cs-keep`；一两行启动必读 → `cs-note`
+- **沉淀两入口**：独立 markdown（坑点 / 选型，全文检索）→ `cs-keep`；一两行启动必读 → `cs-note`
 
 ## 退出
 

@@ -82,6 +82,7 @@ context 可演化但**不讲历史叙事**（"曾经…后来…"属于关闭的
 
 | 对方 | 关系 |
 |---|---|
+| `cs-clarify` | 澄清出的领域术语 / 硬取舍，退出前由用户走 cs-context 落地（词汇表 / 取舍说明） |
 | `cs-audit` | 拿 context 当**对账基准**：代码偏离取舍、抽象缺"为什么要变" → 开 issue |
 | `cs-epic` | epic 打开期间接口契约是 provisional；**关闭时稳定的取舍毕业进 context** |
 | `cs-issue` | issue 关闭若改变了取舍，回写对应取舍说明（DoD 一条） |

@@ -25,9 +25,9 @@ CodeStable 是面向严肃工程的 AI 编码工作流。它编排的是**软件
 ## 横切与周边
 
 - `cs-code` — 写代码的纪律（只写当前要的、漂移那刻停）。正交于两轴，任何动手写代码都用
-- `cs-keep` — 坑点 / 技巧 / 选型 / 调研沉淀到 `compound/`，纯 markdown，grep 检索
+- `cs-keep` — 坑点 / 技巧 / 选型 / 调研沉淀到 `compound/`，纯 markdown，全文检索
 - `cs-note` — 一两行启动必读追加到 `attention.md`
-- `cs-brainstorm` — 想法还模糊时的讨论 + 分诊入口，聊清楚后路由到直接写或 `cs-epic`
+- `cs-clarify` — 想法还模糊时的讨论 + 分诊入口，聊清楚后路由到直接写或 `cs-epic`
 - `cs-convention` — 维护体系共享口径（分发成 `.codestable/convention.md`）
 - `cs-onboard` — 把仓库接入体系
 - `cs-doc-tutorial` / `cs-doc-api` — 写给外部读者的指南 / API 参考
@@ -39,6 +39,6 @@ CodeStable 是面向严肃工程的 AI 编码工作流。它编排的是**软件
 ## 进一步参考
 
 - `.codestable/convention.md` — 体系共识与约定（两轴 / 启动必读 / 载体 / 命名 / 单目标 / scoped-commit / 退出骨架）
-- `.codestable/reference/tools.md` — `search-yaml.py` / `validate-yaml.py` 用法（本地载体的 yaml frontmatter；compound 直接 grep）
+- `.codestable/reference/tools.md` — `search-yaml.py` / `validate-yaml.py` 用法（本地载体的 yaml frontmatter；compound 走全文检索）
 - `.codestable/reference/maintainer-notes.md` — 断点恢复、新增子工作流登记
 - `.codestable/attention.md` — 启动必读项目注意 + 变更轴载体

@@ -122,8 +122,8 @@ The change axis is the increment; the state axis is the current truth those incr
 <tr><td><code>cs-audit</code></td><td>Proactive scan + reconciliation against context, producing candidate changes</td></tr>
 <tr><td><code>cs-code</code></td><td>Coding discipline: write only what's needed now, stop the moment you drift (cross-cutting, used in any hands-on work)</td></tr>
 <tr><td><b>State axis</b></td><td><code>cs-context</code></td><td>Domain glossary + rationale notes (happy path / boundaries / why flexibility is needed)</td></tr>
-<tr><td><b>Discussion entry</b></td><td><code>cs-brainstorm</code></td><td>Discussion + triage when ideas are fuzzy: route to writing directly or to cs-epic</td></tr>
-<tr><td rowspan="3"><b>Cross-cut & periphery</b></td><td><code>cs-keep</code></td><td>Sink pitfalls / tricks / decisions / exploration into <code>compound/</code> as plain markdown, searched via grep</td></tr>
+<tr><td><b>Discussion entry</b></td><td><code>cs-clarify</code></td><td>Discussion + triage when ideas are fuzzy: route to writing directly or to cs-epic</td></tr>
+<tr><td rowspan="3"><b>Cross-cut & periphery</b></td><td><code>cs-keep</code></td><td>Sink pitfalls / tricks / decisions / exploration into <code>compound/</code> as plain markdown, full-text searchable</td></tr>
 <tr><td><code>cs-note</code></td><td>Append one-line startup must-knows to <code>attention.md</code></td></tr>
 <tr><td><code>cs-convention</code></td><td>Maintain the system's shared conventions, distributed as <code>.codestable/convention.md</code></td></tr>
 <tr><td rowspan="2"><b>Outward docs</b></td><td><code>cs-doc-tutorial</code></td><td>Outward-facing dev / user guides (task-oriented: how to use X to do Y)</td></tr>
@@ -144,7 +144,7 @@ CodeStable isn't a single linear pipeline — it's **two axes + event-driven**:
                           │
         ┌─────────────────┼─────────────────┐
    (not onboarded)     (idea fuzzy)       (onboarded)
-   cs-onboard          cs-brainstorm       go to the axes
+   cs-onboard          cs-clarify          go to the axes
    skeleton + carrier  discuss + triage
 ═══════════════════════════════════════════════════════════════
  Change axis · things to do that get closed  (GitHub issue or local)
@@ -163,7 +163,7 @@ CodeStable isn't a single linear pipeline — it's **two axes + event-driven**:
 ═══════════════════════════════════════════════════════════════
             ▼ any time something is worth recording ▼
  Cross-cut · knowledge sink (compounding engineering)
-   cs-keep ──▶ .codestable/compound/    plain markdown, grep to search
+   cs-keep ──▶ .codestable/compound/    plain markdown, full-text search
    cs-note ──▶ .codestable/attention.md  one-line startup must-knows
 ═══════════════════════════════════════════════════════════════
 ```
@@ -194,10 +194,10 @@ your-project/
 │   ├── issues/  epics/       # Change axis — only in local-carrier mode
 │   │   └── YYYY-MM-DD-{slug}/ # (in github mode, issues/epics live on GitHub)
 │   │
-│   ├── compound/             # Knowledge sink, plain markdown, grep to search (cs-keep)
+│   ├── compound/             # Knowledge sink, plain markdown, full-text search (cs-keep)
 │   │   └── YYYY-MM-DD-{slug}.md
 │   │
-│   ├── brainstorms/          # Big-need exploration notes (cs-brainstorm, lazy)
+│   ├── clarify/              # Big-need clarification notes (cs-clarify, lazy)
 │   ├── tools/                # Cross-workflow shared scripts (released by onboard)
 │   └── reference/            # Shared reference docs (released by onboard)
 │       ├── system-overview.md
@@ -212,7 +212,7 @@ your-project/
 - All local artifacts aggregate under `.codestable/`, so "how did we handle that change last time" is three seconds away
 - `context/` is the **state axis** (glossary + rationale notes), describing only the current truth with no historical narrative; history lives in closed issues
 - **The change-axis carrier is one of two**: GitHub issues (native closeable entities) or local `issues/ epics/`, chosen at onboard and recorded in `attention.md`
-- `compound/` is the knowledge sink — plain markdown, no frontmatter, searched via `grep -r`. Easy to write, easy to find
+- `compound/` is the knowledge sink — plain markdown, no frontmatter, full-text searchable. Easy to write, easy to find
 - `convention.md` / `reference/` are distributed by `cs-onboard` from the skill package; to change shared conventions go through `cs-convention`, and new projects pick up the new version on onboard
 
 ### Hard constraint
