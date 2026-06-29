@@ -18,6 +18,12 @@ from codestable_gate_common import gate_result, load_yaml, main_exit, parse_args
 
 def collect_commands(checklist: dict[str, Any]) -> list[dict[str, Any]]:
     commands: list[dict[str, Any]] = []
+    # Authoritative schema: top-level `dod.commands` (cs-feat-design reference §"DoD
+    # Contract" — `dod` is a top-level checklist key alongside `steps`/`checks`).
+    top_dod = checklist.get("dod") or {}
+    for command in top_dod.get("commands", []) or []:
+        commands.append(command)
+    # Backward-compat: also accept step-level `dod.commands`.
     for step in checklist.get("steps", []) or []:
         dod = step.get("dod") or {}
         for command in dod.get("commands", []) or []:
