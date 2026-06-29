@@ -105,11 +105,13 @@ Bugs, refactors, small features, big needs — they're all "a change to make tha
 - **`cs-epics`** — too big for a single issue: settle the architecture in epics first (module split + interface contracts), then break it into a dependency-DAG of issues
 - **`cs-audit`** — proactive scanner + reconciliation against requirements, producing a triage list; selected findings become issues
 
-### requirements — needs, constraints, trade-offs
+### requirements — human-readable current needs
 
-This is CodeStable's north star: **read it and you know the requirements, constraints, and trade-offs behind the code.** It only records what the code itself can't show — why this, why not that, the rejected alternatives, which user stories must hold, which boundaries vary. Code says "what it does," requirements fills in "why it must be this way"; together they're the full picture, neither repeating the other.
+This is CodeStable's north star: **read it and you know the requirements, constraints, and trade-offs behind the code.** It is not a field table. It should explain, in human language, the background, the rough capability being built, why this path was chosen, which user stories must hold, and which boundaries may vary.
 
-- **`cs-requirements`** — current needs, constraints, domain glossary, and rationale notes (happy path / boundaries / why flexibility is needed). No code locations, no historical narrative
+Requirements use progressive disclosure: the entry file starts with an overview and submodule navigation; complex subsystems, substeps, or domain rules move into sibling requirement files. Each child file follows the same explanatory shape: background, what it should provide, key rules, boundaries, and trade-offs.
+
+- **`cs-requirements`** — current need explanations, domain language, key rules, and trade-offs (background / capability / boundaries / why flexibility is needed). No code locations, no historical narrative
 
 ### How they mesh
 
@@ -133,7 +135,7 @@ Work items are the increments; requirements is the current requirements truth th
 <tr><td rowspan="3"><b>Work items</b></td><td><code>cs-issue</code></td><td>One closeable change: bug / refactor / small feature / chore, tagged by type</td></tr>
 <tr><td><code>cs-epics</code></td><td>Big need: enter epics, settle architecture (module split + interface contracts), then break into dependency issues</td></tr>
 <tr><td><code>cs-audit</code></td><td>Proactive scan + reconciliation against requirements, producing candidate changes</td></tr>
-<tr><td><b>Requirements</b></td><td><code>cs-requirements</code></td><td>Current needs, constraints, domain glossary, and rationale notes (happy path / boundaries / why flexibility is needed)</td></tr>
+<tr><td><b>Requirements</b></td><td><code>cs-requirements</code></td><td>Explain current needs, domain language, key rules, and trade-offs through an overview and submodule files</td></tr>
 <tr><td rowspan="3"><b>Support files</b></td><td><code>cs-maketools</code></td><td>Let a human guide AI through an unknown workflow, then sink notes, a facts reference, and optional tools</td></tr>
 <tr><td><code>cs-keep</code></td><td>Sink pitfalls / tricks / decisions / exploration into <code>notes/</code> as plain markdown, full-text searchable</td></tr>
 <tr><td><code>cs-note</code></td><td>Append one-line startup facts to <code>facts.md</code></td></tr>
@@ -175,8 +177,8 @@ CodeStable isn't a single linear pipeline — it's **work items + requirements +
 ═══════════════════════════════════════════════════════════════
  requirements · needs, constraints, trade-offs (.cs/requirements/)
 ───────────────────────────────────────────────────────────────
-   cs-requirements ──▶ current needs + domain glossary + rationale notes
-                       (happy path / boundaries / why flexibility is needed)
+   cs-requirements ──▶ overview + submodule explanations + domain language + trade-offs
+                       (background / capability / key rules / boundaries)
                        north star: read it and you know the requirements & trade-offs
 ═══════════════════════════════════════════════════════════════
             ▼ any time something is worth recording ▼
@@ -226,7 +228,7 @@ your-project/
 **Key points:**
 
 - All local artifacts aggregate under `.cs/`, so "how did we handle that change last time" is three seconds away
-- `requirements/` holds current needs, constraints, domain language, and trade-offs; it describes only the current truth with no historical narrative; history lives in closed issues
+- `requirements/` explains current needs, constraints, domain language, and trade-offs in human language; the entry file gives the overview, while details are progressively disclosed through submodule files; history lives in closed issues
 - Issues default to local `issues/YYYY/MM/{slug}.md`, avoiding too many files in one directory; search recursively under `issues/`
 - `notes/` is the knowledge notes area — plain markdown, no frontmatter, full-text searchable. Easy to write, easy to find
 - `cs-maketools` turns human-guided unknown workflows into `notes/`, adds a `facts.md` reference, and only writes `tools/` when automation is stable
