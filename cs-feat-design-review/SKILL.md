@@ -31,7 +31,7 @@ description: feature design 人工确认前的方案审查 gate。对照 {slug}-
 - design 第 4 节指向的 architecture 文档
 - 相关 compound 沉淀：用项目搜索工具按 feature 关键词检索 decision / learning / explore / trick
 - design 中引用到的关键代码位置、接口、类型、组件、命令、配置
-- independent reviewer 输出（如果本轮启用了 Paseo 或其他外部 reviewer）
+- 独立 Task agent reviewer 输出（如果本轮启用了 Paseo 或其他 reviewer）
 
 没有代码引用时不强行扫全仓库；但 design 声称复用、修改、挂载或约束某个现有模块时，必须读对应代码或文档事实核验。
 
@@ -50,13 +50,13 @@ description: feature design 人工确认前的方案审查 gate。对照 {slug}-
 
 ---
 
-## 独立 reviewer 增强项
+## 独立 Task agent reviewer 增强项
 
-本阶段默认由当前 agent 做本地方案审查；独立 reviewer 是增强项，不是硬依赖。检测不到 Task agent、provider 未配置或用户明确要求快速完成时，可以继续本地 review，并在报告里记录 `Independent reviewer: local-only` / `skipped-by-user`。
+本阶段默认由当前 agent 做本地方案审查；独立 Task agent reviewer 是增强项，不是硬依赖。检测不到 Task agent、provider 未配置或用户明确要求快速完成时，可以继续本地 review，并在报告里记录 `Independent reviewer: local-only` / `skipped-by-user`。
 
-但一旦本轮已经启动 independent reviewer，它就是本轮 review gate 的输入。主 agent 可以先做本地审查草稿，但不能在 independent reviewer 返回前定稿 `{slug}-design-review.md`、不能给出 `passed`、不能把 design 交给用户确认。reviewer 卡住、失败、权限阻塞或耗时过长时，只能把本轮标成 `blocked` / `independent-review-pending`，让用户决定继续等待、重试 reviewer，或明确降级为 local-only review。
+但一旦本轮已经启动独立 Task agent reviewer，它就是本轮 review gate 的输入。主 agent 可以先做本地审查草稿，但不能在 reviewer 返回前定稿 `{slug}-design-review.md`、不能给出 `passed`、不能把 design 交给用户确认。reviewer 卡住、失败、权限阻塞或耗时过长时，只能把本轮标成 `blocked` / `independent-review-pending`，让用户决定继续等待、重试 reviewer，或明确降级为 local-only review。
 
-**检测由主 agent 在运行时自检自己的工具**，按 `.codestable/reference/execution-conventions.md` 的 Task agent 选择规则启动独立 reviewer：Paseo subagent 优先，否则用当前宿主的原生 Codex/Claude Task/Agent。都没有则本地 review，记录 `local-only`，不要伪装启动。不要无限轮询运行中的 agent；若已启动但未返回，停止在 review gate，记录 pending/blocked，等待通知或用户决定。
+**检测由主 agent 在运行时自检自己的工具**，按 `.codestable/reference/execution-conventions.md` 的 Task agent 选择规则启动独立 Task agent reviewer：Paseo subagent 优先，否则用当前宿主的原生 Codex/Claude Task/Agent。都没有则本地 review，记录 `local-only`，并写入 `approval-report.md` 请 owner 授权降级；不要伪装启动。不要无限轮询运行中的 agent；若已启动但未返回，停止在 review gate，记录 pending/blocked，等待通知或用户决定。
 
 Task agent prompt 必须只给原始材料和边界，不透露本地 review 结论：
 
@@ -77,7 +77,7 @@ Task agent prompt 必须只给原始材料和边界，不透露本地 review 结
 不要写 {slug}-design-review.md；只把审查结果回传给主 agent。
 ```
 
-主 agent 仍是最终审查责任方：必须逐条核验 independent reviewer 的 finding，去重、定级、合并进 `{slug}-design-review.md`。未经本地事实核验的外部结论只能写 `residual-risk` 或忽略，不能直接升级成 `blocking`。
+主 agent 仍是最终审查责任方：必须逐条核验 reviewer 的 finding，去重、定级、合并进 `{slug}-design-review.md`。未经本地事实核验的外部结论只能写 `residual-risk` 或忽略，不能直接升级成 `blocking`。
 
 ---
 
@@ -96,7 +96,7 @@ Task agent prompt 必须只给原始材料和边界，不透露本地 review 结
 ### 2. 独立审查合并
 
 - 记录主 agent 自检结果：`paseo` / `native-agent` / `local-only`。
-- 没有启动 independent reviewer 时，记录原因，本地 review 可以定稿。
+- 没有启动独立 Task agent reviewer 时，记录原因，本地 review 可以定稿。
 - 启动 Task agent 后，最终 verdict 必须等 reviewer 返回。
 - reviewer 返回后逐条做本地事实核验；能用 design / checklist / 文档 / 代码证据支撑才合并。
 - reviewer 失败、权限阻塞、超时或仍在运行时，不要默默降级；报告 `status: blocked`。
@@ -247,7 +247,7 @@ Summary: E={n}, C={n}, H={n}, H-only core checks={列表或 none}。
 ## 7. Verdict
 
 - Status: passed|changes-requested|blocked
-- Next: 交给用户整体 review | 回 `cs-feat-design` 修订后重跑 `cs-feat-design-review` | 等 independent reviewer 完成 / 用户确认降级后重跑
+- Next: 交给用户整体 review | 回 `cs-feat-design` 修订后重跑 `cs-feat-design-review` | 等独立 Task agent reviewer 完成 / 用户确认降级后重跑
 ```
 
 没有某类 finding 时写 `none`，不要删除章节；下一轮复审要能对比。
@@ -259,8 +259,8 @@ Summary: E={n}, C={n}, H={n}, H-only core checks={列表或 none}。
 - [ ] 已读取 attention、design、checklist、相关 intent / brainstorm / roadmap / req / arch / compound。
 - [ ] 已按 design 声明核验必要代码、接口、类型、组件或命令事实。
 - [ ] 已确认 checklist 可解析，steps/checks 都可追溯。
-- [ ] 已运行 independent reviewer 检测，或记录为什么跳过。
-- [ ] 如果启动了 independent reviewer，已等到 completed 并逐条本地核验合并 / 驳回 findings；否则报告 `status: blocked`，没有进入用户 review。
+- [ ] 已运行独立 Task agent reviewer 检测，或记录为什么跳过。
+- [ ] 如果启动了独立 Task agent reviewer，已等到 completed 并逐条本地核验合并 / 驳回 findings；否则报告 `status: blocked`，没有进入用户 review。
 - [ ] 已审查需求边界、术语、名词层、编排层、挂载点、结构健康度、验收契约、steps/checks、基线、交付物、清洁度。
 - [ ] 已检查 Acceptance Coverage Matrix、Feature Design Review Invariants 和 Evidence Confidence Ledger。
 - [ ] 核心检查 H-only 时没有静默 passed。
@@ -277,6 +277,6 @@ Summary: E={n}, C={n}, H={n}, H-only core checks={列表或 none}。
 - roadmap 起头时不检查接口契约，导致 feature 偷偷绕开 roadmap。
 - 现状段没读代码就放过，implement 阶段才发现设计站不住。
 - steps 出现"和 / 以及 / 同时"却不复查是否该拆。
-- 启动 independent reviewer 后结果还没回来，就把本地 review 定稿为 passed。
+- 启动独立 Task agent reviewer 后结果还没回来，就把本地 review 定稿为 passed。
 - 外部 reviewer 的结论没经本地事实核验就照抄。
 - review 报告没有落盘，导致用户 review 和后续实现没有可追溯输入。

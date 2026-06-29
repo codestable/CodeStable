@@ -43,7 +43,7 @@ description: 横切代码审查 gate——任何流程（feature / issue / refac
 - diff 涉及的人写代码文件和相邻关键调用点
 - spec 指向的 architecture / requirement / roadmap 相关文档（只读，判断改动是否会影响归并；feature 即 design 第 4 节）
 - goal / gate 模式下的 evidence pack、gate results、DoD results；缺失时回 implementation gate 补证据，不现场猜测
-- independent reviewer 输出（如果本轮启用了 Paseo 或其他外部 reviewer）
+- 独立 Task agent reviewer 输出（如果本轮启用了 Paseo 或其他 reviewer）
 
 如果工作区有本轮范围外的既有 dirty 文件，先记录为 baseline/无关变更；审查结论只针对本轮可归因的改动。无法区分归因时写成 `residual-risk`，不要把不确定当通过。
 
@@ -63,7 +63,7 @@ description: 横切代码审查 gate——任何流程（feature / issue / refac
 
 ---
 
-## 独立 reviewer（双环节）
+## 独立 Task agent reviewer（双环节）
 
 本阶段是**双环节 review**，两个环节互补：
 
@@ -78,9 +78,9 @@ description: 横切代码审查 gate——任何流程（feature / issue / refac
 
 ### 环节 A：独立隔离上下文 agent review（gate 必需）
 
-主 agent 按 `.codestable/reference/execution-conventions.md` 的 Task agent 选择规则启动独立 reviewer：Paseo subagent 优先，否则用当前宿主的原生 Codex/Claude Task/Agent；都没有则记 `local-only`，不能伪装启动。gate 默认不放行，需用户明确降级（见 `reviewer` 字段）。
+主 agent 按 `.codestable/reference/execution-conventions.md` 的 Task agent 选择规则启动独立 Task agent reviewer：Paseo subagent 优先，否则用当前宿主的原生 Codex/Claude Task/Agent；都没有则记 `local-only`，不能伪装启动。gate 默认不放行，需用户明确降级（见 `reviewer` 字段）。
 
-独立 reviewer prompt（只给原始材料，不透露主 agent 的任何 review 结论）：
+独立 Task agent reviewer prompt（只给原始材料，不透露主 agent 的任何 review 结论）：
 
 ```text
 你是 CodeStable 本次改动的独立代码审查 agent。只读，不修改文件，不更新 checklist/design。
@@ -208,9 +208,9 @@ gate 默认要求 `subagent` 或 `subagent+ocr`；`ocr` 和 `self` 需配 `CODES
 
 - `passed`：没有 blocking；important 已修复、无重要项、或用户明确接受延后。
 - `changes-requested`：有 blocking，或 important 多到会影响验收可信度。
-- `blocked`：缺少关键输入、diff 归因无法判断、设计/实现状态不满足 review 前置条件，或本轮已启动 independent reviewer 但结果仍 pending / failed / blocked 且用户尚未确认降级。
+- `blocked`：缺少关键输入、diff 归因无法判断、设计/实现状态不满足 review 前置条件，或本轮已启动独立 Task agent reviewer 但结果仍 pending / failed / blocked 且用户尚未确认降级。
 
-**`reviewer` 字段（gate 锚点）**：`{slug}-review.md` 的 frontmatter `reviewer` 决定下游 worktree / commit / finish gate 是否放行，按「独立 reviewer（双环节）」实际完成情况写 `subagent+ocr` / `subagent` / `ocr` / `self`（语义见上节表）。任一已启动环节仍 pending / failed / blocked 时不定稿 `passed`，也不写 `subagent`。
+**`reviewer` 字段（gate 锚点）**：`{slug}-review.md` 的 frontmatter `reviewer` 决定下游 worktree / commit / finish gate 是否放行，按「独立 Task agent reviewer（双环节）」实际完成情况写 `subagent+ocr` / `subagent` / `ocr` / `self`（语义见上节表）。任一已启动环节仍 pending / failed / blocked 时不定稿 `passed`，也不写 `subagent`。
 
 ---
 
