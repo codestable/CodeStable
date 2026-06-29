@@ -1,6 +1,6 @@
 ---
 name: cs-close
-description: 关闭一个已经实现并验证的 issue：读取 `.cs/issues/YYYY/MM/{slug}.md`、执行记录、验证结果、关闭回写、相关 requirements/notes/facts/tools，把仍然有效的需求、约束、取舍、坑点、操作经验和工具说明沉淀到对应实体，然后在 issue 中记录关闭结论。触发：用户说“关闭这个 issue”“收尾”“把这个 issue 关掉”“沉淀一下”“写回 requirements/notes”。不写业务代码，不重新设计，不替代 cs-do 验证。
+description: 关闭一个已经实现并验证的 issue：读取 `.cs/issues/YYYY/MM/DD/{slug}.md`、执行记录、验证结果、关闭回写、相关 requirements/notes/facts/tools，把仍然有效的需求、约束、取舍、坑点、操作经验和工具说明沉淀到对应实体，然后在 issue 中记录关闭结论。触发：用户说“关闭这个 issue”“收尾”“把这个 issue 关掉”“沉淀一下”“写回 requirements/notes”。不写业务代码，不重新设计，不替代 cs-do 验证。
 ---
 
 # cs-close

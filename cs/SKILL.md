@@ -51,12 +51,13 @@ LITE 要消除两件事：
 |---|---|---|
 | cs-onboard | 用 cs 之前，创建或补齐 `.cs/` 工作区和基础实体目录 | 已落地 |
 | cs-talk | 有想法没想清、先聊聊、方向还在摇摆、信息交代不完整——先查仓库已有上下文，再把缺口、真问题、术语、约束聊出来 | 已落地 |
-| cs-complain | 系统行为不符合预期时，固定预期/实际/复现/证据并生成 bug issue | 已落地 |
+| cs-complain | 系统行为不符合预期时，完成投诉建档、反馈回路、诊断、修复验证并回写 bug issue | 已落地 |
 | cs-plan | 把 talks 里聊清楚的需求落到当前系统：进 epics 还是 issues | 已落地 |
 | cs-design | 针对某个明确 issue 做实现设计：模块归属、接口/数据/状态、测试面和实施顺序 | 已落地 |
 | cs-test | 可选测试设计：用户或团队需要时，为单个 issue 设计测试目标、用例和执行方式 | 已落地 |
 | cs-do | 针对明确 issue 按实现设计写代码、验证，并回写执行记录 | 已落地 |
 | cs-close | 实现和验证完成后关闭 issue，把毕业内容沉淀到 requirements / notes 等实体 | 已落地 |
+| cs-note | 记可复用项目知识：长内容写 notes，启动必读短事实写 facts.md | 已落地 |
 | cs-maketools | 人带 AI 跑通未知流程，沉淀 notes、facts 引用和可选 tools | 已落地 |
 
 **原则类**（不手动触发，是指导原则；设计上自洽、不依赖其他技能）：
@@ -71,13 +72,14 @@ LITE 要消除两件事：
 
 1. 还没接入 → `cs-onboard` 搭好结构
 2. 新东西没想清或信息没交代完整 → `cs-talk` 先查仓库上下文，再聊出缺口、真问题、术语、约束，并整理进 `talks/`
-3. 行为跑偏 → `cs-complain` 固定预期、实际、复现和证据，生成 bug issue
+3. 行为跑偏 → `cs-complain` 固定预期/实际，建立反馈回路，诊断修复并回写 bug issue
 4. 想清了 → `cs-plan` 读取 talks，判断进 epics 还是 issues
 5. issue 明确但还不能直接写 → `cs-design` 做实现设计
 6. 需要测试设计 → `cs-test` 补测试目标、用例和执行方式；不需要就跳过
 7. 设计就绪 → `cs-do` 开干
 8. 满意了 → `cs-close` 关闭 issue，沉淀 requirements / notes 等实体
-9. AI 不会某个内部流程 → `cs-maketools` 由人带路跑通一次，沉淀成 notes / facts / tools
+9. 值得复用的坑点、技巧、命令陷阱 → `cs-note` 判断写 notes 还是 facts
+10. AI 不会某个内部流程 → `cs-maketools` 由人带路跑通一次，沉淀成 notes / facts / tools
 
 衔接由**用户驱动**——`cs` 和各技能都不替你决定下一步走哪个，也不自动派发。这张地图只帮你知道"什么场景大概伸手拿哪个"。
 

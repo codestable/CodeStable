@@ -1,0 +1,4 @@
+interface:
+  display_name: "cs-note"
+  short_description: "把项目知识笔记或启动必读事实写入 .cs 工作区文件"
+  default_prompt: "Use $cs-note to record a reusable project note or startup fact in .cs."

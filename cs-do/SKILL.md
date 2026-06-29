@@ -1,6 +1,6 @@
 ---
 name: cs-do
-description: 执行一个已经明确、最好已经完成实现设计的 issue：读取 `.cs/issues/YYYY/MM/{slug}.md`、相关 requirements 和代码现状，按 issue 的目标/范围/实现设计修改代码；如果存在测试设计就按测试设计写/跑测试；最后运行验证并把执行记录、验证结果和需要回写的结论写回 issue。触发：用户说“实现这个 issue”“开始做”“按这个 issue 开干”“cs-do”“设计好了，写代码”。不创建新事项，不重新澄清需求，不替代 cs-design 或 cs-test。
+description: 执行一个已经明确、最好已经完成实现设计的 issue：读取 `.cs/issues/YYYY/MM/DD/{slug}.md`、相关 requirements 和代码现状，按 issue 的目标/范围/实现设计修改代码；如果存在测试设计就按测试设计写/跑测试；最后运行验证并把执行记录、验证结果和需要回写的结论写回 issue。触发：用户说“实现这个 issue”“开始做”“按这个 issue 开干”“cs-do”“设计好了，写代码”。不创建新事项，不重新澄清需求，不替代 cs-design 或 cs-test。
 ---
 
 # cs-do
@@ -72,7 +72,8 @@ CodeStable 里真正危险的不是“AI 不会写代码”，而是写着写着
 
 - **用户指定一个 issue 要实现。** 读取 issue，按设计修改代码并验证。
 - **设计已经完成，可以开写。** 执行 `## 实现设计`，必要时做小幅回写。
-- **bug issue 要修。** 先复现/定位因果链，再修根因并加验证。
+- **非 bug issue 要实现。** 按目标和设计推进 feature / chore / 小重构类事项。
+- **已诊断完成的 bug issue 要执行剩余实现。** 优先确认 `cs-complain` 已写清反馈回路、根因定位和验证；缺这些就回 `cs-complain`，不要在 cs-do 里重新猜根因。
 
 不适用：
 
@@ -80,4 +81,5 @@ CodeStable 里真正危险的不是“AI 不会写代码”，而是写着写着
 - **不创建或拆分事项。** 没有 issue 或 issue 太大，回到 `cs-plan`。
 - **不替代实现设计。** 设计缺失且风险较高，先用 `cs-design`。
 - **不替代测试设计。** 用户或团队要求测试设计时，先用 `cs-test`。
+- **不替代 bug 诊断。** 行为跑偏、报错、性能回退等 bug 全生命周期优先走 `cs-complain`。
 - **不负责最终收尾。** 关闭事项和沉淀 requirements / notes 交给 `cs-close`。

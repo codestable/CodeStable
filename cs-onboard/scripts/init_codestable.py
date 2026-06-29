@@ -12,7 +12,7 @@ FACTS = """# facts.md
 
 ## 流程索引
 
-- [做某个已跑通流程前，先读 .cs/notes/YYYY-MM-DD-{slug}.md]
+- [做某个已跑通流程前，先读 .cs/notes/YYYY/MM/DD/{slug}.md]
 """
 
 DIRS = [

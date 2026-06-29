@@ -35,7 +35,7 @@ python cs-onboard/scripts/init_codestable.py --project .
 确认：
 
 - `.cs/facts.md` 存在。
-- 如果项目已有旧文档，只指出下一步可以用 `cs-talk`、`cs-plan`、`cs-maketools` 或 `cs-close` 逐步沉淀，不在 onboard 里强迁移。
+- 如果项目已有旧文档，只指出下一步可以用 `cs-talk`、`cs-plan`、`cs-note`、`cs-maketools` 或 `cs-close` 逐步沉淀，不在 onboard 里强迁移。
 
 ## 结束输出
 
@@ -43,4 +43,4 @@ python cs-onboard/scripts/init_codestable.py --project .
 
 - 创建或补齐了哪些目录和文件。
 - 哪些文件已存在所以保留。
-- 下一步该用哪个技能：想法模糊用 `cs-talk`，已有讨论用 `cs-plan`，内部流程未知用 `cs-maketools`。
+- 下一步该用哪个技能：想法模糊用 `cs-talk`，已有讨论用 `cs-plan`，要记知识用 `cs-note`，内部流程未知用 `cs-maketools`。

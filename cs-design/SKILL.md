@@ -1,6 +1,6 @@
 ---
 name: cs-design
-description: 针对某个明确 issue 做实现设计：读取目标 `.cs/issues/YYYY/MM/{slug}.md`、相关 requirements 和代码现状，把需求翻译成模块归属、接口/数据/状态设计、测试面、实施顺序和风险，并写回该 issue 的“实现设计”。触发：用户说“设计这个 issue”“给这个 issue 做实现设计”“需求到实现怎么落”“先别写代码，先 design”。不创建新 issue，不写代码，不替代 cs-plan 拆分事项，也不替代 cs-do 执行。
+description: 针对某个明确 issue 做实现设计：读取目标 `.cs/issues/YYYY/MM/DD/{slug}.md`、相关 requirements 和代码现状，把需求翻译成模块归属、接口/数据/状态设计、测试面、实施顺序和风险，并写回该 issue 的“实现设计”。触发：用户说“设计这个 issue”“给这个 issue 做实现设计”“需求到实现怎么落”“先别写代码，先 design”。不创建新 issue，不写代码，不替代 cs-plan 拆分事项，也不替代 cs-do 执行。
 ---
 
 # cs-design

@@ -59,7 +59,7 @@ issue 和 epic 都要服务关闭，不要写成愿望清单。
 
 ### 落到本地事项
 
-事项默认落在项目本地的 `.cs/` 里：小需求写入 `.cs/issues/YYYY/MM/{slug}.md`；大需求写入 `.cs/epics/YYYY-MM-DD-{slug}.md`，并列出子 issues。
+事项默认落在项目本地的 `.cs/` 里：小需求写入 `.cs/issues/YYYY/MM/DD/{slug}.md`；大需求写入 `.cs/epics/YYYY/MM/DD/{slug}.md`，并列出子 issues。
 
 落完后回写源 talk 的“下一步”或追加“计划出口”：链接到生成的 issue / epic，说明为什么这样分流。稳定下来的需求、约束和领域词汇，只在关闭事项时再回写 `requirements/`。
 
