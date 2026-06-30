@@ -263,19 +263,19 @@ qa-fix 不要求 checklist 新增普通 step，除非用户明确要求把修复
 
 ## 写完后输出统一汇报
 
-所有步骤完成后，按 `reference.md` 的"实现完成汇报"模板输出并停等用户 review。模板必须列出真实 `git status`、按步骤归类的改动、方案外触碰、新概念、step 证据、清洁度、交付物、知识候选、最后一轮本地审计和验收场景自检。
+所有步骤完成后，按 `references/reference.md` 的"实现完成汇报"模板输出并停等用户 review。模板必须列出真实 `git status`、按步骤归类的改动、方案外触碰、新概念、step 证据、清洁度、交付物、知识候选、最后一轮本地审计和验收场景自检。
 
 ---
 
 ## 测试用例怎么落
 
-标准 design 第 3 节"关键场景清单"每条 = 一个可验证行为约束。把每条变成可观察证据：单测 / 集成 / 手工操作 / 类型编译期保证。具体测试策略看 `reference.md`。
+标准 design 第 3 节"关键场景清单"每条 = 一个可验证行为约束。把每条变成可观察证据：单测 / 集成 / 手工操作 / 类型编译期保证。coding step 适合自动化测试时，可在 step 内采用 TDD vertical slice；这是 `cs-feat-impl` 的内嵌实现策略，不是切换到独立 `tdd` skill。具体测试策略看 `references/reference.md` 和 `references/tdd.md`。
 
 ---
 
 ## 退出条件
 
-完整 checklist 见 `reference.md`。主文件保留硬门摘要：
+完整 checklist 见 `references/reference.md`。主文件保留硬门摘要：
 
 - [ ] 所有 steps 的 status 都 `done`，且每步有退出信号证据。
 - [ ] 完成汇报已输出，用户 review 通过（或 review-fix / qa-fix 汇报已输出，等待重跑对应 gate）。
@@ -287,10 +287,10 @@ qa-fix 不要求 checklist 新增普通 step，除非用户明确要求把修复
 
 ## 退出后
 
-告诉用户下一步：普通实现完成后触发 `cs-code-review`；review-fix 后重跑 `cs-code-review`；qa-fix 后重跑 `cs-code-review` 和 `cs-feat-qa`。不要顺手进入验收报告；完整话术见 `reference.md`。
+告诉用户下一步：普通实现完成后触发 `cs-code-review`；review-fix 后重跑 `cs-code-review`；qa-fix 后重跑 `cs-code-review` 和 `cs-feat-qa`。不要顺手进入验收报告；完整话术见 `references/reference.md`。
 
 ---
 
 ## 容易踩的坑
 
-完整列表见 `reference.md`。最常见红线：半成品汇报、方案外顺手改、新概念不回填、补丁分支硬冲、跳过 review/QA gate、关键场景没有证据。
+完整列表见 `references/reference.md`。最常见红线：半成品汇报、方案外顺手改、新概念不回填、补丁分支硬冲、跳过 review/QA gate、关键场景没有证据。

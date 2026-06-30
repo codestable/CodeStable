@@ -56,6 +56,8 @@
 
 具体怎么测、用什么 framework、mock 怎么搭——design 没规定，自决。但你得在 `steps` 里写清楚"哪一步落哪个测试"，汇报里逐项核对每条场景都有证据。
 
+coding feature / coding step 适合自动化测试时，按同目录 `tdd.md` 的 step 内 TDD 策略执行。它只约束当前 step 里的测试-实现微循环，不改变 `cs-feat-impl` 的 gate、checklist、证据、review / QA 流程。
+
 **测试通过 ≠ 验收场景满足**——前者只说明你写的用例过了，不说明每条场景都有用例覆盖。
 
 类型系统保证的（如 TypeScript 签名直接排除某种调用），汇报里说"类型签名已落地，编译期保证"。
