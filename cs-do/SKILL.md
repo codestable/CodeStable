@@ -1,6 +1,6 @@
 ---
 name: cs-do
-description: 执行一个已经明确、最好已经完成实现设计的 issue：读取 `.cs/issues/YYYY/MM/DD/{slug}.md`、相关 requirements 和代码现状，按 issue 的目标/范围/实现设计修改代码；如果存在测试设计就按测试设计写/跑测试；最后运行验证并把执行记录、验证结果和需要回写的结论写回 issue。触发：用户说“实现这个 issue”“开始做”“按这个 issue 开干”“cs-do”“设计好了，写代码”。不创建新事项，不重新澄清需求，不替代 cs-design 或 cs-test。
+description: 执行一个已经明确、最好已经完成实现设计的 issue：读取 `.cs/issues/YYYY/MM/DD/{status}-{slug}.md`、相关 requirements 和代码现状，按 issue 的目标/范围/实现设计修改代码；如果存在测试设计就按测试设计写/跑测试；最后运行验证并把执行记录、验证结果和需要回写的结论写回 issue。触发：用户说“实现这个 issue”“开始做”“按这个 issue 开干”“cs-do”“设计好了，写代码”。不创建新事项，不重新澄清需求，不替代 cs-design 或 cs-test。
 ---
 
 # cs-do

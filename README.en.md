@@ -206,7 +206,7 @@ your-project/
 │   ├── talks/                # Discussion synthesis (cs-talk, lazy)
 │   │   └── YYYY/MM/DD/{slug}.md
 │   │
-│   ├── issues/               # Small work items, sharded by creation date
+│   ├── issues/               # Small work items, sharded by creation date, named open-{slug}.md / closed-{slug}.md
 │   │   └── YYYY/MM/DD/{slug}.md
 │   ├── epics/                # Large work-item planning
 │   │   └── YYYY/MM/DD/{slug}.md

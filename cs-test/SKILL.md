@@ -1,6 +1,6 @@
 ---
 name: cs-test
-description: 为某个明确 issue 生成可选测试设计：读取 `.cs/issues/YYYY/MM/DD/{slug}.md`、实现设计、相关 requirements 和代码测试现状，设计测试目标、行为用例、测试层级、数据/环境、执行命令和是否 test-first，并写回 issue 的“测试设计”。触发：用户说“写测试设计”“补测试用例”“这个 issue 需要测试”“公司要求测试设计”“走 TDD”。不写业务实现，不创建事项，不强制所有 issue 都测试。
+description: 为某个明确 issue 生成可选测试设计：读取 `.cs/issues/YYYY/MM/DD/{status}-{slug}.md`、实现设计、相关 requirements 和代码测试现状，设计测试目标、行为用例、测试层级、数据/环境、执行命令和是否 test-first，并写回 issue 的“测试设计”。触发：用户说“写测试设计”“补测试用例”“这个 issue 需要测试”“公司要求测试设计”“走 TDD”。不写业务实现，不创建事项，不强制所有 issue 都测试。
 ---
 
 # cs-test
