@@ -1,3 +1,11 @@
+---
+kind: issue
+title: "[Issue 标题]"
+type: bug | feature | refactor | chore
+status: open
+created: YYYY-MM-DD
+---
+
 # [Issue 标题]
 
 ## 类型

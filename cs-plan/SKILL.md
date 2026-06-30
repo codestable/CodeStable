@@ -49,6 +49,7 @@ description: 把已经聊清楚的需求落成可执行事项：读取 `.cs/talk
 
 issue 和 epic 都要服务关闭，不要写成愿望清单。
 
+- issue 必须使用 `cs/templates/entities/issue.md` 的完整结构，保留 YAML frontmatter；不要只凭章节名手写一个缺头的 markdown。
 - issue 写清：类型、目标、范围、当前证据、方案判断、验证、关闭回写。
 - epic 写清：目标、背景、关键取舍、子 issue、依赖、整体验收、关闭回写。
 - 每个 issue 只承载一条能独立验证的变更；不要把“顺手做掉”的内容塞进去。
