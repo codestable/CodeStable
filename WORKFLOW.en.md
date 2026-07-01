@@ -23,10 +23,10 @@ Vertical means layers, not strict time order. Long-lived archives are refreshed 
 
 ## Runtime Structure
 
-After `/cs-onboard`, the project root gets `codestable/`:
+After `/cs-onboard`, the project root gets `.codestable/`:
 
 ```text
-codestable/
+.codestable/
 ├── requirements/        # requirement docs + domain model: CONTEXT.md glossary + adrs/ ADRs
 ├── roadmap/
 ├── goals/
@@ -46,4 +46,4 @@ Key constraints:
 - `roadmap/` is the planning layer for large needs; `goals/` holds cs-goal start / iteration / acceptance artifacts.
 - `features/`, `issues/`, and `refactors/` use `YYYY-MM-DD-{slug}/` to group one workflow run; `audits/` and `brainstorms/` likewise hold audit and brainstorm artifacts.
 - `compound/` is the single knowledge sink; `cs-keep` writes pitfalls / tricks / decisions / research there as plain markdown files retrieved via grep.
-- `reference/` is released by `cs-onboard`; cross-skill shared docs must go through project-local `codestable/reference/`, not direct references to another skill package.
+- `reference/` is released by `cs-onboard`; cross-skill shared docs must go through project-local `.codestable/reference/`, not direct references to another skill package.

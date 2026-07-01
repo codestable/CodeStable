@@ -33,7 +33,7 @@ Claude plugin marketplace:
 
 ```text
 /plugin marketplace add liuzhengdongfortest/CodeStable
-/plugin install codestable
+/plugin install codestable@codestable
 ```
 
 `skills` CLI:
@@ -124,7 +124,7 @@ CodeStable goes the **other way**:
 <tr><th></th><th>Agent-orchestration camp</th><th>CodeStable</th></tr>
 <tr><td><b>Core entity</b></td><td>Agent / Role / Team</td><td>Requirement / Architecture / Feature / Issue / Decision</td></tr>
 <tr><td><b>Main question</b></td><td>How do agents divide work, hand off, coordinate?</td><td>How do requirements, constraints, decisions get recorded, retrieved, reused?</td></tr>
-<tr><td><b>Where state lives</b></td><td>Agent sessions / message buses / queues</td><td>The <code>codestable/</code> file tree in your project (readable by both humans and AI)</td></tr>
+<tr><td><b>Where state lives</b></td><td>Agent sessions / message buses / queues</td><td>The <code>.codestable/</code> file tree in your project (readable by both humans and AI)</td></tr>
 <tr><td><b>Pain it solves</b></td><td>One agent isn't enough; need coordination to scale</td><td>Software complexity overflows context; tacit knowledge gets lost; requirements drift</td></tr>
 <tr><td><b>Role of humans</b></td><td>The less the better — full automation is the ideal</td><td>Human-in-the-loop — the programmer owns the whole; AI is an efficient executor</td></tr>
 </table>
@@ -208,12 +208,118 @@ See [SKILL_CATALOG.en.md](./SKILL_CATALOG.en.md) for the full catalog. In daily 
 
 CodeStable's skills are **layered + event-driven**: root routing, onboard, long-lived archives, roadmap planning, feature / issue / refactor execution flows, and cross-cut knowledge sinking.
 
-- Vertical means layers, not strict time order; long-lived archives are refreshed repeatedly, while the roadmap layer is entered for large needs.
-- `cs-feat-design-review`, `cs-code-review`, and `cs-feat-qa` are explicit gates; blocking findings route work back to the matching stage.
-- Execution is event-driven: new capability goes to feature flow, bugs go to issue flow, rot goes to refactor flow, and bounded outcomes go to goal flow.
-- The cross-cut layer compounds knowledge: `cs-keep` records reusable experience, `cs-note` stores small project conventions, and `cs-docs-neat` reconciles docs at milestone boundaries.
+```text
+═══════════════════════════════════════════════════════════════════════
+ Root entry · routing                              (callable any time)
+───────────────────────────────────────────────────────────────────────
+   cs ──▶ Introduce the system / route open-ended intent to a sub-skill
+          (does nothing itself — only triages and points)
+═══════════════════════════════════════════════════════════════════════
+                              │
+              ┌───────────────┼───────────────┐
+              ▼               ▼               ▼
+        (not onboarded)  (onboarded)    (just want to learn)
+         go to phase 0   jump to L1~4 / cross-cut    quick read
+              │
+              ▼
+═══════════════════════════════════════════════════════════════════════
+ Phase 0 · Onboard                            (runs once per project)
+───────────────────────────────────────────────────────────────────────
+   cs-onboard ──▶ Generate .codestable/ skeleton + release reference/, tools/
+                  optionally release codestable-ai-branch-guard hook
+═══════════════════════════════════════════════════════════════════════
+                              │
+                              ▼
+═══════════════════════════════════════════════════════════════════════
+ Layer 1 · Long-lived archive ("what the system looks like now")
+───────────────────────────────────────────────────────────────────────
+   cs-req     ──▶ .codestable/requirements/{slug}.md       capability vision
+   cs-domain  ──▶ .codestable/requirements/CONTEXT.md      domain glossary
+                  .codestable/requirements/adrs/NNN-*.md   ADRs (3-criteria gate)
+                  CONTEXT-MAP.md present → nest per bounded context
+═══════════════════════════════════════════════════════════════════════
+                              │
+                              ▼
+═══════════════════════════════════════════════════════════════════════
+ Layer 2 · Planning ("how we plan to deliver this big thing next")
+───────────────────────────────────────────────────────────────────────
+   cs-roadmap ──▶ .codestable/roadmap/{slug}/
+                  Turn "I want X" into a complete up-front plan:
+                    ① High-level design — module / component split
+                    ② Architectural detail — interface contracts
+                    ③ Sub-features      — broken into executable units
+                  ② is a hard input for feature-design
+                  (Small needs skip this layer and go straight to L3)
 
-See [WORKFLOW.en.md](./WORKFLOW.en.md) for the fuller workflow and runtime model.
+   cs-roadmap-review ✦Gate ──▶ independent planning review
+                                → {slug}-roadmap-review.md
+
+   cs-roadmap-impl-goal ──▶ prepare design/checklist/design-review
+                             for each sub-feature
+                             → emit ready-to-run /goal prompts
+═══════════════════════════════════════════════════════════════════════
+                              │
+                              ▼
+═══════════════════════════════════════════════════════════════════════
+ Discussion entry (optional · enter when fuzzy, route after triage)
+───────────────────────────────────────────────────────────────────────
+                          ┌── case 1 clear enough ──▶ cs-feat-design
+   cs-brainstorm ────────▶┼── case 2 small + decided ─▶ feature flow
+                          └── case 3 big with one word ─▶ cs-roadmap
+═══════════════════════════════════════════════════════════════════════
+                              │
+                              ▼
+═══════════════════════════════════════════════════════════════════════
+ Layer 3 · Execution flows (pick one per event type)
+───────────────────────────────────────────────────────────────────────
+
+  ▸ Event: new capability                                      ┌──────────┐
+       cs-feat-design ─▶ cs-feat-design-review ✦Gate ─▶       │ features │
+       cs-feat-impl ─▶ cs-code-review ✦Gate ─▶                 │ /YYYY-…/ │
+       cs-feat-qa ✦Gate ─▶ cs-feat-accept                      └──────────┘
+
+       cs-feat-ff     ──(light lane, skips design/accept)─▶
+
+  ▸ Event: fix a defect                                         ┌──────────┐
+       cs-issue-report ─▶ cs-issue-analyze ─▶ cs-issue-fix ─▶   │  issues  │
+                                              cs-code-review    │ /YYYY-…/ │
+                                                                └──────────┘
+
+  ▸ Event: code rot (beta)                                      ┌──────────┐
+       cs-refactor / cs-refactor-ff ─▶ cs-code-review           │refactors │
+                                                                 │ /YYYY-…/ │
+                                                                 └──────────┘
+
+  ▸ Event: bounded goal                                         ┌──────────┐
+       cs-goal ──▶ start report ─▶ autonomous impl/verify loop  │  goals   │
+                   ─▶ subagent functional acceptance            │ /{slug}/ │
+                                                                 └──────────┘
+═══════════════════════════════════════════════════════════════════════
+                              │
+          ┌───────────────────┴───────────────────┐
+          ▼ trigger any time something is reusable ▼ milestone close
+═══════════════════════════════════════════════════════════════════════
+ Cross-cut · Knowledge sink & docs cleanup
+───────────────────────────────────────────────────────────────────────
+   cs-keep  ──▶ .codestable/compound/YYYY-MM-DD-{slug}.md
+                 plain markdown, no frontmatter, grep to search
+                 next cs-feat-design / cs-issue-analyze greps it
+
+   cs-note  ──▶ .codestable/attention.md
+
+   cs-docs-neat ──▶ reconcile .codestable/, README/docs,
+                     CLAUDE.md / AGENTS.md, and agent memory
+═══════════════════════════════════════════════════════════════════════
+```
+
+**How to read this diagram:**
+
+- **Vertical = layers**, not strict time order; long-lived archives are refreshed repeatedly, while the roadmap layer is entered for large needs.
+- **✦Gate = explicit blocking points**: design-review, code-review, and QA each produce a report; blocking findings route work back to the matching stage.
+- **Layer 3 is event-driven**: new capability goes to feature flow, bugs go to issue flow, rot goes to refactor flow, and bounded outcomes go to goal flow.
+- **Cross-cut is the flywheel**: any flow can sink reusable experience through `cs-keep`; `cs-docs-neat` reconciles docs at milestone boundaries.
+
+See [WORKFLOW.en.md](./WORKFLOW.en.md) for another compact workflow summary.
 
 ---
 
@@ -221,18 +327,88 @@ See [WORKFLOW.en.md](./WORKFLOW.en.md) for the fuller workflow and runtime model
 
 After `/cs-onboard`, a `.codestable/` directory appears at your project root as the aggregate root for requirements, roadmap, goals, features, issues, refactors, audits, compound, tools, hooks, and reference.
 
-Key points:
+```text
+your-project/
+├── .codestable/
+│   ├── attention.md                       # required preflight for CodeStable skills
+│   ├── requirements/                      # requirements + domain model
+│   │   ├── VISION.md                      # capability index
+│   │   ├── {slug}.md                      # one capability per flat file
+│   │   ├── CONTEXT.md                     # domain glossary
+│   │   ├── CONTEXT-MAP.md                 # multi-context topology, when needed
+│   │   ├── adrs/                          # architecture decisions
+│   │   │   └── NNN-{slug}.md              # Nygard four sections + status machine
+│   │   └── {ctx}/                         # bounded-context subdir, when needed
+│   │       ├── CONTEXT.md
+│   │       ├── adrs/
+│   │       └── {capability}.md
+│   │
+│   ├── roadmap/                           # roadmaps ("how we plan to walk next")
+│   │   └── {slug}/
+│   │       ├── {slug}-roadmap.md          # main doc: background / breakdown / sequencing
+│   │       ├── {slug}-items.yaml          # machine-readable sub-feature list
+│   │       ├── {slug}-roadmap-review.md   # planning review before human approval
+│   │       └── drafts/                    # optional drafts / research
+│   │
+│   ├── goals/                             # goal-driven workflow aggregate root
+│   │   └── {slug}/
+│   │       ├── {slug}-start-report.md
+│   │       ├── {slug}-state.yaml
+│   │       ├── {slug}-iteration-*.md
+│   │       └── {slug}-functional-acceptance.md
+│   │
+│   ├── features/                          # feature flow aggregate root
+│   │   └── YYYY-MM-DD-{slug}/             # one directory per feature
+│   │       ├── {slug}-brainstorm.md       # optional cs-brainstorm output
+│   │       ├── {slug}-design.md           # design
+│   │       ├── {slug}-checklist.yaml      # implementation checklist
+│   │       ├── {slug}-design-review.md    # pre-human design review
+│   │       ├── {slug}-review.md           # post-implementation code review
+│   │       ├── {slug}-qa.md               # QA gate after code review
+│   │       └── {slug}-acceptance.md       # acceptance report
+│   │
+│   ├── issues/                            # issue flow aggregate root
+│   │   └── YYYY-MM-DD-{slug}/
+│   │       ├── {slug}-report.md
+│   │       ├── {slug}-analysis.md         # only when root cause is non-obvious
+│   │       └── {slug}-fix-note.md
+│   │
+│   ├── refactors/                         # refactor flow aggregate root
+│   │   └── YYYY-MM-DD-{slug}/
+│   │       ├── {slug}-scan.md
+│   │       ├── {slug}-refactor-design.md
+│   │       ├── {slug}-checklist.yaml
+│   │       └── {slug}-apply-notes.md
+│   │
+│   ├── audits/                            # audit findings and scan outputs
+│   ├── brainstorms/                       # standalone brainstorm outputs
+│   ├── compound/                          # unified knowledge sink
+│   │   └── YYYY-MM-DD-{slug}.md
+│   │       # plain markdown, no frontmatter, grep to search
+│   │
+│   ├── gates/                             # workflow gate config released by onboard
+│   ├── tools/                             # shared workflow scripts released by onboard
+│   └── reference/                         # shared references released by onboard
+│       ├── shared-conventions.md          # cross-skill conventions / paths / metadata
+│       ├── system-overview.md             # system overview + scenario routing
+│       └── ...
+│
+└── AGENTS.md                              # project root, not under .codestable/
+```
 
-- All workflow artifacts aggregate under `.codestable/`, so "how did we handle that feature / bug last time" is three seconds away.
-- `requirements/` is the long-lived archive, `roadmap/` is the planning layer, and `features/` / `issues/` / `refactors/` are per-run execution records.
-- `compound/` is the single knowledge sink: plain markdown, no frontmatter, searched via `grep -r`.
+**Key points:**
+
+- All artifacts aggregate under `.codestable/`, so "how did we handle that feature / bug last time" is three seconds away.
+- `requirements/` is the **long-lived archive** (capability vision + domain glossary CONTEXT.md + decisions adrs/); `roadmap/` is the **planning layer** (what's next), deliberately separated.
+- `features/` `issues/` `refactors/` use `YYYY-MM-DD-{slug}/` to bundle all related specs in one directory, no crossing.
+- `compound/` is the **single** knowledge sink directory: plain markdown, no frontmatter, searched via `grep -r`.
 - `reference/` is copied in by `cs-onboard`; to change shared conventions, edit the templates under `plugins/codestable/skills/cs-onboard/reference/` so new projects pick them up at onboard time.
 
 ### Hard constraint
 
 > A skill is an independent install unit. At runtime, **each skill can only see files inside its own package**. References like `B-skill/reference/xxx.md` written in skill A's SKILL.md are **simply unreachable** at runtime.
 >
-> Cross-skill shared references must go through the "working project" layer: `cs-onboard` copies them from the skill package to the project's `codestable/reference/`, and other skills read them via the project-relative path.
+> Cross-skill shared references must go through the "working project" layer: `cs-onboard` copies them from the skill package to the project's `.codestable/reference/`, and other skills read them via the project-relative path.
 
 To change shared conventions, edit the templates under `plugins/codestable/skills/cs-onboard/reference/`; new projects pick them up at onboard time. See [WORKFLOW.en.md](./WORKFLOW.en.md) for the full directory model and cross-skill reference constraints.
 

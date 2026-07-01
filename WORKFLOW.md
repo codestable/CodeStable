@@ -23,10 +23,10 @@ cs
 
 ## 运行时结构
 
-`/cs-onboard` 后，项目根下会出现 `codestable/`：
+`/cs-onboard` 后，项目根下会出现 `.codestable/`：
 
 ```text
-codestable/
+.codestable/
 ├── requirements/        # 需求文档 + 领域模型：CONTEXT.md 术语表 + adrs/ ADR
 ├── roadmap/
 ├── goals/
@@ -46,4 +46,4 @@ codestable/
 - `roadmap/` 是规划层，描述大需求接下来怎么走；`goals/` 存 cs-goal 的目标启动 / 迭代 / 验收产物。
 - `features/`、`issues/`、`refactors/` 用 `YYYY-MM-DD-{slug}/` 聚合单次流程产物；`audits/`、`brainstorms/` 同理存审计与头脑风暴产物。
 - `compound/` 是唯一知识沉淀目录，由 `cs-keep` 把坑 / 技巧 / 决策 / 调研统一写成纯 markdown 文件，靠 grep 检索。
-- `reference/` 由 `cs-onboard` 释放共享口径；跨 skill 共享文档必须通过项目内 `codestable/reference/`，不能从一个 skill 直接引用另一个 skill 包内文件。
+- `reference/` 由 `cs-onboard` 释放共享口径；跨 skill 共享文档必须通过项目内 `.codestable/reference/`，不能从一个 skill 直接引用另一个 skill 包内文件。
