@@ -112,8 +112,14 @@ acceptance，并把证据写回仓库。
 
 1. **Paseo subagent**：首选。Paseo 有 agent id、activity、status、permission 和 cancel
    表面，用户能看见并接管长程执行。
-2. **宿主原生 Task/Agent**：仅当宿主暴露用户可见的 run id / 状态 / 日志 / 取消或最终
-   transcript 时可用。主 agent 必须能告诉用户如何查看这个 driver。
+2. **宿主原生 Task/Agent**：只有同时满足下面两条才可用：
+   - 宿主显式暴露用户可见的 run id / 状态 / 日志 / 取消或最终 transcript，且主 agent
+     能告诉用户如何查看。
+   - 宿主显式支持 driver 在其运行环境内再启动独立 Task agent reviewer；review gate
+     必须能跑，不能靠 driver 自审。
+
+   任一条不能确认时，不要猜测可用；不要用原生子 agent 当 driver，直接回退打印 `/goal`，
+   避免 driver 在第一个 review gate 就 handoff。
 3. **不可见或派发失败**：不要静默后台运行。打印 fenced `/goal` 指令，让用户粘贴到新的
    agent 会话执行，并说明没有自动 driver 在跑。
 

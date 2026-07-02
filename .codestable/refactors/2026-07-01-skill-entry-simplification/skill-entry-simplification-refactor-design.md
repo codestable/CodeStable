@@ -168,3 +168,11 @@ Thick stage details should live in reference files, not in the main `SKILL.md`.
 - Old stage skill names remain present.
 - Thick workflow rules exist under main entry references.
 - Tests cover the migration invariants above.
+
+## 10. Amendments (2026-07-02)
+
+Long-range execution supersedes parts of decisions 17 and 21:
+
+1. `cs-feat` keeps one human checkpoint at the design gate. After the user approves the design, it generates a single-feature goal package and runs implementation, code review, QA, and acceptance long-range; ordinary stage blockers are fixed inside the goal loop, and only goal handoff conditions stop for the user.
+2. `cs-epic` and `cs-feat` first try to dispatch a **visible Task agent goal driver** (Paseo subagent preferred, then host-native Task/Agent with user-visible run id/status/logs/cancel). Dispatch preconditions include the driver being able to launch independent Task agent reviewers in its own runtime. If no visible or capable driver exists, they print the fenced `/goal` command for the user to paste; they never run the long-range loop silently in the main thread (`cs-epic`) and never auto-execute slash commands.
+3. Per-feature user-wait checkpoints convert to written reports/state/evidence in goal mode; design-gate confirmations, contract/scope changes, blocked independent reviewers, and repeated failures still hand off to the user.

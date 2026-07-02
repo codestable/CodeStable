@@ -161,8 +161,8 @@ CodeStable models real coding work as a set of **entities** and **flows**.
 
 | Flow | Recommended main entry | Notes |
 |------|------------|------|
-| **Feature delivery** | `cs-feat` | End-to-end design → design review → implementation → `cs-code-review` → QA → acceptance |
-| **Epic delivery** | `cs-epic` | Plan a large demand, review it, design child features, prepare a goal package, then print `/goal` |
+| **Feature delivery** | `cs-feat` | End-to-end design → design review → user gate → long-range goal run of implementation → `cs-code-review` → QA → acceptance |
+| **Epic delivery** | `cs-epic` | Plan a large demand, review it, design child features, prepare a goal package, then dispatch a visible goal driver (print `/goal` as fallback) |
 | **Goal achievement** | `cs-goal` | Bounded start/end → interview/grill + start report → autonomous implement/validate/iterate → subagent functional acceptance |
 | **Issue fixing** | `cs-issue` | End-to-end report → analyze → fix → `cs-code-review` |
 | **Refactoring** | `cs-refactor` | Behavior-preserving cleanup; standard or fastforward mode, followed by `cs-code-review` |
@@ -230,8 +230,8 @@ cs
 How to read it:
 
 - `cs` only triages to main entries; it no longer routes users to stage skills.
-- `cs-feat`, `cs-issue`, and `cs-refactor` resume from repository facts and stop at human checkpoints.
-- `cs-epic` prepares planning and goal packages; v1 still writes `.codestable/roadmap/`.
+- `cs-feat`, `cs-issue`, and `cs-refactor` resume from repository facts. `cs-issue` and `cs-refactor` stop at review, blocking, or user-confirmation checkpoints; `cs-feat` stops only at the design gate, then runs impl, review, QA, and accept long-range via a visible goal driver.
+- `cs-epic` prepares planning and goal packages, then dispatches a visible goal driver; v1 still writes `.codestable/roadmap/`.
 - `cs-code-review` is the cross-cutting gate; `cs-docs-neat` handles hygiene; `cs-docs` writes outward docs.
 - Old stage skills are long-term compatibility entries for historical users.
 

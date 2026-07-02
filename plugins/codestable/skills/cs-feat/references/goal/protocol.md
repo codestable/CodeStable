@@ -57,6 +57,22 @@ qa: ".codestable/features/YYYY-MM-DD-{slug}/{slug}-qa.md"
 acceptance: ".codestable/features/YYYY-MM-DD-{slug}/{slug}-acceptance.md"
 ```
 
+合法状态机：
+
+| stage | status | 何时写入 | 下一步 |
+|---|---|---|---|
+| implementation | ready-to-dispatch | goal 包生成后 | 派发 driver 或打印 `/goal` |
+| implementation | running | driver 开始实现时 | 完成 checklist steps |
+| review | ready | implementation gates 通过，evidence 已生成 | 运行 `cs-code-review` |
+| review | fixing | review 有 blocking，进入 review-fix | 修完回 `review: ready` |
+| qa | ready | review passed | 运行 `cs-feat` QA |
+| qa | fixing | QA failed / blocked，进入 qa-fix | 修完回 `review: ready`，重跑 review 和 QA |
+| acceptance | ready | QA passed | 运行 `cs-feat` acceptance |
+| complete | passed | acceptance passed 且无 handoff | 打印 `CS_FEATURE_GOAL_COMPLETE` |
+| handoff | blocked | 命中 handoff 条件 | 打印 `CS_FEATURE_GOAL_HANDOFF` |
+
+每次 stage / status 变化都要立即写回 `goal-state.yaml`。driver 中断后，后续 agent 先读 `goal-state.yaml`，再按仓库事实核验对应产物是否存在且状态匹配；不一致时以仓库事实为准并修正 state。
+
 `goal-protocol.md` 必须写明执行 loop：
 
 1. 读取 design、checklist、goal-plan、goal-state。
@@ -66,6 +82,18 @@ acceptance: ".codestable/features/YYYY-MM-DD-{slug}/{slug}-acceptance.md"
 5. review passed 后进入 `cs-feat` QA；QA failed / blocked 就 qa-fix 后重跑 review 和 QA。
 6. QA passed 后进入 `cs-feat` acceptance，更新 checklist checks 和必要长期文档。
 7. 全部通过后打印 `CS_FEATURE_GOAL_COMPLETE`。
+
+`goal-protocol.md` 还必须写明：
+
+- Goal 模式接管：普通流程中各阶段停等用户确认的 checkpoint，在 goal 模式下改为写入报告、状态和证据记录；只有命中 handoff 条件才停。
+- 每个阶段 gate 通过后按上表更新 `goal-state.yaml` 的 `stage` / `status`，保证 driver 中断后可按仓库事实重派续跑。
+- handoff 输出格式：
+
+```text
+CS_FEATURE_GOAL_HANDOFF
+Reason: <具体阻塞>
+Next: <建议动作>
+```
 
 handoff 条件：
 

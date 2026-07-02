@@ -256,6 +256,8 @@ qa-fix 不要求 checklist 新增普通 step，除非用户明确要求把修复
 
 所有步骤完成后，按 `support/reference.md` 的"实现完成汇报"模板输出并停等用户 review。模板必须列出真实 `git status`、按步骤归类的改动、方案外触碰、新概念、step 证据、清洁度、交付物、知识候选、最后一轮本地审计和验收场景自检。
 
+Goal 模式例外（本轮按 feature / roadmap 目录下 `goal-protocol.md` 长程执行）：汇报照常落盘留档，但不停等用户 review，直接按 goal 协议进入 before_review gates 和 `cs-code-review`；只有命中 goal handoff 条件才停下交还用户。
+
 ---
 
 ## 测试用例怎么落
@@ -269,7 +271,7 @@ qa-fix 不要求 checklist 新增普通 step，除非用户明确要求把修复
 完整 checklist 见 `support/reference.md`。主文件保留硬门摘要：
 
 - [ ] 所有 steps 的 status 都 `done`，且每步有退出信号证据。
-- [ ] 完成汇报已输出，用户 review 通过（或 review-fix / qa-fix 汇报已输出，等待重跑对应 gate）。
+- [ ] 完成汇报已输出，用户 review 通过（或 review-fix / qa-fix 汇报已输出，等待重跑对应 gate；goal 模式为汇报落盘留档后按 goal 协议继续）。
 - [ ] 没有未处理的"需要叫停"信号、方案外改动或清洁度缺口。
 - [ ] 开始前做过基线预检；完成前做过最后一轮本地审计。
 - [ ] 第 3 节关键场景每条都有证据 / 测试覆盖（fastforward 对照第 2 节）。

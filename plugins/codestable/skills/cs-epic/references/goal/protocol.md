@@ -139,6 +139,8 @@ features:
 
 `current_feature_index` 是 **0-based**，指向 `features` 数组中下一个要处理的元素；第一个 feature 必须是 `0`。每个 feature accepted 后必须 scoped-commit 且确认工作树干净，再加 1。展示给用户的 `Feature: N/总数` 仍使用 1-based。roadmap item 若在执行前被标 `dropped`，不要写入 `goal-state.features`；已进入 `goal-state.features` 的条目必须走到 `accepted` 或回退修复。
 
+与单 feature goal 不同，epic goal 用 `current_feature_index` 表示跨 feature 进度，并用每个 `features[].status` 表示单个 feature 状态；单 feature 内部的 implementation / review / QA / acceptance 细粒度阶段仍由对应 feature 产物和 `goal-protocol-feature-loop.md` 核验，不在 epic 顶层 state 里再复制一套 `stage` 字段。
+
 ### `goal-protocol*.md`
 
 从 `support/protocol.md`、`protocol-feature-loop.md`、`protocol-gates.md`、`protocol-audit.md` 复制到 roadmap 目录，并把 `{roadmap-slug}` / `{roadmap-path}` / `{roadmap-file}` / `{items-file}` 替换为本次实际值。不要替换 `<feature-slug>` 这类运行时占位；它们必须保留给 goal 会话在每个 feature 边界填写。

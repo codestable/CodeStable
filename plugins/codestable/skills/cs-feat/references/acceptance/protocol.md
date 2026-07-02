@@ -49,7 +49,7 @@
 6. **验证证据来源**——独立 `cs-feat` QA 阶段 不是 standalone accept 的硬前置；但验收必须有同等强度的验证证据：
    - 已有 `{slug}-qa.md`：读取并复核。frontmatter 必须 `doc_type=feature-qa`、`status=passed`；failed / blocked → 退回 `cs-feat` implementation 阶段 qa-fix；status 不是 passed → 不进入验收。
    - 没有 `{slug}-qa.md`：不要强制切去跑 `cs-feat` QA 阶段。在本次 accept 里建立 `Inline Verification Matrix`，对照 design 第 3 节、checklist checks、review Test And QA Focus / residual risk 和项目测试入口，现场运行验证，并把证据写入 acceptance 第 3 节和第 10 节最终审计。这个模式等价于“accept-inline QA”，但不额外生成 QA 报告。
-   - Goal 模式例外：`cs-epic` goal 阶段 协议明确要求逐 feature 生成 QA 报告；在 goal 模式缺 `{slug}-qa.md` 时按 goal protocol 停止，不走 accept-inline。
+   - Goal 模式例外：`cs-feat` / `cs-epic` 的 goal 协议都明确要求生成 QA 报告；goal 模式缺 `{slug}-qa.md` 时按 goal protocol 停止，不走 accept-inline。
 7. **核心证据复核**——不管证据来自 QA 报告还是 accept-inline，都按同一标准复核：
    - 功能性或 mixed feature：design 第 3 节、checklist checks、review QA focus 中的核心功能路径必须有运行证据。若核心路径未运行、真实用户/API/运行时路径未验证、必跑命令未执行，acceptance 必须写 `status=blocked`。下一步按原因选择：代码/测试缺口 → `cs-feat` implementation 阶段 qa-fix 后重跑 review 和 accept-inline；环境缺口 → 先补环境；用户希望独立 QA 报告 → 跑 `cs-feat` QA 阶段。
    - 非功能性 feature：不要求 e2e / browser / API，但必须写明为什么不需要端到端运行，并提供静态检查、diff 复核、文档一致性、schema/快照/类型/构建/目标测试等替代证据。缺说明或证据不足时继续补证据，不直接通过。

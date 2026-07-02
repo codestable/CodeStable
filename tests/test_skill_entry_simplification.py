@@ -223,6 +223,40 @@ def test_feat_and_epic_document_goal_driver_dispatch() -> None:
     assert "fenced `/goal`" in epic_goal
 
 
+def test_goal_mode_overrides_stage_user_waits() -> None:
+    impl = (SKILLS / "cs-feat/references/implementation/protocol.md").read_text(encoding="utf-8")
+    impl_reference = (SKILLS / "cs-feat/references/implementation/support/reference.md").read_text(encoding="utf-8")
+    accept = (SKILLS / "cs-feat/references/acceptance/protocol.md").read_text(encoding="utf-8")
+    conventions = (SKILLS / "cs-onboard/references/execution-conventions.md").read_text(encoding="utf-8")
+    feat_goal = (SKILLS / "cs-feat/references/goal/protocol.md").read_text(encoding="utf-8")
+    epic_goal_support = (SKILLS / "cs-epic/references/goal/support/protocol.md").read_text(encoding="utf-8")
+    epic_goal = (SKILLS / "cs-epic/references/goal/protocol.md").read_text(encoding="utf-8")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    readme_en = (ROOT / "README.en.md").read_text(encoding="utf-8")
+
+    # implementation 的"停等用户 review"必须有 goal 模式例外，否则 driver 长程会被打断。
+    assert "Goal 模式例外" in impl
+    assert "Goal 模式汇报后不停等用户" in impl_reference
+    assert "按 goal 协议更新 `goal-state.yaml`" in impl_reference
+    # acceptance 的 goal 例外要同时覆盖单 feature goal 和 epic goal。
+    assert "`cs-feat` / `cs-epic` 的 goal 协议" in accept
+    # 原生子 agent 当 driver 前必须确认它还能启动独立 reviewer；不能就回退打印 /goal。
+    assert "只有同时满足下面两条才可用" in conventions
+    assert "不能靠 driver 自审" in conventions
+    # 单 feature goal 包必须带接管条款和 handoff 标记，与 epic goal 包对齐。
+    assert "合法状态机" in feat_goal
+    assert "| review | fixing |" in feat_goal
+    assert "| handoff | blocked |" in feat_goal
+    assert "Goal 模式接管" in feat_goal
+    assert "CS_FEATURE_GOAL_HANDOFF" in feat_goal
+    assert "goal 模式下改为写入报告" in epic_goal_support
+    assert "CS_ROADMAP_GOAL_HANDOFF" in epic_goal_support
+    assert "与单 feature goal 不同" in epic_goal
+    # README 不应暗示 issue/refactor 有标准 QA checkpoint。
+    assert "review、blocking 或用户确认 checkpoint" in readme
+    assert "review, blocking, or user-confirmation checkpoints" in readme_en
+
+
 def test_compatibility_entries_do_not_declare_argument_hint() -> None:
     for skill in COMPATIBILITY_ENTRIES:
         text = (SKILLS / skill / "SKILL.md").read_text(encoding="utf-8")

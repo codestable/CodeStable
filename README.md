@@ -162,8 +162,8 @@ CodeStable 顺着软件编码的真实流程来设计，把开发活动建模成
 
 | 流程 | 推荐主入口 | 说明 |
 |------|------------|------|
-| **特性引入** | `cs-feat` | 一个入口端到端推进 design → design-review → implementation → `cs-code-review` → QA → acceptance |
-| **大需求端到端** | `cs-epic` | 大需求规划 → 规划审查 → 用户确认 → 子 feature design/review → goal 执行包 → 输出 `/goal` 指令 |
+| **特性引入** | `cs-feat` | 一个入口端到端推进 design → design-review → 用户确认 → goal 包长程执行 implementation → `cs-code-review` → QA → acceptance |
+| **大需求端到端** | `cs-epic` | 大需求规划 → 规划审查 → 用户确认 → 子 feature design/review → goal 执行包 → 派发可见 goal driver（失败则输出 `/goal` 指令） |
 | **目标达成** | `cs-goal` | 限定起点/终点 → grill 写起点报告 → 自主实现/验证/迭代 → subagent 功能验收 |
 | **问题修改** | `cs-issue` | 一个入口端到端推进 report → analyze → fix → `cs-code-review` |
 | **代码重构** | `cs-refactor` | 行为等价重构；内部判定标准模式或 fastforward mode，完成后进入 `cs-code-review` |
@@ -232,8 +232,8 @@ cs
 **怎么读这张图：**
 
 - `cs` 只做轻量分诊到主入口，不再把用户导向阶段技能。
-- `cs-feat` / `cs-issue` / `cs-refactor` 是连续编排入口，会按仓库事实恢复阶段，并在 design、review、QA、accept 等 checkpoint 停下等用户确认。
-- `cs-epic` 负责大需求规划和 goal 执行包；第一版内部仍使用 `.codestable/roadmap/`，不批量迁移历史产物。
+- `cs-feat` / `cs-issue` / `cs-refactor` 是连续编排入口，按仓库事实恢复阶段。`cs-issue` / `cs-refactor` 在 review、blocking 或用户确认 checkpoint 停下；`cs-feat` 只在 design gate 停下，用户确认后经可见 goal driver 长程完成 impl、review、QA、accept。
+- `cs-epic` 负责大需求规划和 goal 执行包，用户确认后派发可见 goal driver 长程执行；第一版内部仍使用 `.codestable/roadmap/`，不批量迁移历史产物。
 - `cs-code-review` 是横切 gate；`cs-docs-neat` 是阶段收尾整理器；`cs-docs` 只写对外指南和 API 参考。
 - 旧阶段技能是长期兼容入口，历史用户可以继续调用，但新文档和新提示词应使用主入口。
 
