@@ -1,7 +1,7 @@
 ---
 name: cs-epic
 description: Epic 主入口。触发：大需求/系统级能力/执行整个 epic；规划、review、feature design、goal 包。
-argument-hint: "[planning|review|goal-package] [大需求描述]"
+argument-hint: "[--stage planning|review|goal-package] <epic>"
 ---
 
 # cs-epic
@@ -20,7 +20,7 @@ argument-hint: "[planning|review|goal-package] [大需求描述]"
 
 本次调用参数：$ARGUMENTS
 
-意图来源按优先级：调用参数 > 兼容入口预设 > 用户话术。参数为空或未被替换（仍是字面 `$ARGUMENTS`）时跳过该来源；首个 token 命中 `planning` / `review` / `goal-package` 则设为对应 `requested_stage`，其余文本作为大需求描述。
+意图来源按优先级：调用参数 flag > 兼容入口预设 > 用户话术。参数为空或未被替换（仍是字面 `$ARGUMENTS`）时跳过该来源；调用参数用 `--stage planning|review|goal-package` 表示阶段意图，其余文本作为大需求描述。旧裸 token（如 `review`）只作为历史提示词兼容识别；新文档和新调用一律用 `--stage`。
 
 入口意图不覆盖仓库事实。已有 roadmap review 未通过时先修规划；已有 feature design 未确认时不生成 goal 包。
 

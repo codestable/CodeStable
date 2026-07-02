@@ -1,6 +1,6 @@
 # CodeStable 技能目录
 
-主入口调用时可带阶段 / 模式参数（如 `/cs-feat qa`、`/cs-refactor ff`、`/cs-docs api 认证接口`）。参数只是意图提示，仓库事实始终优先。
+主入口调用时可带 flag 化的阶段 / 模式参数（如 `/cs-feat --stage qa`、`/cs-refactor --mode fastforward`、`/cs-docs --mode api 认证接口`）。参数只是意图提示，仓库事实始终优先；裸参数始终表示任务描述。
 
 ## 推荐主入口
 

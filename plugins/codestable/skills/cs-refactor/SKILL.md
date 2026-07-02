@@ -1,7 +1,7 @@
 ---
 name: cs-refactor
 description: Refactor 主入口。触发：优化/重构/拆分/性能/代码太长，且不改变行为、不新增需求。
-argument-hint: "[standard|ff|scan|design|apply] [重构目标]"
+argument-hint: "[--stage scan|design|apply] [--mode standard|fastforward] <target>"
 ---
 
 # cs-refactor
@@ -20,15 +20,17 @@ argument-hint: "[standard|ff|scan|design|apply] [重构目标]"
 
 本次调用参数：$ARGUMENTS
 
-意图来源按优先级：调用参数 > 兼容入口预设 > 用户话术。参数为空或未被替换（仍是字面 `$ARGUMENTS`）时跳过该来源；首个 token 命中下表则设为入口意图，其余文本作为重构目标。
+意图来源按优先级：调用参数 flag > 兼容入口预设 > 用户话术。参数为空或未被替换（仍是字面 `$ARGUMENTS`）时跳过该来源；调用参数用 `--stage <stage>` 表示阶段意图，用 `--mode <mode>` 表示执行模式，其余文本作为重构目标。
 
-| token | 入口意图 |
+| 参数 | 入口意图 |
 |---|---|
-| `standard` | `requested_mode: standard` |
-| `ff` | `requested_mode: fastforward` |
-| `scan` | `requested_stage: scan` |
-| `design` | `requested_stage: design` |
-| `apply` | `requested_stage: apply` |
+| `--stage scan` | `requested_stage: scan` |
+| `--stage design` | `requested_stage: design` |
+| `--stage apply` | `requested_stage: apply` |
+| `--mode standard` | `requested_mode: standard` |
+| `--mode fastforward` | `requested_mode: fastforward` |
+
+旧裸 token（如 `ff`、`scan`）只作为历史提示词兼容识别；新文档和新调用一律用 `--stage` / `--mode`。
 
 入口意图只是偏好。仓库事实优先：已有 scan/design/checklist/apply-notes 时按真实状态续跑。
 

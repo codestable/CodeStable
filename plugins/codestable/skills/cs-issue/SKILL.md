@@ -1,7 +1,7 @@
 ---
 name: cs-issue
 description: Issue 主入口。触发：修 bug/有问题/修复 XX；端到端推进 report、analyze、fix、review。
-argument-hint: "[report|analyze|fix] [问题描述]"
+argument-hint: "[--stage report|analyze|fix] <issue>"
 ---
 
 # cs-issue
@@ -20,7 +20,7 @@ argument-hint: "[report|analyze|fix] [问题描述]"
 
 本次调用参数：$ARGUMENTS
 
-意图来源按优先级：调用参数 > 兼容入口预设 > 用户话术。参数为空或未被替换（仍是字面 `$ARGUMENTS`）时跳过该来源；首个 token 命中 `report` / `analyze` / `fix` 则设为对应 `requested_stage`，其余文本作为问题描述。
+意图来源按优先级：调用参数 flag > 兼容入口预设 > 用户话术。参数为空或未被替换（仍是字面 `$ARGUMENTS`）时跳过该来源；调用参数用 `--stage report|analyze|fix` 表示阶段意图，其余文本作为问题描述。旧裸 token（如 `fix`）只作为历史提示词兼容识别；新文档和新调用一律用 `--stage`。
 
 入口意图不覆盖仓库事实。若 report 已存在但用户从 report 兼容入口进来，继续 analyze；若代码已改但无 fix-note，进入 fix 验证/记录。
 

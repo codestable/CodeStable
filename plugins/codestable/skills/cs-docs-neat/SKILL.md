@@ -1,7 +1,7 @@
 ---
 name: cs-docs-neat
 description: CodeStable 文档收尾。触发：阶段结束、整理文档、同步记忆、/sync、/neat。
-argument-hint: "[同步范围或关注点，可空]"
+argument-hint: "[scope]"
 ---
 
 # cs-docs-neat

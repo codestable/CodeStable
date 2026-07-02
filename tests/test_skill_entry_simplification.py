@@ -148,6 +148,17 @@ MAIN_ENTRY_SKILLS = [
     "cs-docs-neat",
 ]
 
+MAIN_ENTRY_ARGUMENT_HINTS = {
+    "cs": "[request]",
+    "cs-feat": "[--stage design|design-review|impl|qa|accept] [--mode fastforward] <feature>",
+    "cs-issue": "[--stage report|analyze|fix] <issue>",
+    "cs-refactor": "[--stage scan|design|apply] [--mode standard|fastforward] <target>",
+    "cs-docs": "[--mode tutorial|api] <topic>",
+    "cs-epic": "[--stage planning|review|goal-package] <epic>",
+    "cs-code-review": "[--range <git-range>] [scope]",
+    "cs-docs-neat": "[scope]",
+}
+
 
 def frontmatter_of(text: str) -> str:
     return text.split("---", 2)[1]
@@ -156,11 +167,30 @@ def frontmatter_of(text: str) -> str:
 def test_main_entries_declare_argument_hint_and_intent_fallback() -> None:
     for skill in MAIN_ENTRY_SKILLS:
         text = (SKILLS / skill / "SKILL.md").read_text(encoding="utf-8")
+        frontmatter = frontmatter_of(text)
 
-        assert "argument-hint:" in frontmatter_of(text), skill
+        assert f"argument-hint: \"{MAIN_ENTRY_ARGUMENT_HINTS[skill]}\"" in frontmatter, skill
         assert "$ARGUMENTS" in text, skill
         # 宿主不替换参数时必须优雅降级，不能把字面 $ARGUMENTS 当诉求。
         assert "字面 `$ARGUMENTS`" in text, skill
+
+
+def test_main_entry_argument_hints_use_flags_for_control_intents() -> None:
+    flag_entries = {
+        "cs-feat": ["--stage", "--mode"],
+        "cs-issue": ["--stage"],
+        "cs-refactor": ["--stage", "--mode"],
+        "cs-docs": ["--mode"],
+        "cs-epic": ["--stage"],
+        "cs-code-review": ["--range"],
+    }
+
+    for skill, flags in flag_entries.items():
+        text = (SKILLS / skill / "SKILL.md").read_text(encoding="utf-8")
+        frontmatter = frontmatter_of(text)
+        for flag in flags:
+            assert flag in frontmatter, skill
+        assert "首个 token 命中" not in text, skill
 
 
 def test_compatibility_entries_do_not_declare_argument_hint() -> None:
@@ -229,7 +259,8 @@ def test_user_routing_guidance_prefers_main_entries() -> None:
 def test_code_review_ad_hoc_git_range_uses_range_diff() -> None:
     text = (SKILLS / "cs-code-review/SKILL.md").read_text(encoding="utf-8")
 
-    assert "ad-hoc 参数如果是 git range" in text
+    assert "--range <git-range>" in text
+    assert "ad-hoc 参数如果含 `--range`" in text
     assert "git diff {range}" in text
     assert "ad-hoc range 审查允许工作区干净" in text
 

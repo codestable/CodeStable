@@ -1,7 +1,7 @@
 ---
 name: cs-docs
 description: Docs 主入口。触发：写/更新开发者指南、用户指南、API 参考；不包含 docs-neat 收尾整理。
-argument-hint: "[tutorial|api] [文档主题]"
+argument-hint: "[--mode tutorial|api] <topic>"
 ---
 
 # cs-docs
@@ -20,7 +20,7 @@ argument-hint: "[tutorial|api] [文档主题]"
 
 本次调用参数：$ARGUMENTS
 
-意图来源按优先级：调用参数 > 兼容入口预设 > 用户话术。参数为空或未被替换（仍是字面 `$ARGUMENTS`）时跳过该来源；首个 token 命中 `tutorial` / `api` 则设为对应 `requested_mode`，其余文本作为文档主题。
+意图来源按优先级：调用参数 flag > 兼容入口预设 > 用户话术。参数为空或未被替换（仍是字面 `$ARGUMENTS`）时跳过该来源；调用参数用 `--mode tutorial|api` 表示文档模式，其余文本作为文档主题。旧裸 token（如 `api`）只作为历史提示词兼容识别；新文档和新调用一律用 `--mode`。
 
 用户没有明确文档类型时先判断目标读者和使用场景；仍不清楚就问用户选择。
 

@@ -1,7 +1,7 @@
 ---
 name: cs-feat
 description: Feature 主入口。触发：新功能/加 X/实现 XX；端到端推进 design、review、impl、QA、accept。
-argument-hint: "[design|design-review|impl|qa|accept|ff] [需求描述]"
+argument-hint: "[--stage design|design-review|impl|qa|accept] [--mode fastforward] <feature>"
 ---
 
 # cs-feat
@@ -20,16 +20,18 @@ argument-hint: "[design|design-review|impl|qa|accept|ff] [需求描述]"
 
 本次调用参数：$ARGUMENTS
 
-意图来源按优先级：调用参数 > 兼容入口预设 > 用户话术。参数为空或未被替换（仍是字面 `$ARGUMENTS`）时跳过该来源；首个 token 命中下表则设为入口意图，其余文本作为需求描述。
+意图来源按优先级：调用参数 flag > 兼容入口预设 > 用户话术。参数为空或未被替换（仍是字面 `$ARGUMENTS`）时跳过该来源；调用参数用 `--stage <stage>` 表示阶段意图，用 `--mode <mode>` 表示执行模式，其余文本作为需求描述。
 
-| token | 入口意图 |
+| 参数 | 入口意图 |
 |---|---|
-| `design` | `requested_stage: design` |
-| `design-review` | `requested_stage: design-review` |
-| `impl` | `requested_stage: implementation` |
-| `qa` | `requested_stage: qa` |
-| `accept` | `requested_stage: acceptance` |
-| `ff` | `requested_mode: fastforward` |
+| `--stage design` | `requested_stage: design` |
+| `--stage design-review` | `requested_stage: design-review` |
+| `--stage impl` | `requested_stage: implementation` |
+| `--stage qa` | `requested_stage: qa` |
+| `--stage accept` | `requested_stage: acceptance` |
+| `--mode fastforward` | `requested_mode: fastforward` |
+
+旧裸 token（如 `qa`、`ff`）只作为历史提示词兼容识别；新文档和新调用一律用 `--stage` / `--mode`。
 
 入口意图只是偏好。仓库事实优先：如果已有产物显示当前应先 review、修 QA 或验收，就按事实推进并向用户说明。
 

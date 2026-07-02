@@ -1,7 +1,7 @@
 ---
 name: cs
 description: CodeStable 路由入口。触发：用户只说 cs/该用哪个 skill/介绍体系，或诉求未收敛。
-argument-hint: "[诉求描述，可空]"
+argument-hint: "[request]"
 ---
 
 # cs

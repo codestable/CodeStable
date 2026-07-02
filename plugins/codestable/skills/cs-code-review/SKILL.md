@@ -1,7 +1,7 @@
 ---
 name: cs-code-review
 description: Code review gate。触发：实现完成后、QA/验收/commit 前审本轮 diff。
-argument-hint: "[git range 或范围说明，可空]"
+argument-hint: "[--range <git-range>] [scope]"
 ---
 
 # cs-code-review
@@ -30,9 +30,9 @@ argument-hint: "[git range 或范围说明，可空]"
 
 **不是 `cs-audit`**：audit 主动扫一片代码找潜在问题；code review 只审当前变更范围。
 
-本次调用参数：$ARGUMENTS。非空且不是字面 `$ARGUMENTS` 时，按 ad-hoc 来源处理，参数即用户指定的 git range / 审查范围；仍需按「启动检查」核对范围内确有可归因改动。
+本次调用参数：$ARGUMENTS。非空且不是字面 `$ARGUMENTS` 时，按 ad-hoc 来源处理；`--range <git-range>` 指定提交范围，其余文本作为范围说明或文件 scope。仍需按「启动检查」核对范围内确有可归因改动。
 
-ad-hoc 参数如果是 git range（如 `main..HEAD`、`origin/main...HEAD` 或一个 commit/ref），审查范围来自 `git diff {range}`，不要求工作区有未提交 diff。参数如果是文件路径、自然语言范围或 pre-merge 说明，则先解析为明确文件 / diff 来源；解析不清时先问清楚。
+ad-hoc 参数如果含 `--range`，审查范围来自 `git diff {range}`，不要求工作区有未提交 diff。历史裸 git range（如 `main..HEAD`、`origin/main...HEAD` 或一个 commit/ref）可兼容识别；新文档和新调用一律用 `--range`。参数如果是文件路径、自然语言范围或 pre-merge 说明，则先解析为明确文件 / diff 来源；解析不清时先问清楚。
 
 ---
 
