@@ -32,6 +32,8 @@ argument-hint: "[--stage scan|design|apply] [--mode standard|fastforward] <targe
 
 旧裸 token（如 `ff`、`scan`）只作为历史提示词兼容识别；新文档和新调用一律用 `--stage` / `--mode`。
 
+无参数默认行为：没有 flag / 目标描述时，先按 `.codestable/refactors/`、scan/design/checklist/apply-notes 和当前 git diff 恢复；若没有可恢复重构且用户原话也没有目标，先问用户要优化哪个范围。
+
 入口意图只是偏好。仓库事实优先：已有 scan/design/checklist/apply-notes 时按真实状态续跑。
 
 ---

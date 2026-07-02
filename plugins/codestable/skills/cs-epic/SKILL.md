@@ -22,6 +22,8 @@ argument-hint: "[--stage planning|review|goal-package] <epic>"
 
 意图来源按优先级：调用参数 flag > 兼容入口预设 > 用户话术。参数为空或未被替换（仍是字面 `$ARGUMENTS`）时跳过该来源；调用参数用 `--stage planning|review|goal-package` 表示阶段意图，其余文本作为大需求描述。旧裸 token（如 `review`）只作为历史提示词兼容识别；新文档和新调用一律用 `--stage`。
 
+无参数默认行为：没有 stage / epic 描述时，扫描 `.codestable/roadmap/`、子 feature design 和 goal 包状态，用状态机恢复；若没有可恢复 epic 且用户原话也没有大需求目标，先问用户要规划哪个 epic。
+
 入口意图不覆盖仓库事实。已有 roadmap review 未通过时先修规划；已有 feature design 未确认时不生成 goal 包。
 
 ---

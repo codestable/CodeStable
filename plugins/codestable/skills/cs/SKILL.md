@@ -24,7 +24,7 @@ argument-hint: "[request]"
 2. 已接入：读 `.codestable/attention.md`；若有 `.codestable/reference/system-overview.md` 也读；扫描进行中的 `features/`、`issues/`、`roadmap/`、`refactors/`。
 3. 未接入：提示先走 `cs-onboard`。
 4. 看本次调用参数（$ARGUMENTS）：非空且不是字面 `$ARGUMENTS` 时，作为用户诉求匹配路由表。
-5. 参数为空再看用户原话：开放式还是带具体诉求；带诉求匹配路由表，没诉求给体系速读。
+5. 无参数默认行为：参数为空或仍是字面 `$ARGUMENTS` 时，看用户原话；带诉求匹配路由表，没诉求给体系速读。
 
 ---
 

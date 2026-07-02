@@ -16,7 +16,7 @@ argument-hint: "[scope]"
 
 `cs-docs-neat` 不是 `cs-docs`：`cs-docs` 写单篇开发者 / 用户指南或 API 参考；`cs-docs-neat` 做阶段收尾的全局知识库卫生检查和同步。
 
-本次调用参数：$ARGUMENTS。非空且不是字面 `$ARGUMENTS` 时，作为本轮同步的优先关注点；它只影响排序，不缩小 Phase 1 的机械式枚举范围。
+本次调用参数：$ARGUMENTS。非空且不是字面 `$ARGUMENTS` 时，作为本轮同步的优先关注点；它只影响排序，不缩小 Phase 1 的机械式枚举范围。无参数默认行为：没有 scope 时执行完整 Phase 1，只是不设置优先关注点。
 
 ---
 

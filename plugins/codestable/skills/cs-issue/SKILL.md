@@ -22,6 +22,8 @@ argument-hint: "[--stage report|analyze|fix] <issue>"
 
 意图来源按优先级：调用参数 flag > 兼容入口预设 > 用户话术。参数为空或未被替换（仍是字面 `$ARGUMENTS`）时跳过该来源；调用参数用 `--stage report|analyze|fix` 表示阶段意图，其余文本作为问题描述。旧裸 token（如 `fix`）只作为历史提示词兼容识别；新文档和新调用一律用 `--stage`。
 
+无参数默认行为：没有 flag / 问题描述时，不猜阶段；扫描 `.codestable/issues/`、目标产物和当前 git diff，用状态机恢复下一步。若没有可恢复 issue 且用户原话也没有问题目标，先问用户要处理哪个 issue。
+
 入口意图不覆盖仓库事实。若 report 已存在但用户从 report 兼容入口进来，继续 analyze；若代码已改但无 fix-note，进入 fix 验证/记录。
 
 ---

@@ -173,6 +173,7 @@ def test_main_entries_declare_argument_hint_and_intent_fallback() -> None:
         assert "$ARGUMENTS" in text, skill
         # 宿主不替换参数时必须优雅降级，不能把字面 $ARGUMENTS 当诉求。
         assert "字面 `$ARGUMENTS`" in text, skill
+        assert "无参数默认行为" in text, skill
 
 
 def test_main_entry_argument_hints_use_flags_for_control_intents() -> None:
@@ -191,6 +192,14 @@ def test_main_entry_argument_hints_use_flags_for_control_intents() -> None:
         for flag in flags:
             assert flag in frontmatter, skill
         assert "首个 token 命中" not in text, skill
+
+
+def test_skill_catalog_documents_no_argument_default() -> None:
+    zh_text = (ROOT / "SKILL_CATALOG.md").read_text(encoding="utf-8")
+    en_text = (ROOT / "SKILL_CATALOG.en.md").read_text(encoding="utf-8")
+
+    assert "不传参数时按仓库事实和用户原话恢复或路由" in zh_text
+    assert "no-argument calls recover or route" in en_text
 
 
 def test_compatibility_entries_do_not_declare_argument_hint() -> None:

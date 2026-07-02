@@ -1,6 +1,6 @@
 # CodeStable Skill Catalog
 
-Main entries accept optional stage / mode flags (for example `/cs-feat --stage qa`, `/cs-refactor --mode fastforward`, `/cs-docs --mode api auth-endpoints`). Flags are only intent hints; repository facts always win, and bare arguments always describe the task.
+Main entries accept optional stage / mode flags (for example `/cs-feat --stage qa`, `/cs-refactor --mode fastforward`, `/cs-docs --mode api auth-endpoints`). Flags are only intent hints; repository facts always win, bare arguments always describe the task, and no-argument calls recover or route from repository facts plus the user's words.
 
 ## Recommended Main Entries
 

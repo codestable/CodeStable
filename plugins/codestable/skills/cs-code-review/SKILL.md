@@ -32,6 +32,8 @@ argument-hint: "[--range <git-range>] [scope]"
 
 本次调用参数：$ARGUMENTS。非空且不是字面 `$ARGUMENTS` 时，按 ad-hoc 来源处理；`--range <git-range>` 指定提交范围，其余文本作为范围说明或文件 scope。仍需按「启动检查」核对范围内确有可归因改动。
 
+无参数默认行为：参数为空或仍是字面 `$ARGUMENTS` 时，按「进入来源」表从当前流程产物和 git diff 推断来源；没有可归因 diff、定稿 spec 或 git range 时，不做空 review，退回来源实现技能或请用户补范围。
+
 ad-hoc 参数如果含 `--range`，审查范围来自 `git diff {range}`，不要求工作区有未提交 diff。历史裸 git range（如 `main..HEAD`、`origin/main...HEAD` 或一个 commit/ref）可兼容识别；新文档和新调用一律用 `--range`。参数如果是文件路径、自然语言范围或 pre-merge 说明，则先解析为明确文件 / diff 来源；解析不清时先问清楚。
 
 ---

@@ -33,6 +33,8 @@ argument-hint: "[--stage design|design-review|impl|qa|accept] [--mode fastforwar
 
 旧裸 token（如 `qa`、`ff`）只作为历史提示词兼容识别；新文档和新调用一律用 `--stage` / `--mode`。
 
+无参数默认行为：没有 flag / 需求描述时，不猜阶段；扫描 `.codestable/features/`、目标产物和当前 git diff，用状态机恢复下一步。若没有可恢复 feature 且用户原话也没有新功能目标，先问用户要处理哪个 feature。
+
 入口意图只是偏好。仓库事实优先：如果已有产物显示当前应先 review、修 QA 或验收，就按事实推进并向用户说明。
 
 ---
