@@ -126,6 +126,11 @@ acceptance，并把证据写回仓库。
 派发 prompt 只给 goal 包路径、协议文件和完成 / handoff 标记，不塞主 agent 的本地推断。
 主 agent 不能因为 driver 已启动就宣称 goal 完成；完成只能由 goal 产物和 transcript 标记证明。
 
+派发成功后立即把 driver 形态与标识写回对应 goal-state.yaml（`driver_kind: paseo|native`、
+`driver_id`）。重入（用户再次调用主入口）时先读 goal-state：状态为 running 且该 driver
+仍可见时，汇报进度和查看方式，不重复派发；driver 已不可见时，以仓库事实修正 state，
+再续跑或重派，并把新 driver 标识写回。
+
 ## 独立代码 review
 
 每个执行 worktree 在汇报一批实现完成前，必须触发独立 review。review 是完成 gate，

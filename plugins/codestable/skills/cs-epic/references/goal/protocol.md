@@ -124,6 +124,8 @@
 roadmap: "{slug}"
 status: ready-to-dispatch
 baseline_ref: "{git rev-parse HEAD 或 no-git}"
+driver_kind: none            # paseo|native|none，派发成功后写回
+driver_id: ""
 current_feature_index: 0
 features:
   - slug: "{feature-slug}"

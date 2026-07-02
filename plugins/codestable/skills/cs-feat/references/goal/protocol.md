@@ -50,6 +50,8 @@ feature: "{slug}"
 status: ready-to-dispatch
 baseline_ref: "{git rev-parse HEAD 或 no-git}"
 stage: implementation
+driver_kind: none            # paseo|native|none，派发成功后写回
+driver_id: ""
 design: ".codestable/features/YYYY-MM-DD-{slug}/{slug}-design.md"
 checklist: ".codestable/features/YYYY-MM-DD-{slug}/{slug}-checklist.yaml"
 review: ".codestable/features/YYYY-MM-DD-{slug}/{slug}-review.md"
@@ -71,7 +73,7 @@ acceptance: ".codestable/features/YYYY-MM-DD-{slug}/{slug}-acceptance.md"
 | complete | passed | acceptance passed 且无 handoff | 打印 `CS_FEATURE_GOAL_COMPLETE` |
 | handoff | blocked | 命中 handoff 条件 | 打印 `CS_FEATURE_GOAL_HANDOFF` |
 
-每次 stage / status 变化都要立即写回 `goal-state.yaml`。driver 中断后，后续 agent 先读 `goal-state.yaml`，再按仓库事实核验对应产物是否存在且状态匹配；不一致时以仓库事实为准并修正 state。
+每次 stage / status 变化都要立即写回 `goal-state.yaml`。driver 中断后，后续 agent 先读 `goal-state.yaml`，再按仓库事实核验对应产物是否存在且状态匹配；不一致时以仓库事实为准并修正 state。派发成功后写回 `driver_kind` / `driver_id`；重入是否重派按 `.codestable/reference/execution-conventions.md` 的 Goal driver 派发规则判定。
 
 `goal-protocol.md` 必须写明执行 loop：
 

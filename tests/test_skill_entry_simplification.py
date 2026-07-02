@@ -255,6 +255,64 @@ def test_goal_mode_overrides_stage_user_waits() -> None:
     # README 不应暗示 issue/refactor 有标准 QA checkpoint。
     assert "review、blocking 或用户确认 checkpoint" in readme
     assert "review, blocking, or user-confirmation checkpoints" in readme_en
+    # 重入不重复派发：派发成功要写回 driver 标识，重入按派发规则判定。
+    assert "driver_kind" in conventions
+    assert "不重复派发" in conventions
+    assert "driver_kind: none" in feat_goal
+    assert "driver_kind: none" in epic_goal
+
+
+def test_epic_defers_child_design_approval_to_batch_checkpoint() -> None:
+    epic_skill = (SKILLS / "cs-epic/SKILL.md").read_text(encoding="utf-8")
+
+    # 子 design 逐项推进时保持 draft，用户确认统一发生在批量 checkpoint，
+    # 避免 agent 按 cs-feat 普通模式逐个停等用户。
+    assert "design 保持 `draft`，不逐个让用户确认" in epic_skill
+    assert "统一确认所有 design" in epic_skill
+
+
+CANONICAL_PREFLIGHT = (
+    "开始任何判断或动作前，先执行 CodeStable preflight：读 `.codestable/attention.md`；"
+    "缺失先 `cs-onboard`；不读外部 AI 入口替代（详见 `.codestable/reference/execution-conventions.md`）。"
+)
+
+PREFLIGHT_CANONICAL_SKILLS = [
+    "cs",
+    "cs-feat",
+    "cs-issue",
+    "cs-refactor",
+    "cs-docs",
+    "cs-epic",
+    "cs-code-review",
+    "cs-docs-neat",
+    "cs-audit",
+    "cs-req",
+    "cs-goal",
+]
+
+# 这三个技能把 preflight 融进自己的启动节奏（语义等价变体）。
+PREFLIGHT_VARIANT_SKILLS = ["cs-brainstorm", "cs-domain", "cs-keep"]
+
+
+def test_public_skills_run_codestable_preflight() -> None:
+    for skill in PREFLIGHT_CANONICAL_SKILLS:
+        text = (SKILLS / skill / "SKILL.md").read_text(encoding="utf-8")
+        assert CANONICAL_PREFLIGHT in text, skill
+
+    for skill in PREFLIGHT_VARIANT_SKILLS:
+        text = (SKILLS / skill / "SKILL.md").read_text(encoding="utf-8")
+        assert "CodeStable preflight" in text, skill
+        assert ".codestable/attention.md" in text, skill
+
+    # cs-note 是约定认可的唯一例外：attention.md 缺失时可先建骨架再写入。
+    note = (SKILLS / "cs-note/SKILL.md").read_text(encoding="utf-8")
+    assert "只有 attention.md 缺失时" in note
+    assert "不要回退到外部 AI 入口文件" in note
+
+    # 兼容入口保持薄壳，不自带 preflight；preflight 由主入口协议执行。
+    for skill in COMPATIBILITY_ENTRIES:
+        text = (SKILLS / skill / "SKILL.md").read_text(encoding="utf-8")
+        assert "preflight" not in text.lower(), skill
 
 
 def test_compatibility_entries_do_not_declare_argument_hint() -> None:

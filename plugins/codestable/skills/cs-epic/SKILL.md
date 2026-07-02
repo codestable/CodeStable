@@ -54,8 +54,8 @@ argument-hint: "[--stage planning|review|goal-package] <epic>"
 | roadmap draft 无 passed review | 读取 `references/review/protocol.md` |
 | roadmap review blocking / blocked | 回 planning 修订后重跑 review |
 | roadmap review passed 但用户未确认 | 停下让用户确认 epic 规划 |
-| roadmap 已确认，子 feature design 未完成 | 逐项进入 `cs-feat` design/design-review |
-| 子 feature design-review passed 但未整体确认 | 停下让用户确认所有 design |
+| roadmap 已确认，子 feature design 未完成 | 逐项进入 `cs-feat` design/design-review；design 保持 `draft`，不逐个让用户确认 |
+| 子 feature design-review passed 但未整体确认 | 停下让用户统一确认所有 design，确认后逐份标 `approved` |
 | 所有 design approved，goal 包未生成 | 读取 `references/goal/protocol.md` |
 | goal 包已生成 | 按 Goal driver 派发；派发失败则输出可粘贴 `/goal` 指令并停止 |
 
