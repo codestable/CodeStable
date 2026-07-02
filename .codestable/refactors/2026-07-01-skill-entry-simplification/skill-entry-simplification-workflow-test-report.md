@@ -3,14 +3,14 @@ doc_type: refactor-test-report
 refactor: 2026-07-01-skill-entry-simplification
 status: passed
 tested: 2026-07-02
-summary: Isolated workflow scenario tests for the skill entry simplification refactor.
+summary: Isolated workflow state-machine scenario tests for the skill entry simplification refactor.
 ---
 
 # Skill Entry Simplification Workflow Test Report
 
 ## 1. 测试目标
 
-本轮测试验证这次 entry simplification refactor 后，CodeStable 的主入口和兼容入口能在隔离项目里按仓库事实稳定协同推进工程流程。
+本轮测试验证这次 entry simplification refactor 后，CodeStable 的主入口和兼容入口能在隔离仓库事实模型里按 `.codestable` 产物恢复正确下一步。
 
 重点不是检查文案是否存在，而是验证：
 
@@ -20,7 +20,7 @@ summary: Isolated workflow scenario tests for the skill entry simplification ref
 - Goal driver 只在可见且可 review 的条件下派发，失败回退 fenced `/goal`。
 - issue / refactor / docs / code review 的阶段恢复不会被旧 stage skill 名称误导。
 
-## 2. 隔离环境
+## 2. 隔离环境与边界
 
 新增测试文件：`tests/test_skill_workflow_scenarios.py`。
 
@@ -31,7 +31,9 @@ summary: Isolated workflow scenario tests for the skill entry simplification ref
 - `src/app.py`
 - feature / issue / roadmap / refactor / docs 对应产物
 
-测试不依赖当前仓库真实 `.codestable` 状态，不启动真实长程 AI agent；它用仓库事实 evaluator 模拟 agent 按 skill 状态表做的下一步选择。这样能稳定复现 gate、状态恢复和 driver 派发决策。
+测试不依赖当前仓库真实 `.codestable` 状态，不启动真实长程 AI agent，也不在 toy app 中实际完成代码开发；它用仓库事实 evaluator 模拟 agent 按 skill 状态表做的下一步选择。这样能稳定复现 gate、状态恢复和 driver 派发决策。
+
+真实 toy repo 开发 dogfood 见同目录 `skill-entry-simplification-dogfood-report.md`。
 
 ## 3. 场景矩阵
 
@@ -124,7 +126,7 @@ find plugins/codestable/skills -name '*.md' -print0 | xargs -0 wc -l | awk '$2 !
 
 ## 7. 结论
 
-当前证据证明：这次 skill entry simplification refactor 的核心协作链路在隔离项目场景下可恢复、可推进、可 gate、可 fallback。
+当前证据证明：这次 skill entry simplification refactor 的核心状态机链路在隔离仓库事实场景下可恢复、可推进、可 gate、可 fallback。真实代码开发执行证据见 dogfood 报告。
 
 尤其是：
 
