@@ -9,6 +9,7 @@ feedback: {YYYY-MM-DD}-{slug}
 status: draft
 created: {YYYY-MM-DD}
 source_providers: [codex, claude]
+privacy: local-private
 github_issue: ""
 ---
 
@@ -22,18 +23,25 @@ github_issue: ""
 
 - since_days: {N}
 - session_filter: {session_filter_or_none}
-- evidence: `evidence.json`
+- local_private_evidence: `evidence.json`
+- public_preview: `github-issue.md`
 - matched_events: {count}
 
 ## 失败点清单
 
 | # | 类型 | 相关 skill | 现象 | 证据 |
 |---|---|---|---|---|
-| 1 | tool-failure / unclear-rule / detour / install | `cs-feat` | {一句话} | {provider/session/timestamp} |
+| 1 | tool-failure / unclear-rule / agent-detour / goal-driver / install-distribution / privacy-reporting | `cs-feat` | {一句话} | {provider/session_label/timestamp_bucket} |
 
 ## 关键上下文
 
 {按失败点摘要 evidence 里的 context，不贴完整 transcript。}
+
+## 隐私说明
+
+- `evidence.json` 是本机私有证据，`public_upload_allowed=false`。
+- GitHub issue 只使用 `github-issue.md` public preview，不上传 `evidence.json` 原文。
+- 虽然 evidence 已 best-effort 脱敏，仍可能含业务上下文，应按私有文件处理。
 
 ## 用户纠正信号
 
@@ -67,17 +75,18 @@ github_issue: ""
 ## Evidence
 
 - Report: `{report_path}`
-- Evidence: `{evidence_path}`
+- Local private evidence: kept on the user's machine, not uploaded
 - Matched events: {count}
+- Public evidence fields: provider, session_label, timestamp_bucket, failure_type, match_type, tool_name, skill_or_reference, sanitized_excerpt
 
 ## Suspected Area
 
-- Skill/reference/script: {paths_or_unknown}
-- Failure type: {tool-failure|unclear-rule|detour|install|unknown}
+- Skill/reference/script/test: {paths_or_unknown}
+- Failure type: {tool-failure|unclear-rule|agent-detour|goal-driver|install-distribution|privacy-reporting|unknown}
 
 ## Context
 
-{脱敏后的关键上下文；只放最小必要片段。}
+{只放 public allowlist 摘要；不贴完整 transcript、本机绝对路径、私有 repo 名、remote URL、环境变量、token、MCP/tool 原始 JSON 参数或大段业务代码。}
 
 ## Expected Behavior
 

@@ -90,11 +90,77 @@ def test_collects_codestable_tool_failures_and_user_corrections(tmp_path: Path) 
 
     assert exit_code == 0
     payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["privacy"] == "local-private"
+    assert payload["public_upload_allowed"] is False
+    assert payload["public_issue_context"]["privacy"] == "public-preview"
     assert payload["matched_events"]
     reasons = {reason for event in payload["matched_events"] for reason in event["reasons"]}
     assert {"codestable", "failure", "user-correction"} <= reasons
+    match_types = {match_type for event in payload["matched_events"] for match_type in event["match_types"]}
+    assert {"tool-failure", "user-correction", "skill-reference"} <= match_types
+    public_event = payload["public_issue_context"]["events"][0]
+    assert set(public_event) == {
+        "provider",
+        "session_label",
+        "timestamp_bucket",
+        "failure_type",
+        "match_type",
+        "tool_name",
+        "skill_or_reference",
+        "sanitized_excerpt",
+    }
     assert "secret123456" not in output.read_text(encoding="utf-8")
     assert "<redacted>" in output.read_text(encoding="utf-8")
+
+
+def test_feedback_tokens_do_not_select_unrelated_events(tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    transcript = home / ".codex/sessions/2026/07/03/noise-session.jsonl"
+    write_jsonl(
+        transcript,
+        [
+            {
+                "timestamp": "2026-07-03T01:00:00Z",
+                "type": "session_meta",
+                "payload": {"session_id": "noise-session", "cwd": "/repo"},
+            },
+            {
+                "timestamp": "2026-07-03T01:01:00Z",
+                "type": "event_msg",
+                "payload": {"message": "I am thinking about cs-feat but there is no incident here."},
+            },
+            {
+                "timestamp": "2026-07-03T01:02:00Z",
+                "type": "event_msg",
+                "payload": {"message": "Plain unrelated discussion about lunch."},
+            },
+            {
+                "timestamp": "2026-07-03T01:03:00Z",
+                "type": "event_msg",
+                "payload": {"message": "plain tool failed without any related marker"},
+            },
+        ],
+    )
+
+    output = tmp_path / "evidence.json"
+    collector.main_with_args_for_test(
+        [
+            "--history-root",
+            str(home),
+            "--since-days",
+            "9999",
+            "--feedback",
+            "cs-feat tool failed",
+            "--output",
+            str(output),
+        ]
+    )
+
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert len(payload["matched_events"]) == 1
+    assert payload["matched_events"][0]["reasons"] == ["codestable", "feedback-token"]
+    public_payload = json.loads((tmp_path / "public-issue-context.json").read_text(encoding="utf-8"))
+    assert public_payload["privacy"] == "public-preview"
 
 
 def test_collects_claude_json_history_and_goal_mentions(tmp_path: Path) -> None:
@@ -183,6 +249,48 @@ def test_current_session_reports_ambiguity_when_multiple_recent_candidates(tmp_p
     assert payload["searched_files"] == []
 
 
+def test_current_session_does_not_auto_select_without_cwd_metadata(tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    for session in ["a", "b"]:
+        write_jsonl(
+            home / f".codex/sessions/2026/07/03/no-cwd-{session}.jsonl",
+            [
+                {
+                    "timestamp": "2026-07-03T01:00:00Z",
+                    "type": "session_meta",
+                    "payload": {"session_id": session},
+                },
+                {
+                    "timestamp": "2026-07-03T01:01:00Z",
+                    "type": "event_msg",
+                    "payload": {"message": "cs-feedback rule unclear"},
+                },
+            ],
+        )
+
+    output = tmp_path / "evidence.json"
+    collector.main_with_args_for_test(
+        [
+            "--history-root",
+            str(home),
+            "--since-days",
+            "9999",
+            "--session",
+            "current",
+            "--cwd",
+            "/same/repo",
+            "--feedback",
+            "cs-feedback current session",
+            "--output",
+            str(output),
+        ]
+    )
+
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert len(payload["ambiguity"]["candidates"]) == 2
+    assert payload["searched_files"] == []
+
+
 def test_current_session_can_select_single_claude_json_candidate(tmp_path: Path) -> None:
     home = tmp_path / "home"
     write_json(
@@ -224,6 +332,58 @@ def test_current_session_can_select_single_claude_json_candidate(tmp_path: Path)
     assert payload["matched_events"]
 
 
+def test_public_summary_redacts_paths_and_remotes(tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    transcript = home / ".codex/sessions/2026/07/03/private-paths.jsonl"
+    write_jsonl(
+        transcript,
+        [
+            {
+                "timestamp": "2026-07-03T04:00:00Z",
+                "type": "session_meta",
+                "payload": {"session_id": "private-session", "cwd": "/Users/me/private/repo"},
+            },
+            {
+                "timestamp": "2026-07-03T04:01:00Z",
+                "type": "event_msg",
+                "payload": {
+                    "message": (
+                        "cs-feat failed reading /Users/me/private/repo/.codestable/attention.md, "
+                        "~/work/private-client/secrets.md, and /opt/acme/customer_data.md from "
+                        "https://github.com/acme/private?token=abc and git@gitlab.company.com:secret/private-repo.git"
+                    )
+                },
+            },
+        ],
+    )
+
+    output = tmp_path / "evidence.json"
+    collector.main_with_args_for_test(
+        [
+            "--history-root",
+            str(home),
+            "--since-days",
+            "9999",
+            "--feedback",
+            "cs-feat file read failed",
+            "--output",
+            str(output),
+        ]
+    )
+
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    excerpt = payload["public_issue_context"]["events"][0]["sanitized_excerpt"]
+    assert "/Users/me" not in excerpt
+    assert "~/work" not in excerpt
+    assert "/opt/acme" not in excerpt
+    assert "acme/private" not in excerpt
+    assert "secret/private-repo" not in excerpt
+    assert "gitlab.company.com" not in excerpt
+    assert "token=abc" not in excerpt
+    assert "<local-path>" in excerpt
+    assert "<repo-remote>" in excerpt
+
+
 def test_reporter_falls_back_when_gh_is_missing(tmp_path: Path, monkeypatch) -> None:
     body = tmp_path / "github-issue.md"
     body.write_text("## Summary\n\ncs-feedback issue\n", encoding="utf-8")
@@ -249,3 +409,28 @@ def test_reporter_falls_back_when_gh_is_missing(tmp_path: Path, monkeypatch) -> 
     assert payload["reason"] == "gh not found"
     assert "gh issue create" in payload["command"]
     assert "'Feedback: cs skill failed'" in payload["command"]
+
+
+def test_reporter_refuses_local_private_evidence(tmp_path: Path, monkeypatch) -> None:
+    evidence = tmp_path / "evidence.json"
+    evidence.write_text(
+        json.dumps({"privacy": "local-private", "public_upload_allowed": False}, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(reporter.shutil, "which", lambda name: None)
+
+    try:
+        reporter.main_with_args_for_test(
+            [
+                "--repo",
+                "owner/repo",
+                "--title",
+                "Feedback: cs skill failed",
+                "--body-file",
+                str(evidence),
+            ]
+        )
+    except SystemExit as exc:
+        assert "refusing to upload local-private" in str(exc)
+    else:
+        raise AssertionError("expected reporter to reject evidence.json")

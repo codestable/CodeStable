@@ -102,6 +102,15 @@ def main_with_args_for_test(argv: list[str] | None = None) -> int:
     body_file = Path(args.body_file).expanduser()
     if not body_file.is_file():
         raise SystemExit(f"body file not found: {body_file}")
+    if body_file.name == "evidence.json":
+        raise SystemExit("refusing to upload local-private evidence.json; use github-issue.md public preview")
+    if body_file.suffix == ".json":
+        try:
+            payload = json.loads(body_file.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            payload = {}
+        if isinstance(payload, dict) and payload.get("privacy") == "local-private":
+            raise SystemExit("refusing to upload local-private evidence; generate a public preview first")
 
     gh = shutil.which("gh")
     command = [

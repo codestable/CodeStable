@@ -498,9 +498,9 @@ def test_new_main_entries_are_registered() -> None:
 
 def test_feedback_skill_is_registered_and_uses_progressive_disclosure() -> None:
     feedback = (SKILLS / "cs-feedback/SKILL.md").read_text(encoding="utf-8")
+    template = (SKILLS / "cs-feedback/references/report-template.md").read_text(encoding="utf-8")
     collector = SKILLS / "cs-feedback/scripts/collect_feedback_context.py"
     reporter = SKILLS / "cs-feedback/scripts/report_feedback_issue.py"
-    template = SKILLS / "cs-feedback/references/report-template.md"
     router = (SKILLS / "cs/SKILL.md").read_text(encoding="utf-8")
     catalog = (ROOT / "SKILL_CATALOG.md").read_text(encoding="utf-8")
     catalog_en = (ROOT / "SKILL_CATALOG.en.md").read_text(encoding="utf-8")
@@ -510,9 +510,16 @@ def test_feedback_skill_is_registered_and_uses_progressive_disclosure() -> None:
     assert "--session current" in feedback
     assert "best-effort" in feedback
     assert "ambiguity.candidates" in feedback
+    assert "Ask User（缺口驱动）" in feedback
+    assert "不要固定三问" in feedback
+    assert "即使用户传 `--github`，也必须先让用户确认 preview" in feedback
+    assert "public-issue-context.json" in feedback
+    assert "禁止公开" in feedback
+    assert "local_private_evidence" in template
+    assert "Public evidence fields" in template
+    assert "完整 transcript" in template
     assert collector.is_file()
     assert reporter.is_file()
-    assert template.is_file()
     assert "CodeStable skill 跑偏" in router
     assert "cs-feedback" in catalog
     assert "cs-feedback" in catalog_en
