@@ -1,6 +1,6 @@
 ---
 name: cs-roadmap-review
-description: Epic review 兼容入口。旧 roadmap review 调用保留；执行时转入 cs-epic 主流程的 review 阶段。
+description: Deprecated 兼容入口：旧 cs-roadmap-review 调用用；转交 cs-epic --stage review。新请求不要主动选择。
 ---
 
 # cs-roadmap-review

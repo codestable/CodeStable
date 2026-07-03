@@ -1,6 +1,6 @@
 ---
 name: cs-issue-report
-description: Issue report 兼容入口。旧调用保留；执行时转入 cs-issue 主流程的 report 阶段。
+description: Deprecated 兼容入口：旧 cs-issue-report 调用用；转交 cs-issue --stage report。新请求不要主动选择。
 ---
 
 # cs-issue-report

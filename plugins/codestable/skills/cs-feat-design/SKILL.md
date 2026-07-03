@@ -1,6 +1,6 @@
 ---
 name: cs-feat-design
-description: Feature design 兼容入口。旧调用保留；执行时转入 cs-feat 主流程的 design 阶段。
+description: Deprecated 兼容入口：旧 cs-feat-design 调用用；转交 cs-feat --stage design。新请求不要主动选择。
 ---
 
 # cs-feat-design

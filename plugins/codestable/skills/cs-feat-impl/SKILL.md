@@ -1,6 +1,6 @@
 ---
 name: cs-feat-impl
-description: Feature implementation 兼容入口。旧调用保留；执行时转入 cs-feat 主流程的 implementation 阶段。
+description: Deprecated 兼容入口：旧 cs-feat-impl 调用用；转交 cs-feat --stage impl。新请求不要主动选择。
 ---
 
 # cs-feat-impl

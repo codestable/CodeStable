@@ -1,6 +1,6 @@
 ---
 name: cs-feat-qa
-description: Feature QA 兼容入口。旧调用保留；执行时转入 cs-feat 主流程的 QA 阶段。
+description: Deprecated 兼容入口：旧 cs-feat-qa 调用用；转交 cs-feat --stage qa。新请求不要主动选择。
 ---
 
 # cs-feat-qa

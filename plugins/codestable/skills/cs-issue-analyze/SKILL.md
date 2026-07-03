@@ -1,6 +1,6 @@
 ---
 name: cs-issue-analyze
-description: Issue analyze 兼容入口。旧调用保留；执行时转入 cs-issue 主流程的 analyze 阶段。
+description: Deprecated 兼容入口：旧 cs-issue-analyze 调用用；转交 cs-issue --stage analyze。新请求不要主动选择。
 ---
 
 # cs-issue-analyze

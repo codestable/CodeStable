@@ -1,6 +1,6 @@
 ---
 name: cs-roadmap
-description: Epic planning 兼容入口。旧 roadmap 调用保留；执行时转入 cs-epic 主流程的 planning 阶段。
+description: Deprecated 兼容入口：旧 cs-roadmap 调用用；转交 cs-epic --stage planning。新请求不要主动选择。
 ---
 
 # cs-roadmap

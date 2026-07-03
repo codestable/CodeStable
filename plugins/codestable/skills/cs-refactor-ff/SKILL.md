@@ -1,6 +1,6 @@
 ---
 name: cs-refactor-ff
-description: Refactor fastforward 兼容入口。旧调用保留；执行时转入 cs-refactor 主流程的 fastforward 模式。
+description: Deprecated 兼容入口：旧 cs-refactor-ff 调用用；转交 cs-refactor --mode fastforward。新请求不要主动选择。
 ---
 
 # cs-refactor-ff

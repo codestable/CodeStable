@@ -1,6 +1,6 @@
 ---
 name: cs-doc-api
-description: Docs API 兼容入口。旧调用保留；执行时转入 cs-docs 主流程的 api 模式。
+description: Deprecated 兼容入口：旧 cs-doc-api 调用用；转交 cs-docs --mode api。新请求不要主动选择。
 ---
 
 # cs-doc-api

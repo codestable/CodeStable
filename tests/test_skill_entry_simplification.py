@@ -128,7 +128,10 @@ def test_compatibility_entries_delegate_to_main_protocols() -> None:
     for skill, (main, key, value) in COMPATIBILITY_ENTRIES.items():
         path = SKILLS / skill / "SKILL.md"
         text = path.read_text(encoding="utf-8")
+        frontmatter = frontmatter_of(text)
 
+        assert "description: Deprecated 兼容入口" in frontmatter, skill
+        assert "新请求不要主动选择" in frontmatter, skill
         assert "兼容入口" in text
         assert (SKILLS / main / "SKILL.md").is_file(), main
         assert f"按已安装 skill 名称加载 `{main}`" in text

@@ -1,6 +1,6 @@
 ---
 name: cs-roadmap-impl-goal
-description: Epic goal-package 兼容入口。旧 roadmap goal 调用保留；执行时转入 cs-epic 主流程的 goal-package 阶段。
+description: Deprecated 兼容入口：旧 cs-roadmap-impl-goal 调用用；转交 cs-epic --stage goal-package。新请求不要主动选择。
 ---
 
 # cs-roadmap-impl-goal

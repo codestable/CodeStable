@@ -1,6 +1,6 @@
 ---
 name: cs-doc-tutorial
-description: Docs tutorial 兼容入口。旧调用保留；执行时转入 cs-docs 主流程的 tutorial 模式。
+description: Deprecated 兼容入口：旧 cs-doc-tutorial 调用用；转交 cs-docs --mode tutorial。新请求不要主动选择。
 ---
 
 # cs-doc-tutorial

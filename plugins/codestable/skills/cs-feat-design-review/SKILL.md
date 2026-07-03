@@ -1,6 +1,6 @@
 ---
 name: cs-feat-design-review
-description: Feature design-review 兼容入口。旧调用保留；执行时转入 cs-feat 主流程的 design-review 阶段。
+description: Deprecated 兼容入口：旧 cs-feat-design-review 调用用；转交 cs-feat --stage design-review。新请求不要主动选择。
 ---
 
 # cs-feat-design-review

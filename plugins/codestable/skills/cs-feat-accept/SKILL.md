@@ -1,6 +1,6 @@
 ---
 name: cs-feat-accept
-description: Feature acceptance 兼容入口。旧调用保留；执行时转入 cs-feat 主流程的 acceptance 阶段。
+description: Deprecated 兼容入口：旧 cs-feat-accept 调用用；转交 cs-feat --stage accept。新请求不要主动选择。
 ---
 
 # cs-feat-accept
