@@ -94,6 +94,7 @@
 - 没有启动独立 Task agent reviewer 时，记录确无能力 / provider 不可用 / 用户授权降级；未满足这些条件时不得定稿 `passed`。
 - 启动 Paseo subagent / 原生 Task agent 后，最终 verdict 必须等 reviewer 返回。
 - reviewer 返回后逐条做本地事实核验；能用 design / checklist / 文档 / 代码证据支撑才合并。
+- reviewer 结果合并进 `{slug}-design-review.md` 后，按 Task agent 生命周期关闭该 reviewer。
 - reviewer 失败、权限阻塞、超时或仍在运行时，不要默默降级；报告 `status: blocked`。
 
 ### 3. 方案审查

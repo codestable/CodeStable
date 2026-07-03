@@ -586,6 +586,40 @@ def test_goal_driver_selection_requires_visibility_and_nested_reviewer() -> None
     assert goal_driver_decision() == Action("fallback", "fenced-/goal")
 
 
+def test_task_agent_lifecycle_closes_consumed_agents_and_cleans_only_on_capacity_failure() -> None:
+    assert_doc_contains(
+        "cs-onboard",
+        "references/execution-conventions.md",
+        "## Task agent 生命周期",
+        "先消费并落盘结果，再调用宿主提供的 `close_agent`",
+        "不要关闭 still-running、pending、permission-needed",
+        "不要预先批量清理旧 agent",
+        "`agent thread limit reached`",
+        "按最老优先关闭一小批，再重试本次 create/spawn 一次",
+    )
+    assert_doc_contains(
+        "cs-goal",
+        "SKILL.md",
+        "按 Task agent 生命周期关闭该验收 agent",
+        "先按 Task agent 生命周期处理容量失败重试",
+    )
+    assert_doc_contains(
+        "cs-goal",
+        "reference.md",
+        "Task agent id / run id、关闭结果或关闭失败 warning",
+        "Task agent 结果消费后",
+    )
+    assert_doc_contains(
+        "cs-code-review",
+        "references/independent-review/protocol.md",
+        "Task agent 生命周期关闭该 reviewer",
+        "只在失败后按最老已完成 agent 清理并重试一次",
+    )
+    assert_doc_contains("cs-feat", "references/qa/protocol.md", "Task agent 生命周期关闭该 runner")
+    assert_doc_contains("cs-feat", "references/acceptance/protocol.md", "auditor 输出被消费后按 Task agent 生命周期关闭")
+    assert_doc_contains("cs-epic", "references/goal/support/protocol-gates.md", "结果消费后按 Task agent 生命周期关闭")
+
+
 def test_issue_scenario_progresses_through_main_entry_references(tmp_path: Path) -> None:
     assert_doc_contains("cs-issue", "SKILL.md", "report、analyze、fix、review", "仓库事实")
     repo = init_isolated_repo(tmp_path)

@@ -15,6 +15,7 @@ QA 可以按 `.codestable/reference/execution-conventions.md` 的 Task agent 选
 - 主 agent 负责建立 Verification Matrix、决定哪些证据阻塞、核验 runner 输出，并写 `{slug}-qa.md` 的最终 verdict。
 - runner 默认只读代码和产物，只运行验证；如需改测试或配置，必须退回 `cs-feat` implementation 阶段 qa-fix。
 - runner 输出必须被写入 QA 报告的证据来源；未经主 agent 本地核验的结论只能作为 `residual-risk` 或待复核项。
+- runner 输出被消费并写入 QA 报告后，按 Task agent 生命周期关闭该 runner；容量失败只在失败后清理最老已完成 agent 并重试一次。
 - 普通低风险非功能性 feature 不强制独立 runner，避免把 QA 成本固定放大。
 
 ---

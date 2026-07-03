@@ -13,7 +13,7 @@
 
 **推进原则**：验收阶段要用仓库事实关闭任务，而不是用对话自述关闭任务。最终结论必须回答四个问题：原始契约是否满足、验证证据是否足够且在最终状态仍成立、承诺交付物是否真实落盘、这次学到的可复用知识是否进入 CodeStable 的沉淀出口。
 
-**独立审计边界**：可按 `.codestable/reference/execution-conventions.md` 的 Task agent 选择规则启动只读 acceptance auditor，复核 design/checklist/review/QA/final diff 和状态回写候选；但 auditor 只能返回 findings，不得写 `{slug}-acceptance.md`、checklist、roadmap、requirement 或状态文件。acceptance 是流程关闭动作，最终 verdict、状态推进和文件写入必须由当前主流程 owner 完成。
+**独立审计边界**：可按 `.codestable/reference/execution-conventions.md` 的 Task agent 选择规则启动只读 acceptance auditor，复核 design/checklist/review/QA/final diff 和状态回写候选；但 auditor 只能返回 findings，不得写 `{slug}-acceptance.md`、checklist、roadmap、requirement 或状态文件。auditor 输出被消费后按 Task agent 生命周期关闭；容量失败只在失败后清理最老已完成 agent 并重试一次。acceptance 是流程关闭动作，最终 verdict、状态推进和文件写入必须由当前主流程 owner 完成。
 
 **没产出报告 = 工作流未完成**。后人查"上次这个功能验收时确认了哪些行为"，没报告就只能翻 git diff 重新推断。
 

@@ -162,14 +162,15 @@ unresolved assumptions 和 next action。保持简洁，只在 goal 边界或状
    Task agent，对记录的 owner acceptance criteria 和实际产品 / 产物行为做功能验收。
 3. 把结果写入 `functional-acceptance.md`，包括 reviewer、scope、acceptance checks、
    functional evidence、verdict、residual risks 和 follow-up。
-4. 在 final iteration 中引用功能验收报告。
+4. 结果被写入并引用后，按 Task agent 生命周期关闭该验收 agent；关闭失败只记录 warning。
+5. 在 final iteration 中引用功能验收报告。
 
 功能验收是面向产品的证据。它可以包括黑盒使用、产物检查、UI / API workflow 检查、
 fixture 输出复核，或其他和 owner 相关的证明。单测、lint 和 build 是有用证据，但单独
 不足以完成 goal。
 
-如果 Task agent 无法启动或未获授权，写 `approval-report.md` 并 owner-stop；不要自验收
-goal 为 complete。
+如果 Task agent 无法启动或未获授权，先按 Task agent 生命周期处理容量失败重试；仍失败时写
+`approval-report.md` 并 owner-stop。不要自验收 goal 为 complete。
 
 ## 严格 Owner Stop
 
