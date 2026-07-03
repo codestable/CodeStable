@@ -4,9 +4,15 @@
 
 ## 什么时候用
 
-当前 feature / step 是代码实现任务，并且某个行为能用自动化测试可靠观察时，可以在该 step 内使用 TDD vertical slice。
+当前 step 改变代码行为，并且行为能用自动化测试可靠观察时，默认必须使用 TDD micro-loop。不能先把实现写完再补测试。
 
-不要为了 TDD 改变已批准 design 的范围。要新增公共接口、行为语义或边界条件，先回到 `cs-feat` design 阶段 / 用户确认。
+允许例外：
+
+- 纯搬迁 / 纯配置 / 纯文档，没有行为变化。
+- 行为只能靠类型系统、浏览器手工流程、外部环境或人工检查观察。
+- 自动化测试成本明显高于本 step 风险。
+
+例外必须在 step evidence 写 `TDD exception: {原因 + 替代证据}`。不要为了 TDD 改变已批准 design 的范围。
 
 ## 微循环
 
@@ -18,6 +24,16 @@
 4. REFACTOR：只能在 GREEN 后做，且每个重构小步后重跑验证。
 
 循环结束后，把测试、命令和结果写回当前 step 的 evidence block。
+
+## 需求迭代边界
+
+实现中出现用户新增点或新边界时，先分类：
+
+- 仍是 approved design 内某个验收行为的细化：追加一个 TDD micro-case，重新 RED / GREEN。
+- 改变 public behavior、接口、错误语义、feature 范围或公开契约：停下回 `cs-feat` design 阶段 / 用户确认。
+- review-fix / qa-fix：只为对应 blocking / failed item 写最小 RED 测试；修完按协议重跑 review / QA。
+
+不要用 TDD 当现场扩 scope 的许可证。测试先红只能证明当前行为缺口存在，不能替用户批准新需求。
 
 ## 硬约束
 
@@ -77,8 +93,11 @@ RED 时不重构。所有当前测试 GREEN 后，才检查这些候选：
 
 ```markdown
 TDD 证据：
+- Step: {step id}
 - 行为：{一句话描述}
-- RED：{测试名 / 命令 / 失败摘要}
+- RED：{测试名 / 命令 / 失败摘要，确认失败原因是目标行为未实现}
 - GREEN：{最小实现位置 + 命令结果}
+- VERIFY：{当前测试 / step 验证命令结果}
 - REFACTOR：{无 / 做了什么 + 重跑结果}
+- 需求迭代：{无 / 用户新增点 / 是否仍在 approved design 内}
 ```

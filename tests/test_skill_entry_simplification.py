@@ -269,6 +269,32 @@ def test_goal_mode_overrides_stage_user_waits() -> None:
     assert "driver_kind: none" in epic_goal
 
 
+def test_feature_implementation_requires_tdd_for_behavior_steps() -> None:
+    impl = (SKILLS / "cs-feat/references/implementation/protocol.md").read_text(encoding="utf-8")
+    tdd = (SKILLS / "cs-feat/references/implementation/support/tdd.md").read_text(encoding="utf-8")
+    impl_reference = (SKILLS / "cs-feat/references/implementation/support/reference.md").read_text(encoding="utf-8")
+    feat_goal = (SKILLS / "cs-feat/references/goal/protocol.md").read_text(encoding="utf-8")
+
+    assert "代码行为变化默认先 RED 测试、再 GREEN 最小实现" in impl
+    assert "行为改动默认 TDD" in impl
+    assert "不能先批量实现再补测试" in impl
+    assert "TDD exception" in impl
+    assert "需求迭代边界" in impl
+
+    assert "默认必须使用 TDD micro-loop" in tdd
+    assert "不能先把实现写完再补测试" in tdd
+    assert "改变 public behavior、接口、错误语义、feature 范围或公开契约" in tdd
+    assert "review-fix / qa-fix" in tdd
+    assert "RED：{测试名 / 命令 / 失败摘要，确认失败原因是目标行为未实现}" in tdd
+
+    assert "### TDD 证据" in impl_reference
+    assert "RED / GREEN / VERIFY evidence" in impl_reference
+
+    assert "implementation TDD policy" in feat_goal
+    assert "Goal driver 不得绕过 implementation 的 TDD policy" in feat_goal
+    assert "必须留下 RED/GREEN/VERIFY evidence" in feat_goal
+
+
 def test_epic_defers_child_design_approval_to_batch_checkpoint() -> None:
     epic_skill = (SKILLS / "cs-epic/SKILL.md").read_text(encoding="utf-8")
     feat_skill = (SKILLS / "cs-feat/SKILL.md").read_text(encoding="utf-8")

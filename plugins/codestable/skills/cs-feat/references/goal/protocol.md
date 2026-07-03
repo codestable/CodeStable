@@ -39,6 +39,7 @@
 - feature、design、checklist、design-review 路径
 - 用户已确认 design 的时间和依据
 - 必跑验证命令
+- implementation TDD policy：代码行为 step 默认 RED → GREEN → VERIFY，例外必须写 `TDD exception`
 - 核心验收路径；非功能性 feature 写替代证据
 - DoD / gate policy 摘要
 - handoff 条件
@@ -78,7 +79,7 @@ acceptance: ".codestable/features/YYYY-MM-DD-{slug}/{slug}-acceptance.md"
 `goal-protocol.md` 必须写明执行 loop：
 
 1. 读取 design、checklist、goal-plan、goal-state。
-2. 进入 `cs-feat` implementation 阶段完成 checklist steps。
+2. 进入 `cs-feat` implementation 阶段完成 checklist steps；代码行为 step 默认按 TDD micro-loop 执行，不能 TDD 时写 `TDD exception` 和替代证据。
 3. 运行 implementation gates，生成 evidence pack / gate results / DoD results。
 4. 进入 `cs-code-review`；有 blocking 就 review-fix 后重跑 review。
 5. review passed 后进入 `cs-feat` QA；QA failed / blocked 就 qa-fix 后重跑 review 和 QA。
@@ -88,6 +89,7 @@ acceptance: ".codestable/features/YYYY-MM-DD-{slug}/{slug}-acceptance.md"
 `goal-protocol.md` 还必须写明：
 
 - Goal 模式接管：普通流程中各阶段停等用户确认的 checkpoint，在 goal 模式下改为写入报告、状态和证据记录；只有命中 handoff 条件才停。
+- Goal driver 不得绕过 implementation 的 TDD policy；行为代码 step 缺 RED / GREEN / VERIFY evidence 且无 `TDD exception` 时，implementation gate 不通过。
 - 每个阶段 gate 通过后按上表更新 `goal-state.yaml` 的 `stage` / `status`，保证 driver 中断后可按仓库事实重派续跑。
 - handoff 输出格式：
 
@@ -112,7 +114,7 @@ handoff 条件：
 输出：
 
 ```text
-/goal "执行 CodeStable feature 目录 .codestable/features/YYYY-MM-DD-{slug} 下的 goal 执行包。先读取 goal-protocol.md、goal-state.yaml、goal-plan.md、{slug}-design.md、{slug}-checklist.yaml；这是已由用户确认 design 后的 goal 模式。按 goal-protocol.md 连续执行 cs-feat implementation、cs-code-review、cs-feat QA、cs-feat acceptance；review blocking 时做 review-fix 并重跑 review；QA failed / blocked 时做 qa-fix 并重跑 review 和 QA。只有当 CS_FEATURE_GOAL_COMPLETE 出现在 transcript 中，且 review passed、QA passed、acceptance passed、没有 CS_FEATURE_GOAL_HANDOFF，本 goal 才算完成。"
+/goal "执行 CodeStable feature 目录 .codestable/features/YYYY-MM-DD-{slug} 下的 goal 执行包。先读取 goal-protocol.md、goal-state.yaml、goal-plan.md、{slug}-design.md、{slug}-checklist.yaml；这是已由用户确认 design 后的 goal 模式。按 goal-protocol.md 连续执行 cs-feat implementation、cs-code-review、cs-feat QA、cs-feat acceptance；implementation 的代码行为 step 默认用 TDD micro-loop，必须留下 RED/GREEN/VERIFY evidence，不能 TDD 时写 TDD exception 和替代证据；review blocking 时做 review-fix 并重跑 review；QA failed / blocked 时做 qa-fix 并重跑 review 和 QA。只有当 CS_FEATURE_GOAL_COMPLETE 出现在 transcript 中，且 review passed、QA passed、acceptance passed、没有 CS_FEATURE_GOAL_HANDOFF，本 goal 才算完成。"
 ```
 
 ---

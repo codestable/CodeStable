@@ -2,7 +2,7 @@
 
 到这一步用户已经在方案上签过字了，你的活是把方案变成代码。容易出问题的不是写代码本身，而是**实现路上发现方案没覆盖到的情况时怎么办**——硬冲下去就把方案当摆设了。下面整套规则就是为了让"停下来"成为默认动作。
 
-**执行原则**：实现不是"一口气改完再说"，而是按已批准 checklist 做可验证增量。每一步要先明确退出信号，做完立刻拿证据验证；失败先诊断和重试，仍失败再写窄范围修复说明；连续失败才交还用户。不要让未验证的中间状态滚进下一步。
+**执行原则**：实现不是"一口气改完再说"，而是按已批准 checklist 做可验证增量。每一步要先明确退出信号；代码行为变化默认先 RED 测试、再 GREEN 最小实现；做完立刻拿证据验证。不要让未验证的中间状态滚进下一步。
 
 **推进原则**：实现阶段要让任务随时可恢复、可归因、可审计。开始前先确认基线；每步完成就更新 checklist 和证据；失败只修当前失败标准；每步都检查清洁度；遇到用户中断就在 step 边界停；学到会影响后续 feature 的知识先记录为候选，交给 acceptance 收尾沉淀。
 
@@ -127,12 +127,21 @@ design 给的 `steps` 是 paradigm 维度切片（编排骨架 → 计算节点 
 
 每步完成后立刻把 `{slug}-checklist.yaml` 对应 step 状态落盘。不要等所有步骤完成再统一改；状态文件就是断点恢复锚点。中断恢复时先读它，而不是靠记忆。
 
+### 行为改动默认 TDD
+
+当前 step 只要改变代码行为，且行为能被自动化测试可靠观察，就必须按 `support/tdd.md` 走 step 内 TDD micro-loop：选一个可观察行为 → RED 测试先真实失败 → GREEN 最小实现 → VERIFY → 可选 REFACTOR。不能先批量实现再补测试。
+
+允许例外：纯搬迁 / 纯配置 / 纯文档、只能靠类型系统或手工环境观察、测试成本明显高于本 step 风险。例外必须在 evidence 写 `TDD exception: {原因 + 替代证据}`。
+
+需求迭代边界：用户新增点或实现中发现的新边界，若仍是 approved design 内某个验收行为的细化，就追加一个 TDD micro-case；若改变公开行为、接口、错误语义、范围或契约，停下回 design / 用户确认。
+
 ### 每步都要有证据块
 
 完成每个 step 后，在工作记录 / 汇报素材里留下最小证据：
 
 - 退出信号：原文摘出
 - 验证动作：跑了什么命令 / 看了什么页面 / 检查了什么 diff / 调了什么接口
+- TDD：行为代码 step 的 RED / GREEN / VERIFY / REFACTOR 证据，或 `TDD exception`
 - 结果：通过 / 未通过；失败写真实错误摘要
 - 影响面：本步新增 / 修改的主要函数、类型、路由、配置或文档
 - 清洁度：本步新增代码里是否有调试输出、临时 TODO/FIXME、注释掉代码、无用 import、方案外文件
@@ -262,7 +271,7 @@ Goal 模式例外（本轮按 feature / roadmap 目录下 `goal-protocol.md` 长
 
 ## 测试用例怎么落
 
-标准 design 第 3 节"关键场景清单"每条 = 一个可验证行为约束。把每条变成可观察证据：单测 / 集成 / 手工操作 / 类型编译期保证。coding step 适合自动化测试时，可在 step 内采用 TDD vertical slice；这是 `cs-feat` implementation 阶段的内嵌实现策略，不是切换到独立 `tdd` skill。具体测试策略看 `support/reference.md` 和 `support/tdd.md`。
+标准 design 第 3 节"关键场景清单"每条 = 一个可验证行为约束。把每条变成可观察证据：单测 / 集成 / 手工操作 / 类型编译期保证。代码行为 step 默认按 `support/tdd.md` 做 step 内 TDD；不能 TDD 时写 `TDD exception` 和替代证据。它不是切换到独立 `tdd` skill，也不接管 CodeStable gate、checklist、review / QA 流程。
 
 ---
 
@@ -271,6 +280,7 @@ Goal 模式例外（本轮按 feature / roadmap 目录下 `goal-protocol.md` 长
 完整 checklist 见 `support/reference.md`。主文件保留硬门摘要：
 
 - [ ] 所有 steps 的 status 都 `done`，且每步有退出信号证据。
+- [ ] 行为代码 step 有 TDD evidence；不适用时有 `TDD exception` 和替代证据。
 - [ ] 完成汇报已输出，用户 review 通过（或 review-fix / qa-fix 汇报已输出，等待重跑对应 gate；goal 模式为汇报落盘留档后按 goal 协议继续）。
 - [ ] 没有未处理的"需要叫停"信号、方案外改动或清洁度缺口。
 - [ ] 开始前做过基线预检；完成前做过最后一轮本地审计。
