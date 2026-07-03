@@ -73,7 +73,7 @@ argument-hint: "[--stage design|design-review|impl|qa|accept|goal-package] [--mo
 | 无 design，或已有 intent/brainstorm 要进设计 | 读取 `references/design/protocol.md` |
 | design 为 draft 且无 passed design-review | 读取 `references/design-review/protocol.md` |
 | design-review changes-requested / blocked | 回 design 修订，再重跑 design-review |
-| design-review passed 但 design 未 approved | 停下让用户整体 review；确认后标 `approved` |
+| design-review passed 但 design 未 approved | 普通单 feature 停下让用户整体 review；若调用上下文是 `epic_child_batch: true`，不在这里停，回到 `cs-epic` 继续下一个子 feature，等待所有 design 统一确认 |
 | design approved 且 goal 包未生成 | 读取 `references/goal/protocol.md` |
 | goal 包已生成且代码未完成 | 按 Goal driver 派发；派发失败则输出可粘贴 `/goal` 指令 |
 | 用户明确请求单阶段实现，或 goal driver handoff 后需要人工续跑 | 读取 `references/implementation/protocol.md` |
@@ -114,6 +114,24 @@ argument-hint: "[--stage design|design-review|impl|qa|accept|goal-package] [--mo
 3. 长程执行中需要改变 approved design、feature 范围或公开契约时，停下让用户确认。
 
 implementation / code review / QA / acceptance 的普通阻塞优先由 goal driver 按协议循环修复；不要在每个阶段默认打断用户。
+
+---
+
+## Epic 子 Feature 批量设计上下文
+
+当 `cs-epic` 为 roadmap items 批量生成子 feature design 时，会以内部上下文
+`epic_child_batch: true` 调用本入口的 design / design-review 阶段。该上下文不是用户公开
+参数，不写入 `argument-hint`。
+
+在 `epic_child_batch: true` 下：
+
+- design-review `passed` 后，design 继续保持 `status: draft`。
+- 不执行单 feature 的人工整体 review checkpoint，不把 design 改成 `approved`。
+- 只把 design、checklist、design-review 和 items.yaml 回写落盘，然后返回 `cs-epic`。
+- `cs-epic` 负责继续处理剩余子 feature；全部 design-review 都 passed 后，才一次性交给
+  用户统一确认。
+
+若用户单独调用 `cs-feat` 或没有该内部上下文，仍按普通单 feature checkpoint 停下等用户确认。
 
 ---
 

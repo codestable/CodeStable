@@ -243,6 +243,11 @@ def test_goal_mode_overrides_stage_user_waits() -> None:
     # 原生子 agent 当 driver 前必须确认它还能启动独立 reviewer；不能就回退打印 /goal。
     assert "只有同时满足下面两条才可用" in conventions
     assert "不能靠 driver 自审" in conventions
+    # 自动 driver 也必须以 literal /goal 启动，不能退化成普通 implementation prompt。
+    assert "literal `/goal` 指令作为 driver 初始任务" in conventions
+    assert "普通“执行/实现这个 feature”" in conventions
+    assert "driver 初始 prompt 必须是上面生成的同一条 literal `/goal` 指令" in feat_goal
+    assert "literal `/goal` 指令作为 driver 初始任务启动 driver" in epic_goal
     # 单 feature goal 包必须带接管条款和 handoff 标记，与 epic goal 包对齐。
     assert "合法状态机" in feat_goal
     assert "| review | fixing |" in feat_goal
@@ -264,11 +269,22 @@ def test_goal_mode_overrides_stage_user_waits() -> None:
 
 def test_epic_defers_child_design_approval_to_batch_checkpoint() -> None:
     epic_skill = (SKILLS / "cs-epic/SKILL.md").read_text(encoding="utf-8")
+    feat_skill = (SKILLS / "cs-feat/SKILL.md").read_text(encoding="utf-8")
+    feat_design = (SKILLS / "cs-feat/references/design/protocol.md").read_text(encoding="utf-8")
+    epic_goal = (SKILLS / "cs-epic/references/goal/protocol.md").read_text(encoding="utf-8")
 
     # 子 design 逐项推进时保持 draft，用户确认统一发生在批量 checkpoint，
     # 避免 agent 按 cs-feat 普通模式逐个停等用户。
     assert "design 保持 `draft`，不逐个让用户确认" in epic_skill
     assert "统一确认所有 design" in epic_skill
+    assert "epic_child_batch: true" in epic_skill
+    assert "仍有子 feature 未完成 design-review" in epic_skill
+    assert "不要在第一个或任一单独子 feature design-review passed 后停下来" in epic_skill
+    assert "不执行单 feature 的人工整体 review checkpoint" in feat_skill
+    assert "不在这里停，回到 `cs-epic` 继续下一个子 feature" in feat_skill
+    assert "`epic_child_batch: true` 时不要停用户" in feat_design
+    assert "继续处理下一个 planned 子 feature" in epic_goal
+    assert "不要停下来要求用户确认该单个 design" in epic_goal
 
 
 CANONICAL_PREFLIGHT = (

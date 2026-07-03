@@ -11,6 +11,11 @@
 - **初始化模式**：用户说"开一个新需求 / 起个草稿 / 新建一个 feature"，但想自己先写半成品方案而不是口述。走下一节"初始化模式"，建好目录和空 `{slug}-intent.md` 就结束本轮，等用户填完再回来。
 - **从 roadmap 条目起头**：用户说"开始做 roadmap 里的 {子 feature slug}"或"推进 {roadmap} 的下一条"。规则见下文"从 roadmap 条目起头"一节。
 
+当 `cs-epic` 批量推进子 feature design 时，会带内部上下文 `epic_child_batch: true`。
+该上下文下，本阶段只负责产出 draft design、checklist、design-review 和 items.yaml 回写；
+不执行单 feature 用户整体 review，不把 design 改成 `approved`。所有子 feature 由
+`cs-epic` 统一交给用户确认。
+
 **设计原则**：design 不是实现前的散文说明，而是后续实现和验收的可执行契约。它必须把"做好"翻译成可观察证据，把 steps 切成独立可验证单元，把风险和依赖前置暴露，并在交给用户前做一次自我批判，修掉含糊标准、混合步骤和薄弱依赖。
 
 **推进原则**：design 要把后续执行需要的"操作手册"写到位：当前基线怎么确认、每步完成后看什么证据、哪些命令必须重跑、哪些交付物要真实落盘、失败时回到哪个契约修。否则 implement 只能临场判断，review 没有稳定契约可审，QA 不知道该跑什么证据，acceptance 也只能相信实现汇报。
@@ -43,7 +48,7 @@
    - **必读主文档第 3 节"模块拆分"和第 4 节"接口契约 / 共享协议"**——这是本 feature 的硬约束输入。契约不合理 / 漏了 → 停下来建议回 `cs-epic` planning/update 改，**不要在 design 里偷偷绕开**
 2. **slug 从 roadmap 取**，feature 目录 `YYYY-MM-DD-{roadmap 条目 slug}`，不另起
 3. **走"流程"一节**，frontmatter 加 `roadmap` / `roadmap_item` 两字段
-4. **候选落盘时回写 items.yaml**：对应条目 `status: in-progress` + `feature: YYYY-MM-DD-{slug}`，用 `validate-yaml.py` 校验；design 先保持 `status: draft`，通过 `cs-feat` design-review 阶段 且用户确认后才改 `approved`
+4. **候选落盘时回写 items.yaml**：对应条目 `status: in-progress` + `feature: YYYY-MM-DD-{slug}`，用 `validate-yaml.py` 校验；design 先保持 `status: draft`，普通单 feature 通过 `cs-feat` design-review 阶段且用户确认后才改 `approved`；`epic_child_batch: true` 时交回 `cs-epic` 批量确认
 
 完整衔接协议看 `.codestable/reference/shared-conventions.md` 第 2.5 节。
 
@@ -205,13 +210,15 @@ AI 默认翻车的姿势是**不思考就往眼前最顺手的文件里加**。
 
 运行 `cs-feat` design-review 阶段：
 
-- `passed`：才能把 design + checklist + design-review 报告交给用户整体 review。
+- `passed`：普通单 feature 才能把 design + checklist + design-review 报告交给用户整体 review；`epic_child_batch: true` 时不要停用户，返回 `cs-epic` 继续下一个子 feature。
 - `changes-requested`：按 finding 修 design/checklist，重新校验 yaml 并重跑 `cs-feat` design-review 阶段。
 - `blocked`：补齐输入、等待独立 Task agent reviewer，或让用户明确降级 local-only 后重跑。
 
 ### 6. 用户整体 review
 
 发一次整体 review 提示（提示词在 reference.md 第 5 节），同时附上 Top 3 风险、关键假设、自我批判结论和 `{slug}-design-review.md` 摘要。用户提意见就改；如果修改影响名词层、编排层、验收契约、steps/checks、roadmap 契约或风险策略，必须同步更新 checklist 并回到 Phase 5 重跑 design review。用户明确放行后，把 `status` 从 `draft` 改 `approved`。
+
+`epic_child_batch: true` 时跳过本节；保持 `status: draft`，由 `cs-epic` 在所有子 feature design-review passed 后统一执行用户确认和 `approved` 标记。
 
 ### 7. 确认 checklist
 
@@ -227,9 +234,11 @@ AI 默认翻车的姿势是**不思考就往眼前最顺手的文件里加**。
 
 ## 退出条件
 
-用户整体 review 通过，并且：
+普通单 feature：用户整体 review 通过，并且：
 
-- [ ] frontmatter 完整（`doc_type` / `feature` / `status=approved` / `summary` / `tags`），requirement 字段已对齐
+`epic_child_batch: true`：design-review 已 passed、design 仍为 draft、items.yaml 已回写，返回 `cs-epic` 继续批量流程；不要单独停等用户。
+
+- [ ] frontmatter 完整（`doc_type` / `feature` / `summary` / `tags`），requirement 字段已对齐；普通单 feature 为 `status=approved`，`epic_child_batch: true` 为 `status=draft`
 - [ ] design 正文已按 `.codestable/attention.md` 的报告语言落盘（默认中文；frontmatter / yaml 字段保持机读格式）
 - [ ] 第 1 节含"不做什么"和复杂度档位偏离（或明确走默认）
 - [ ] 第 2.1 / 2.2 用"现状 → 变化"两段式；接口有示例 + 来源位置；编排层开头有主流程图

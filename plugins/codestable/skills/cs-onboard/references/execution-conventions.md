@@ -123,7 +123,11 @@ acceptance，并把证据写回仓库。
 3. **不可见或派发失败**：不要静默后台运行。打印 fenced `/goal` 指令，让用户粘贴到新的
    agent 会话执行，并说明没有自动 driver 在跑。
 
-派发 prompt 只给 goal 包路径、协议文件和完成 / handoff 标记，不塞主 agent 的本地推断。
+派发 prompt 必须使用 goal 包协议生成的同一条 literal `/goal` 指令作为 driver 初始任务。
+不要改写成普通“执行/实现这个 feature”的自然语言任务；那会绕开 goal 模式接管语义，
+导致 driver 在 implementation / review / QA / acceptance 普通 checkpoint 被截停。除
+`/goal` 指令本身外，只能附加查看方式、agent id 写回要求和完成 / handoff 标记说明，
+不能塞主 agent 的本地推断。
 主 agent 不能因为 driver 已启动就宣称 goal 完成；完成只能由 goal 产物和 transcript 标记证明。
 
 派发成功后立即把 driver 形态与标识写回对应 goal-state.yaml（`driver_kind: paseo|native`、

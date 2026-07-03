@@ -54,8 +54,9 @@ argument-hint: "[--stage planning|review|goal-package] <epic>"
 | roadmap draft 无 passed review | 读取 `references/review/protocol.md` |
 | roadmap review blocking / blocked | 回 planning 修订后重跑 review |
 | roadmap review passed 但用户未确认 | 停下让用户确认 epic 规划 |
-| roadmap 已确认，子 feature design 未完成 | 逐项进入 `cs-feat` design/design-review；design 保持 `draft`，不逐个让用户确认 |
-| 子 feature design-review passed 但未整体确认 | 停下让用户统一确认所有 design，确认后逐份标 `approved` |
+| roadmap 已确认，子 feature design 未完成 | 逐项进入 `cs-feat` design/design-review，并带内部上下文 `epic_child_batch: true`；design 保持 `draft`，不逐个让用户确认 |
+| 仍有子 feature 未完成 design-review | 继续下一个子 feature，不停用户 |
+| 所有子 feature design-review passed 但未整体确认 | 停下让用户统一确认所有 design，确认后逐份标 `approved` |
 | 所有 design approved，goal 包未生成 | 读取 `references/goal/protocol.md` |
 | goal 包已生成 | 按 Goal driver 派发；派发失败则输出可粘贴 `/goal` 指令并停止 |
 
@@ -69,7 +70,7 @@ argument-hint: "[--stage planning|review|goal-package] <epic>"
 - review：`references/review/protocol.md`
 - goal-package：`references/goal/protocol.md`，并复制 `references/goal/support/protocol*.md` 和 `references/goal/support/goal-command-template.md`
 - goal driver：`.codestable/reference/execution-conventions.md` 的 Goal driver 派发规则
-- child feature：通过 `cs-feat` 主入口推进，不直接调用旧阶段技能
+- child feature：通过 `cs-feat` 主入口推进，不直接调用旧阶段技能；调用时带内部上下文 `epic_child_batch: true`，让单 feature 人工 checkpoint 推迟到 `cs-epic` 的批量确认
 
 ---
 
@@ -78,6 +79,10 @@ argument-hint: "[--stage planning|review|goal-package] <epic>"
 1. roadmap/epic planning review passed 后，用户确认规划。
 2. 所有子 feature design-review passed 后，用户统一确认 design。
 3. goal driver 不可见、派发失败或返回 `CS_ROADMAP_GOAL_HANDOFF` 时，把 `/goal` 指令或 handoff 原因交给用户。
+
+不要在第一个或任一单独子 feature design-review passed 后停下来要求用户确认执行；那是
+`cs-feat` 普通单 feature 行为，在 `cs-epic` 子流程里必须延后到所有子 feature 都完成
+design-review 后统一处理。
 
 ---
 

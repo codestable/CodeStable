@@ -9,7 +9,7 @@
 1. 确认 `{slug}-design.md` 已 `status: approved`，且 `{slug}-design-review.md` 为 `passed`。
 2. 写 `goal-plan.md`、`goal-state.yaml`、`goal-protocol.md`。
 3. 生成一条可粘贴 `/goal` 指令。
-4. 按 `.codestable/reference/execution-conventions.md` 的 Goal driver 派发规则，优先用可见 Task agent 自动执行；派发失败就把 `/goal` 指令交给用户。
+4. 按 `.codestable/reference/execution-conventions.md` 的 Goal driver 派发规则，优先用可见 Task agent 自动执行；自动 driver 也必须用这条 literal `/goal` 指令作为初始任务。派发失败就把 `/goal` 指令交给用户。
 
 ---
 
@@ -122,6 +122,7 @@ handoff 条件：
 生成 goal 包后，按 `.codestable/reference/execution-conventions.md` 的 Goal driver 派发规则执行：
 
 - 有可见 Paseo subagent 或可见 native Task/Agent 时，启动 driver 并把 agent id / run id / 查看方式告诉用户。
+- driver 初始 prompt 必须是上面生成的同一条 literal `/goal` 指令；不要改写成普通 implementation 任务。
 - driver 不可见、不可追踪、缺授权或启动失败时，不启动后台任务，只打印 fenced `/goal`。
 - 主 agent 不能仅凭“已派发”宣布完成；完成必须由 goal 产物和 transcript 标记证明。
 

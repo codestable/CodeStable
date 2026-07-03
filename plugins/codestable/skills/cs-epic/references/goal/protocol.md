@@ -5,7 +5,7 @@
 把一个大需求变成可审阅、可恢复、可自动推进的 CodeStable roadmap 执行包：
 
 1. 先按 `cs-epic` planning 阶段规范澄清需求并创建 / 更新一份 roadmap，运行 `cs-epic` review 阶段并处理到通过。
-2. 用户确认 roadmap 后，为 roadmap items 里的每个子 feature 进入 `cs-feat` design 阶段，生成 design + checklist，运行 `cs-feat` design-review 阶段并处理到通过。
+2. 用户确认 roadmap 后，为 roadmap items 里的每个子 feature 进入 `cs-feat` design 阶段，并带内部上下文 `epic_child_batch: true`；生成 design + checklist，运行 `cs-feat` design-review 阶段并处理到通过。
 3. 用户确认所有 feature design 后，输出一条可直接粘贴的 `/goal` 指令，并优先尝试用可见 Task agent goal driver 派发。
 4. `/goal` 会话按顺序循环执行每个 feature：`cs-feat` implementation 阶段 → `cs-code-review` → 必要时 review-fix → `cs-feat` QA 阶段 → 必要时 qa-fix 后重跑 review/QA → `cs-feat` acceptance 阶段 → 更新状态 → 下一个 feature。
 5. 全部 feature 验收后，做整个 roadmap 的最终审计；只有审计通过才打印完成标记。
@@ -69,7 +69,7 @@
 
 ### 第二次确认：所有 feature design
 
-对 roadmap items 里的每个 planned 子 feature，按依赖顺序逐个完成 `cs-feat` design 阶段的候选设计阶段：
+对 roadmap items 里的每个 planned 子 feature，按依赖顺序逐个完成 `cs-feat` design 阶段的候选设计阶段。调用 `cs-feat` 时必须带内部上下文 `epic_child_batch: true`，表示这是 `cs-epic` 批量子设计流程，不是普通单 feature 流程：
 
 - 创建 feature 目录。
 - 写 `{feature-slug}-design.md`，frontmatter 带 `roadmap` / `roadmap_item`，正文按 `.codestable/attention.md` 的报告语言落盘（默认中文）。
@@ -77,6 +77,8 @@
 - 运行 `cs-feat` design-review 阶段；Task agent 可用时每份 design-review 都必须有独立 reviewer 结果。批量生成多个 feature 不是 local-only 降级理由；有 blocking / blocked / pending 时先修订、等待 reviewer 或让用户明确授权降级，不进入用户二次确认。
 - 按现有 `cs-feat` design 阶段约定，把 items.yaml 对应条目更新为 `in-progress` 并填写 `feature` 字段。
 - design 必须包含：基线预检、必跑验证命令、交付物、验收场景证据类型、清洁度规则、可独立验证 steps。
+
+每完成一个子 feature 的 design-review passed 后，继续处理下一个 planned 子 feature；不要停下来要求用户确认该单个 design，也不要把该 design 改成 `approved`。
 
 这里把 `cs-feat` design 阶段普通模式里的单 feature 用户整体 review 推迟到本协议统一处理：每份 design 先保持 `draft`，不要逐个改 `approved`。全部 feature design 都写完且 design-review 都 passed 后，一次性给用户 review。用户可能反复修改任意一个 design；每次修改后同步更新 checklist，并对实质变化重跑 `cs-feat` design-review 阶段。只有用户明确确认所有 design 后，才输出 `/goal`。
 
@@ -194,7 +196,7 @@ features:
 
 然后按 `.codestable/reference/execution-conventions.md` 的 Goal driver 派发规则执行：
 
-- 有可见 Paseo subagent 或可见 native Task/Agent 时，启动 driver，并把 agent id / run id / 查看方式告诉用户。
+- 有可见 Paseo subagent 或可见 native Task/Agent 时，用上面生成的同一条 literal `/goal` 指令作为 driver 初始任务启动 driver，并把 agent id / run id / 查看方式告诉用户。
 - driver 不可见、不可追踪、缺授权或派发失败时，不启动后台任务，只打印 fenced `/goal`，让用户粘贴到新的 agent 会话执行。
 - 主 agent 不能仅凭“已派发”宣布 roadmap 完成；完成必须由 goal 产物和 transcript 标记证明。
 
