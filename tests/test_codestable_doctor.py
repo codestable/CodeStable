@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -22,6 +23,7 @@ def load_tool(module_name: str, filename: str):
 
 doctor = load_tool("codestable_doctor", "codestable-doctor.py")
 worktree_gate = load_tool("codestable_worktree_gate", "codestable-worktree-gate.py")
+runtime_tool = load_tool("codestable_runtime", "codestable_runtime.py")
 
 
 def run(repo: Path, *args: str) -> subprocess.CompletedProcess[str]:
@@ -54,6 +56,7 @@ def install_runtime(repo: Path) -> None:
         ".codestable/reference/execution-conventions.md",
         ".codestable/reference/shared-conventions.md",
         ".codestable/reference/tools.md",
+        ".codestable/runtime-manifest.json",
         ".codestable/tools/validate-yaml.py",
         ".codestable/tools/search-yaml.py",
         ".codestable/tools/codestable-workflow-next.py",
@@ -68,7 +71,22 @@ def install_runtime(repo: Path) -> None:
     ]:
         target = repo / path
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text("runtime\n", encoding="utf-8")
+        if target.name == "runtime-manifest.json":
+            target.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "plugin": "codestable",
+                        "plugin_version": "1.0.0",
+                        "runtime_version": "1.0.0",
+                        "managed_paths": [".codestable/tools", ".codestable/gates", ".codestable/reference", ".codestable/hooks"],
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+        else:
+            target.write_text("runtime\n", encoding="utf-8")
 
 
 def make_feature_unit(repo: Path) -> Path:
@@ -99,8 +117,8 @@ def test_missing_runtime_assets_are_blocked_with_refresh_hint(tmp_path: Path) ->
     runtime = report["tooling"]["runtime"]
     assert runtime["status"] == "runtime-incomplete"
     assert runtime["capabilities"]["workflow-next"]["missing"] == [".codestable/tools/codestable-workflow-next.py"]
-    assert "cs-onboard --mode refresh-runtime" in runtime["hint"]
-    assert "CodeStable runtime assets are incomplete" in report["findings"][0]["message"]
+    assert "runtime sync" in runtime["hint"]
+    assert "CodeStable runtime assets are incomplete or stale" in report["findings"][0]["message"]
 
 
 def test_missing_attention_reports_onboard_incomplete_not_refresh(tmp_path: Path) -> None:
@@ -112,8 +130,60 @@ def test_missing_attention_reports_onboard_incomplete_not_refresh(tmp_path: Path
     runtime = report["tooling"]["runtime"]
     assert runtime["status"] == "onboard-incomplete"
     assert "cs-onboard`" in runtime["hint"]
-    assert "refresh-runtime does not create attention.md" in runtime["hint"]
+    assert "runtime sync does not create attention.md" in runtime["hint"]
     assert "CodeStable onboarding is incomplete" in report["findings"][0]["message"]
+
+
+def test_runtime_version_mismatch_is_blocked_with_sync_hint(tmp_path: Path) -> None:
+    repo = init_repo(tmp_path)
+    manifest = repo / ".codestable/runtime-manifest.json"
+    data = json.loads(manifest.read_text(encoding="utf-8"))
+    data["plugin_version"] = "0.9.0"
+    manifest.write_text(json.dumps(data) + "\n", encoding="utf-8")
+
+    report = doctor.diagnose(repo)
+
+    runtime = report["tooling"]["runtime"]
+    assert runtime["status"] == "version-mismatch"
+    assert runtime["installed_plugin_version"] == "0.9.0"
+    assert runtime["expected_plugin_version"] == "1.0.0"
+    assert "runtime sync" in runtime["hint"]
+
+
+def test_runtime_sync_refreshes_managed_assets_and_manifest(tmp_path: Path) -> None:
+    repo = init_repo(tmp_path)
+    source = tmp_path / "source-skill"
+    for directory in ["gates", "tools", "references", "hooks"]:
+        (source / directory).mkdir(parents=True)
+    (source / "gates/roadmap-goal-gates.yaml").write_text("version: 2\n", encoding="utf-8")
+    (source / "tools/codestable-workflow-next.py").write_text("new workflow\n", encoding="utf-8")
+    (source / "references/tools.md").write_text("new tools\n", encoding="utf-8")
+    (source / "hooks/hooks.codex.json").write_text("{}\n", encoding="utf-8")
+    (source / "codestable.gitignore").write_text("__pycache__/\n", encoding="utf-8")
+    (source / ".codex-plugin").mkdir()
+    (source / ".codex-plugin/plugin.json").write_text('{"version": "1.1.0"}\n', encoding="utf-8")
+
+    result = runtime_tool.sync_runtime(repo, source)
+
+    assert result["ok"]
+    assert (repo / ".codestable/tools/codestable-workflow-next.py").read_text(encoding="utf-8") == "new workflow\n"
+    manifest = json.loads((repo / ".codestable/runtime-manifest.json").read_text(encoding="utf-8"))
+    assert manifest["plugin_version"] == "1.1.0"
+    assert ".codestable/tools" in manifest["managed_paths"]
+
+
+def test_runtime_sync_refuses_dirty_managed_paths_without_force(tmp_path: Path) -> None:
+    repo = init_repo(tmp_path)
+    source = tmp_path / "source-skill"
+    (source / "tools").mkdir(parents=True)
+    (source / "tools/validate-yaml.py").write_text("new\n", encoding="utf-8")
+    (repo / ".codestable/tools/validate-yaml.py").write_text("local edit\n", encoding="utf-8")
+
+    result = runtime_tool.sync_runtime(repo, source)
+
+    assert not result["ok"]
+    assert result["status"] == "managed-paths-dirty"
+    assert ".codestable/tools/validate-yaml.py" in result["dirty_paths"]
 
 
 def test_docs_only_dirty_state_is_planning_safe(tmp_path: Path) -> None:

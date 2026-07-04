@@ -11,9 +11,9 @@ worktree、review、finish 和 handoff 规则。
 1. 读取 `.codestable/attention.md`。
 2. 缺 `.codestable/attention.md` 时视为骨架不完整，提示补齐或运行 `cs-onboard`。
 3. 不回退读取 `AGENTS.md` / `CLAUDE.md` / `.cursorrules` 等外部 AI 入口文件。
-4. 进入需要项目 runtime 的阶段前，检查该阶段声明的 runtime capability；可用
-   `python3 .codestable/tools/codestable-doctor.py --root . --json` 查看
-   `tooling.runtime.capabilities`。
+4. 检查 `.codestable/runtime-manifest.json`；缺失、版本不匹配或 runtime capability 缺失时，
+   用当前插件包里的 `cs-onboard/tools/codestable-runtime-sync.py` 自动同步 package-owned runtime 资产。可用
+   `python3 .codestable/tools/codestable-doctor.py --root . --json` 查看项目副本的 `tooling.runtime`。
 5. 正文报告语言按 `.codestable/attention.md` 的报告语言策略执行；默认中文，若草稿用了英文，落盘前先改写为项目语言。frontmatter / yaml 字段不翻译。
 
 `cs-note` 是唯一例外：`.codestable/` 存在但 `attention.md` 缺失时，它可以创建最小分节骨架后写入。
@@ -22,11 +22,22 @@ worktree、review、finish 和 handoff 规则。
 
 `.codestable/tools/`、`.codestable/gates/`、`.codestable/reference/` 和 `.codestable/hooks/`
 是 `cs-onboard` 从技能包释放的 runtime 资产。已接入项目可以重复运行
-`cs-onboard --mode refresh-runtime` 刷新这些资产；该模式不重新迁移文档、不移动用户文件、
-不改 `attention.md` 的实质内容。
+runtime sync 刷新这些资产并写 `.codestable/runtime-manifest.json`；该模式不重新迁移文档、
+不移动用户文件、不改 `attention.md` 的实质内容。
 
-runtime capability 缺失时，不要把 gate 当作通过，不要回退到技能包路径继续执行，不要隐式调用 `cs-onboard`。当前阶段应停止为 `runtime-incomplete`，提示用户运行
-`cs-onboard --mode refresh-runtime`，刷新后从仓库事实恢复原流程。
+runtime sync 只允许覆盖 package-owned managed paths。若这些 managed paths 有未提交改动，
+或缺 `.codestable/attention.md`，不要自动覆盖；停下让用户处理。同步后从仓库事实恢复原流程。
+
+preflight 自动同步时，先定位当前插件包的 `cs-onboard` skill 目录：优先用当前已加载
+CodeStable skill 的 sibling `../cs-onboard`，找不到再加载 `codestable:cs-onboard`。不要用
+项目 `.codestable/tools/` 里的旧副本做版本判定。运行：
+
+```bash
+python3 <cs-onboard skill 目录>/tools/codestable-runtime-sync.py --root . --source-skill-dir <cs-onboard skill 目录> --check --json
+```
+
+状态为 `ok` 继续；`runtime-incomplete` / `version-mismatch` / 缺 manifest 时运行同一命令去掉
+`--check` 自动同步；`managed-paths-dirty`、`not-onboarded` 或 `onboard-incomplete` 停用户。
 
 常用 capability：
 

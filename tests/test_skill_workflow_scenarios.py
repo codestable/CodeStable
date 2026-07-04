@@ -610,7 +610,7 @@ def test_epic_child_design_batch_continues_after_one_child_review_passed(tmp_pat
     assert epic_next(repo, slug) == Action("load-skill", "cs-feat design/design-review")
 
 
-def test_missing_workflow_next_hook_stops_for_explicit_runtime_refresh() -> None:
+def test_missing_workflow_next_hook_uses_runtime_manifest_preflight() -> None:
     assert_doc_contains(
         "cs-onboard",
         "SKILL.md",
@@ -618,6 +618,8 @@ def test_missing_workflow_next_hook_stops_for_explicit_runtime_refresh() -> None
         "可重复执行",
         "不重新审计 / 迁移文档",
         "只想刷新 runtime、不审计或迁移文档时，显式传 `--mode refresh-runtime`",
+        ".codestable/runtime-manifest.json",
+        "codestable-runtime-sync.py",
         "不移动用户文件",
     )
     assert_doc_contains(
@@ -625,30 +627,28 @@ def test_missing_workflow_next_hook_stops_for_explicit_runtime_refresh() -> None
         "references/execution-conventions.md",
         "Runtime 资产恢复",
         "runtime capability",
-        "tooling.runtime.capabilities",
+        ".codestable/runtime-manifest.json",
+        "当前插件包里的 `cs-onboard/tools/codestable-runtime-sync.py` 自动同步",
+        "--check --json",
+        "`--check` 自动同步",
         "`workflow-next`",
-        "不要隐式调用 `cs-onboard`",
-        "runtime-incomplete",
-        "cs-onboard --mode refresh-runtime",
+        "managed paths 有未提交改动",
     )
     assert_doc_contains(
         "cs-feat",
         "SKILL.md",
-        "workflow-next` runtime capability",
-        "Runtime 资产恢复",
+        "CodeStable preflight 已确认的 `workflow-next` runtime capability",
     )
     assert_doc_contains(
         "cs-epic",
         "SKILL.md",
-        "workflow-next` runtime capability",
-        "Runtime 资产恢复",
+        "CodeStable preflight 已确认的 `workflow-next` runtime capability",
     )
     assert_doc_contains(
         "cs-epic",
         "references/goal/protocol.md",
-        "workflow-next` runtime capability",
-        "Runtime 资产恢复",
-        "刷新后从仓库事实恢复 batch loop",
+        "CodeStable preflight 已确认的 `workflow-next` runtime capability",
+        "若 preflight 刚完成同步，从仓库事实恢复 batch loop",
     )
 
 

@@ -129,7 +129,7 @@ implementation / code review / QA / acceptance 的普通阻塞优先由 goal dri
 - 不执行单 feature 的人工整体 review checkpoint，不把 design 改成 `approved`。
 - 只把 design、checklist、design-review 和 items.yaml 回写落盘，然后返回 `cs-epic`；不得用 final answer 要用户确认单个 child。
 - 退出前必须运行 `python3 .codestable/tools/codestable-workflow-next.py feature --feature .codestable/features/YYYY-MM-DD-{slug} --epic-child-batch --json`；若输出 `final_answer_allowed: false`，按 `next_action` 交回 `cs-epic` 继续批量流程。
-- 需要 `workflow-next` runtime capability；缺失时按 `.codestable/reference/execution-conventions.md` 的「Runtime 资产恢复」处理。
+- 依赖 CodeStable preflight 已确认的 `workflow-next` runtime capability。
 - `cs-epic` 负责继续处理剩余子 feature；全部 design-review 都 passed 后，才一次性交给
   用户统一确认。
 

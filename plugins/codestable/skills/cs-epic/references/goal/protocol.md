@@ -80,8 +80,7 @@
 
 每完成一个子 feature 的 design-review passed 后，立即运行 `python3 .codestable/tools/codestable-workflow-next.py epic --roadmap .codestable/roadmap/{slug} --json`，按 hook 输出继续处理下一个 planned / in-progress 子 feature；不要停下来要求用户确认该单个 design，也不要把该 design 改成 `approved`。单个 child 完成不是本阶段退出条件，不能用 final answer 把“下一步继续处理下一个 child”交还给用户；除非 hook 返回 `user_gate` / `blocked`、遇到 pending / 授权问题或用户明确要求停止，否则必须在同一轮里继续 batch loop。
 
-本阶段需要 `workflow-next` runtime capability；缺失时按
-`.codestable/reference/execution-conventions.md` 的「Runtime 资产恢复」处理，刷新后从仓库事实恢复 batch loop。
+本阶段依赖 CodeStable preflight 已确认的 `workflow-next` runtime capability；若 preflight 刚完成同步，从仓库事实恢复 batch loop。
 
 这里把 `cs-feat` design 阶段普通模式里的单 feature 用户整体 review 推迟到本协议统一处理：每份 design 先保持 `draft`，不要逐个改 `approved`。全部 feature design 都写完且 design-review 都 passed 后，一次性给用户 review。用户可能反复修改任意一个 design；每次修改后同步更新 checklist，并对实质变化重跑 `cs-feat` design-review 阶段。只有用户明确确认所有 design 后，才输出 `/goal`。
 
@@ -152,7 +151,7 @@ features:
 
 从 `support/protocol.md`、`protocol-feature-loop.md`、`protocol-gates.md`、`protocol-audit.md` 复制到 roadmap 目录，并把 `{roadmap-slug}` / `{roadmap-path}` / `{roadmap-file}` / `{items-file}` 替换为本次实际值。不要替换 `<feature-slug>` 这类运行时占位；它们必须保留给 goal 会话在每个 feature 边界填写。
 
-`goal-protocol-gates.md` 是 Gate Policy 的运行时权威入口；`scope-gate`、`dod-runner`、`evidence-pack` 等具体脚本由 `cs-onboard` 安装到项目 `.codestable/tools/`。缺脚本时按 `.codestable/reference/execution-conventions.md` 的「Runtime 资产恢复」处理；不要把缺失脚本当作 gate passed。
+`goal-protocol-gates.md` 是 Gate Policy 的运行时权威入口；`scope-gate`、`dod-runner`、`evidence-pack` 等具体脚本由 `cs-onboard` 安装到项目 `.codestable/tools/`。缺脚本时视为 runtime capability 未满足，先按 CodeStable preflight 恢复；不要把缺失脚本当作 gate passed。
 
 ### `goal-features/{feature-slug}.md`
 

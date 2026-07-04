@@ -59,6 +59,7 @@ def install_runtime(repo: Path) -> None:
         ".codestable/reference/execution-conventions.md",
         ".codestable/reference/shared-conventions.md",
         ".codestable/reference/tools.md",
+        ".codestable/runtime-manifest.json",
         ".codestable/tools/validate-yaml.py",
         ".codestable/tools/search-yaml.py",
         ".codestable/tools/codestable-workflow-next.py",
@@ -73,7 +74,22 @@ def install_runtime(repo: Path) -> None:
     ]:
         target = repo / path
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text("runtime\n", encoding="utf-8")
+        if target.name == "runtime-manifest.json":
+            target.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "plugin": "codestable",
+                        "plugin_version": "1.0.0",
+                        "runtime_version": "1.0.0",
+                        "managed_paths": [".codestable/tools", ".codestable/gates", ".codestable/reference", ".codestable/hooks"],
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+        else:
+            target.write_text("runtime\n", encoding="utf-8")
 
 
 def make_feature_unit(repo: Path) -> Path:

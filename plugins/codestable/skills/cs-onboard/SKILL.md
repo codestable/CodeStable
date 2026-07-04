@@ -26,7 +26,7 @@ argument-hint: "[--mode refresh-runtime]"
 |---|---|---|
 | **空仓库** | 仓库内无 spec 类文档，也没有 `.codestable/` | 完整骨架 + 必要骨架文件 |
 | **迁移** | 仓库内有零散文档 / `docs/` / 部分 `.codestable/` 结构 | 审计报告 + 迁移映射方案（用户逐条确认）+ 落盘 |
-| **runtime refresh** | 已接入，只缺或需要升级 runtime 资产 | 覆盖刷新 `.codestable/{gates,tools,reference,hooks}` 与 `.codestable/.gitignore` |
+| **runtime refresh** | 已接入，只缺或需要升级 runtime 资产 | 同步 runtime 资产并写 `.codestable/runtime-manifest.json` |
 
 启动后**先扫一次自动判断**，不要让用户选——TA 大概率不知道项目里现有哪些文档。扫描结果模糊（如只有 README）就明说判断依据并问用户。
 
@@ -88,9 +88,9 @@ argument-hint: "[--mode refresh-runtime]"
 
 ## Runtime refresh 路径
 
-`cs-onboard --mode refresh-runtime` 可重复执行，用来把已接入项目升级到当前技能包的 runtime。它只覆盖技能包维护的资产：`.codestable/gates/`、`.codestable/tools/`、`.codestable/reference/`、`.codestable/hooks/` 和 `.codestable/.gitignore`；不重新审计 / 迁移文档，不移动用户文件，不改 `attention.md` 的实质内容。
+`cs-onboard --mode refresh-runtime` 可重复执行，用来把已接入项目升级到当前技能包的 runtime。它只覆盖技能包维护的资产：`.codestable/gates/`、`.codestable/tools/`、`.codestable/reference/`、`.codestable/hooks/`、`.codestable/.gitignore` 和 `.codestable/runtime-manifest.json`；不重新审计 / 迁移文档，不移动用户文件，不改 `attention.md` 的实质内容。
 
-执行迁移路径步骤 4 的整目录覆盖命令，清理 `__pycache__` / `*.pyc`，再汇报刷新了哪些目录。若用户明确说保留某个 tools/reference 本地改动，记录例外并提示可能导致子技能按旧口径运行。
+运行 `python3 <cs-onboard skill 目录>/tools/codestable-runtime-sync.py --root . --source-skill-dir <cs-onboard skill 目录>`。若报告 managed paths dirty，先让用户提交 / stash / 明确允许覆盖；不要静默覆盖本地改动。
 
 ---
 
@@ -111,7 +111,7 @@ argument-hint: "[--mode refresh-runtime]"
 - `.codestable/gates/`（用 `cp -rf` / `Copy-Item -Recurse -Force` 整目录拷贝当前 `cs-onboard` skill 目录的 `gates/`）
 - `.codestable/tools/`（用 `cp -rf` / `Copy-Item -Recurse -Force` 整目录拷贝当前 `cs-onboard` skill 目录的 `tools/`，**不要 Read 再 Write**）
 - `.codestable/reference/`（从当前 `cs-onboard` skill 目录的 `references/` 整目录复制）
-- `.codestable/hooks/`（同上；可选的分支保护层，见下文「分支保护 hook」）
+- `.codestable/hooks/`（同上；可选的分支保护层，见下文「分支保护 hook」），再运行 `codestable-runtime-sync.py --force` 写 `.codestable/runtime-manifest.json`
 
 `requirements/CONTEXT.md` 和 `requirements/adrs/` 不在骨架里——交给 `cs-domain` 在用户第一次需要术语 / ADR 时 lazy 创建。
 
@@ -175,6 +175,7 @@ cp -rf <cs-onboard skill 目录>/hooks/.      .codestable/hooks/
 cp -f  <cs-onboard skill 目录>/codestable.gitignore .codestable/.gitignore
 find .codestable/tools -type d -name __pycache__ -prune -exec rm -rf {} +
 find .codestable/tools -type f -name '*.pyc' -delete
+python3 <cs-onboard skill 目录>/tools/codestable-runtime-sync.py --root . --source-skill-dir <cs-onboard skill 目录> --force
 
 # Windows PowerShell
 Copy-Item -Recurse -Force <cs-onboard skill 目录>\gates\*      .codestable\gates\
@@ -184,9 +185,10 @@ Copy-Item -Recurse -Force <cs-onboard skill 目录>\hooks\*      .codestable\hoo
 Copy-Item -Force <cs-onboard skill 目录>\codestable.gitignore .codestable\.gitignore
 Remove-Item -Recurse -Force .codestable\tools\__pycache__ -ErrorAction SilentlyContinue
 Get-ChildItem .codestable\tools -Recurse -Filter *.pyc | Remove-Item -Force
+python <cs-onboard skill 目录>\tools\codestable-runtime-sync.py --root . --source-skill-dir <cs-onboard skill 目录> --force
 ```
 
-不要：Read+Write 手工搬（截断 / 改缩进）、一个个 cp（多步骤多出错）、先比 diff（规则就是无条件覆盖）。
+不要：Read+Write 手工搬（截断 / 改缩进）、一个个 cp（多步骤多出错）、先比 diff（规则就是无条件覆盖）。`codestable-runtime-sync.py` 会重做同步并写 `.codestable/runtime-manifest.json`。
 
 `<cs-onboard skill 目录>` 是已加载 `SKILL.md` 所在目录。不确定先 `ls` 定位。拷完 `ls .codestable/gates/ .codestable/tools/ .codestable/reference/` 验证。
 
@@ -268,6 +270,7 @@ ocr llm test                                             # 必须看到 ✓ Conn
 - [ ] `.codestable/.gitignore` 已安装
 - [ ] `.codestable/attention.md` 已建
 - [ ] `.codestable/gates/`、`.codestable/tools/`、`.codestable/reference/`、`.codestable/hooks/` 已从技能包复制
+- [ ] `.codestable/runtime-manifest.json` 已写入当前技能包版本
 - [ ] 已告知 owner 分支保护 hook 是可选项及如何接入 / 关闭
 - [ ] 已 `which ocr` 检测：已装则跳过安装、确认配置为 provider 体系（非旧 `llm.*` 块）；未装则询问 owner 是否安装并记录结果
 - [ ] 迁移路径：每条映射都有明确处理结果（迁移 / 保留原位）
@@ -285,8 +288,7 @@ ocr llm test                                             # 必须看到 ✓ Conn
 - **低置信度直接执行**——低 = 必须问
 - **`.codestable/gates/`、`.codestable/tools/` 和 `.codestable/reference/` 走"不覆盖"保守策略**——这些目录**必须**用技能包新版本覆盖，否则升级后用户停留在过时口径
 - **用 Read + Write 手工搬**——必须 `cp -rf` / `Copy-Item -Recurse -Force` 整目录覆盖
-- **把 `__pycache__` / `*.pyc` 带进目标项目**——复制后必须清理生成缓存，不能把本机运行产物当技能资产
-- **Glob 时忘记排除 `node_modules/` `.git/`**——会让扫描结果充斥噪声
+- **带入 `__pycache__` / `*.pyc` 或 Glob 忘排 `node_modules/` `.git/`**——清理缓存，避免噪声
 
 ---
 

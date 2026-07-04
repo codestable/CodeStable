@@ -70,7 +70,7 @@ roadmap 已确认后，子 feature design 阶段是一个连续 batch loop，不
 
 - 每轮开始、每个 child design-review 后、以及准备 final answer 前，先运行
   `python3 .codestable/tools/codestable-workflow-next.py epic --roadmap .codestable/roadmap/{slug} --json`。
-- 需要 `workflow-next` runtime capability；缺失时按 `.codestable/reference/execution-conventions.md` 的「Runtime 资产恢复」处理。
+- 依赖 CodeStable preflight 已确认的 `workflow-next` runtime capability。
 - hook 输出 `must_continue: true` 或 `final_answer_allowed: false` 时，必须按 `next_action` 继续；不得结束本轮。
 - 每轮先扫描 `{slug}-items.yaml`，找出下一个 `planned` / `in-progress` 且缺 design、checklist 或 `passed` design-review 的 item。
 - 完成某一个 child 的 design + design-review `passed` 只是内部进度；不得 final answer、不得要求用户确认该 child、不得进入实现。

@@ -26,6 +26,7 @@ from codestable_common import (
     post_baseline_implementation_changes,
     scan_backlog,
 )
+from codestable_runtime import runtime_health
 
 
 def load_inbox_tool():
@@ -97,66 +98,6 @@ def ocr_health() -> dict[str, object]:
     return info
 
 
-RUNTIME_CAPABILITIES: dict[str, list[str]] = {
-    "base": [
-        ".codestable/attention.md",
-        ".codestable/reference/execution-conventions.md",
-        ".codestable/reference/shared-conventions.md",
-        ".codestable/reference/tools.md",
-        ".codestable/tools/validate-yaml.py",
-        ".codestable/tools/search-yaml.py",
-    ],
-    "workflow-next": [
-        ".codestable/tools/codestable-workflow-next.py",
-    ],
-    "worktree-gate": [
-        ".codestable/tools/codestable-worktree-gate.py",
-        ".codestable/tools/validate-implementation-review.py",
-    ],
-    "goal-gates": [
-        ".codestable/gates/roadmap-goal-gates.yaml",
-        ".codestable/tools/codestable-scope-gate.py",
-        ".codestable/tools/codestable-dod-contract-gate.py",
-        ".codestable/tools/codestable-dod-runner.py",
-        ".codestable/tools/codestable-evidence-pack.py",
-        ".codestable/tools/codestable-goal-consistency-gate.py",
-    ],
-}
-
-
-def runtime_health(root: Path) -> dict[str, object]:
-    capabilities: dict[str, object] = {}
-    missing_all: list[str] = []
-    for name, paths in RUNTIME_CAPABILITIES.items():
-        missing = [path for path in paths if not (root / path).exists()]
-        capabilities[name] = {
-            "ok": not missing,
-            "required_paths": paths,
-            "missing": missing,
-        }
-        missing_all.extend(missing)
-
-    if not (root / ".codestable").exists():
-        status = "not-onboarded"
-        hint = "Run `cs-onboard` to create the CodeStable skeleton."
-    elif ".codestable/attention.md" in missing_all:
-        status = "onboard-incomplete"
-        hint = "Run `cs-onboard` to complete the skeleton; refresh-runtime does not create attention.md."
-    elif missing_all:
-        status = "runtime-incomplete"
-        hint = "Run `cs-onboard --mode refresh-runtime` to refresh .codestable runtime assets."
-    else:
-        status = "ok"
-        hint = "runtime assets ok"
-    return {
-        "status": status,
-        "ok": status == "ok",
-        "hint": hint,
-        "capabilities": capabilities,
-        "missing": missing_all,
-    }
-
-
 def diagnose(root: Path) -> dict[str, object]:
     root = root.resolve()
     changed = git_status(root)
@@ -165,7 +106,7 @@ def diagnose(root: Path) -> dict[str, object]:
     units = iter_units(root)
     review_findings = missing_review_findings(root, units)
     backlog = scan_backlog(root)
-    runtime = runtime_health(root)
+    runtime = runtime_health(root, source_skill_dir=Path(__file__).resolve().parents[1])
     inbox_tool = load_inbox_tool()
     inbox_report = inbox_tool.inbox(root) if inbox_tool is not None else {"items": [], "ready_to_merge": [], "stale_reports": [], "merged": []}
     post_baseline_blocks: list[dict[str, object]] = []
@@ -189,7 +130,7 @@ def diagnose(root: Path) -> dict[str, object]:
         message = (
             "CodeStable onboarding is incomplete; run `cs-onboard`."
             if runtime["status"] in {"not-onboarded", "onboard-incomplete"}
-            else "CodeStable runtime assets are incomplete; run `cs-onboard --mode refresh-runtime`."
+            else "CodeStable runtime assets are incomplete or stale; run runtime sync."
         )
         findings.append(
             Finding(

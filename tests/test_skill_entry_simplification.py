@@ -225,21 +225,27 @@ def test_onboard_runtime_refresh_is_explicit_and_repeatable() -> None:
     assert "不重新审计 / 迁移文档" in onboard
     assert "不移动用户文件" in onboard
     assert "不改 `attention.md` 的实质内容" in onboard
-    assert "`.codestable/{gates,tools,reference,hooks}`" in onboard
+    for managed_path in [".codestable/gates/", ".codestable/tools/", ".codestable/reference/", ".codestable/hooks/"]:
+        assert managed_path in onboard
+    assert ".codestable/runtime-manifest.json" in onboard
+    assert "codestable-runtime-sync.py" in onboard
 
     assert "Runtime 资产恢复" in conventions
     assert "runtime capability" in conventions
-    assert "tooling.runtime.capabilities" in conventions
+    assert ".codestable/runtime-manifest.json" in conventions
+    assert "当前插件包里的 `cs-onboard/tools/codestable-runtime-sync.py` 自动同步" in conventions
+    assert "--check --json" in conventions
+    assert "`--check` 自动同步" in conventions
+    assert "不要用\n项目 `.codestable/tools/` 里的旧副本做版本判定" in conventions
     assert "`workflow-next`" in conventions
-    assert "不要隐式调用 `cs-onboard`" in conventions
-    assert "runtime-incomplete" in conventions
-    assert "cs-onboard --mode refresh-runtime" in conventions
+    assert "managed paths 有未提交改动" in conventions
     assert "不要从技能包深层路径绕过项目副本" in tools_doc
+    assert "version-mismatch" in tools_doc
     assert "tooling.runtime.capabilities" in tools_doc
 
     for text in [feat, feat_design, epic, epic_goal]:
-        assert "workflow-next` runtime capability" in text
-        assert "Runtime 资产恢复" in text
+        assert "CodeStable preflight 已确认的 `workflow-next` runtime capability" in text
+        assert "Runtime 资产恢复" not in text
 
 
 def test_feat_and_epic_document_goal_driver_dispatch() -> None:

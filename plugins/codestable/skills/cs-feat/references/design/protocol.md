@@ -17,8 +17,7 @@
 `cs-epic` 统一交给用户确认。
 退出前必须运行 `codestable-workflow-next.py feature --epic-child-batch`，用 hook 输出确认
 本轮只能交回 `cs-epic`，不能停在单个 child design 确认。
-本阶段需要 `workflow-next` runtime capability；缺失时按
-`.codestable/reference/execution-conventions.md` 的「Runtime 资产恢复」处理。
+本阶段依赖 CodeStable preflight 已确认的 `workflow-next` runtime capability。
 
 **设计原则**：design 不是实现前的散文说明，而是后续实现和验收的可执行契约。它必须把"做好"翻译成可观察证据，把 steps 切成独立可验证单元，把风险和依赖前置暴露，并在交给用户前做一次自我批判，修掉含糊标准、混合步骤和薄弱依赖。
 

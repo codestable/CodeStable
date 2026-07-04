@@ -121,7 +121,7 @@ python3 .codestable/tools/codestable-goal-consistency-gate.py --roadmap .codesta
 `roadmap-goal-gates.yaml` 是阶段配置入口；`codestable-scope-gate.py`、`codestable-dod-runner.py` 和 `codestable-evidence-pack.py` 是 implementation.before_review 的最小 runtime。`status: protocol-only` 的 gate 只表示协议占位，由 review / QA / acceptance / audit 技能读取证据后执行，不代表已有独立脚本。
 `codestable-goal-consistency-gate.py` 是 roadmap_audit.before_complete 的 runtime，检查 goal-state、items、每个 feature 的 review/QA/acceptance/evidence/gate/DoD 产物和 checklist 状态，防止 goal-state 早于证据推进。
 `codestable-workflow-next.py` 是只读下一步解析器，输出 `next_action`、`must_continue` 和 `final_answer_allowed`；`cs-epic` / `cs-feat` 在 child design batch 边界必须按它的 JSON 继续或停 gate。
-如果项目缺少这些 runtime 脚本，说明已接入骨架过旧或不完整；不要从技能包深层路径绕过项目副本，先让用户运行 `cs-onboard --mode refresh-runtime`，刷新后再恢复原流程。
+如果项目缺少这些 runtime 脚本，说明已接入骨架过旧或不完整；不要从技能包深层路径绕过项目副本，先运行 runtime sync，刷新后再恢复原流程。
 
 ---
 
@@ -136,7 +136,7 @@ python3 .codestable/tools/codestable-doctor.py --root . --json
 JSON 关键字段：
 
 - `status`：`idle` / `planning-safe` / `dirty` / `implementation-active` / `attention-needed` / `blocked`
-- `tooling.runtime`：`.codestable` runtime 静态体检；`status=runtime-incomplete` 时运行 `cs-onboard --mode refresh-runtime`
+- `tooling.runtime`：`.codestable` runtime 静态体检；`runtime-incomplete` / `version-mismatch` 时运行 runtime sync
 - `tooling.runtime.capabilities`：`base` / `workflow-next` / `worktree-gate` / `goal-gates` 的必需文件和缺失列表
 - `checkout`：当前分支、默认分支、是否 linked worktree
 - `dirty_buckets`：按 `code` / `tests` / `docs` / `migrations` / `data` / `logs` / `codestable` / `unknown` 分组的 dirty paths
