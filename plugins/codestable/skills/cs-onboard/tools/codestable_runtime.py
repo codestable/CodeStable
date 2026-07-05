@@ -24,6 +24,8 @@ RUNTIME_CAPABILITIES: dict[str, list[str]] = {
         ".codestable/attention.md",
         ".codestable/reference/execution-conventions.md",
         ".codestable/reference/shared-conventions.md",
+        ".codestable/reference/agent-conventions.md",
+        ".codestable/reference/worktree-conventions.md",
         ".codestable/reference/tools.md",
         ".codestable/tools/validate-yaml.py",
         ".codestable/tools/search-yaml.py",

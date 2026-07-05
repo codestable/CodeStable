@@ -162,7 +162,7 @@ updated_at: "YYYY-MM-DD"
 
 ## 功能验收报告
 
-在 `status: complete` 前，按 `.codestable/reference/execution-conventions.md` 的
+在 `status: complete` 前，按 `.codestable/reference/agent-conventions.md` 的
 Task agent 选择规则启动 Task agent，做面向产品的功能验收。结果写入
 `functional-acceptance.md`。
 

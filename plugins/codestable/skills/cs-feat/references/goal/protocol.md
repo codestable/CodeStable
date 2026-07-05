@@ -9,7 +9,7 @@
 1. 确认 `{slug}-design.md` 已 `status: approved`，且 `{slug}-design-review.md` 为 `passed`。
 2. 写 `goal-plan.md`、`goal-state.yaml`、`goal-protocol.md`。
 3. 生成一条可粘贴 `/goal` 指令。
-4. 按 `.codestable/reference/execution-conventions.md` 的 Goal driver 派发规则，优先用可见 Task agent 自动执行；自动 driver 也必须用这条 literal `/goal` 指令作为初始任务。派发失败就把 `/goal` 指令交给用户。
+4. 按 `.codestable/reference/agent-conventions.md` 的 Goal driver 派发规则，优先用可见 Task agent 自动执行；自动 driver 也必须用这条 literal `/goal` 指令作为初始任务。派发失败就把 `/goal` 指令交给用户。
 
 ---
 
@@ -74,7 +74,7 @@ acceptance: ".codestable/features/YYYY-MM-DD-{slug}/{slug}-acceptance.md"
 | complete | passed | acceptance passed 且无 handoff | 打印 `CS_FEATURE_GOAL_COMPLETE` |
 | handoff | blocked | 命中 handoff 条件 | 打印 `CS_FEATURE_GOAL_HANDOFF` |
 
-每次 stage / status 变化都要立即写回 `goal-state.yaml`。driver 中断后，后续 agent 先读 `goal-state.yaml`，再按仓库事实核验对应产物是否存在且状态匹配；不一致时以仓库事实为准并修正 state。派发成功后写回 `driver_kind` / `driver_id`；重入是否重派按 `.codestable/reference/execution-conventions.md` 的 Goal driver 派发规则判定。
+每次 stage / status 变化都要立即写回 `goal-state.yaml`。driver 中断后，后续 agent 先读 `goal-state.yaml`，再按仓库事实核验对应产物是否存在且状态匹配；不一致时以仓库事实为准并修正 state。派发成功后写回 `driver_kind` / `driver_id`；重入是否重派按 `.codestable/reference/agent-conventions.md` 的 Goal driver 派发规则判定。
 
 `goal-protocol.md` 必须写明执行 loop：
 
@@ -121,7 +121,7 @@ handoff 条件：
 
 ## 派发
 
-生成 goal 包后，按 `.codestable/reference/execution-conventions.md` 的 Goal driver 派发规则执行：
+生成 goal 包后，按 `.codestable/reference/agent-conventions.md` 的 Goal driver 派发规则执行：
 
 - 有可见 Paseo subagent 或可见 native Task/Agent 时，启动 driver 并把 agent id / run id / 查看方式告诉用户。
 - driver 初始 prompt 必须是上面生成的同一条 literal `/goal` 指令；不要改写成普通 implementation 任务。

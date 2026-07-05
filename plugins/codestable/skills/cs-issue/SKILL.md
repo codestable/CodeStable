@@ -8,7 +8,7 @@ argument-hint: "[--stage report|analyze|fix] <issue>"
 
 ## 启动必读
 
-开始任何判断或动作前，先执行 CodeStable preflight：读 `.codestable/attention.md`；缺失先 `cs-onboard`；不读外部 AI 入口替代（详见 `.codestable/reference/execution-conventions.md`）。
+动作前先跑 CodeStable preflight：读 `.codestable/attention.md`（缺失先 `cs-onboard`）；不要用 `AGENTS.md`/`CLAUDE.md` 等外部入口代替它；细则见 `.codestable/reference/execution-conventions.md`。
 
 `cs-issue` 是问题修复的唯一推荐入口。它负责把问题从记录、根因分析、定点修复、验证、fix-note 和 code review 衔接到闭环。
 

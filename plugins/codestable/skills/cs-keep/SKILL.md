@@ -5,7 +5,7 @@ description: 项目知识沉淀。触发：用户说“记下来/沉淀/留个 n
 
 # cs-keep
 
-先执行 CodeStable preflight：读 `.codestable/attention.md`；缺失先 `cs-onboard`；不读外部 AI 入口替代（详见 `.codestable/reference/execution-conventions.md`）。
+动作前先跑 CodeStable preflight：读 `.codestable/attention.md`（缺失先 `cs-onboard`）；不要用 `AGENTS.md`/`CLAUDE.md` 等外部入口代替它；细则见 `.codestable/reference/execution-conventions.md`。
 
 把这次值得记的事写到 `.codestable/compound/YYYY-MM-DD-{slug}.md`：
 

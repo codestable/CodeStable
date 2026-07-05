@@ -55,6 +55,8 @@ def install_runtime(repo: Path) -> None:
         ".codestable/attention.md",
         ".codestable/reference/execution-conventions.md",
         ".codestable/reference/shared-conventions.md",
+        ".codestable/reference/agent-conventions.md",
+        ".codestable/reference/worktree-conventions.md",
         ".codestable/reference/tools.md",
         ".codestable/runtime-manifest.json",
         ".codestable/tools/validate-yaml.py",

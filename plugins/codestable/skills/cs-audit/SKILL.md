@@ -7,7 +7,7 @@ description: 系统审计。触发：审查系统、扫描 bug/安全/性能/架
 
 ## 启动必读
 
-开始任何判断或动作前，先执行 CodeStable preflight：读 `.codestable/attention.md`；缺失先 `cs-onboard`；不读外部 AI 入口替代（详见 `.codestable/reference/execution-conventions.md`）。
+动作前先跑 CodeStable preflight：读 `.codestable/attention.md`（缺失先 `cs-onboard`）；不要用 `AGENTS.md`/`CLAUDE.md` 等外部入口代替它；细则见 `.codestable/reference/execution-conventions.md`。
 
 `cs-issue` 等你报 bug，`cs-refactor` 等你指优化点，`cs-keep` 等你说"这事记一下"——但"我也不知道哪有问题，你先扫一遍看看"这个诉求没人接。`cs-audit` 补上这块：**在用户限定的范围内主动扫描，产出一份按严重度 × 性质交叉分类的发现清单**。
 

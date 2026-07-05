@@ -80,6 +80,9 @@ CodeStable 把常见开发活动各配一套流程，产物放进统一的 `.cod
 ## 进一步参考
 
 - `.codestable/reference/shared-conventions.md` — 目录结构、frontmatter 口径、checklist 生命周期和收尾约定。
+- `.codestable/reference/execution-conventions.md` — CodeStable preflight、runtime 恢复和按需规则索引。
+- `.codestable/reference/agent-conventions.md` — Task agent 选择、生命周期和 Goal driver 派发。
+- `.codestable/reference/worktree-conventions.md` — 执行 worktree、commit、finish 和 context packet 约定。
 - `.codestable/reference/tools.md` — `search-yaml.py` / `validate-yaml.py` 用法。
 - `.codestable/reference/maintainer-notes.md` — 断点恢复和新增子工作流登记。
 

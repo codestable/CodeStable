@@ -5,7 +5,7 @@ description: Goal 自主达成。触发：明确终点/验收/预算、持续迭
 
 # cs-goal
 
-开始任何判断或动作前，先执行 CodeStable preflight：读 `.codestable/attention.md`；缺失先 `cs-onboard`；不读外部 AI 入口替代（详见 `.codestable/reference/execution-conventions.md`）。
+动作前先跑 CodeStable preflight：读 `.codestable/attention.md`（缺失先 `cs-onboard`）；不要用 `AGENTS.md`/`CLAUDE.md` 等外部入口代替它；细则见 `.codestable/reference/execution-conventions.md`。
 
 `cs-goal` 处理有界 goal：owner 给出起点和期望终态，CodeStable 先做轻量
 interview / grill，动手前写起点报告，然后自主实现、验证、迭代；完成前必须请求
@@ -29,8 +29,9 @@ iteration 中创建或引用对应 feature / issue / refactor 产物。
 3. 读取本技能的 `reference.md`。
 4. 如果存在，读取 `.codestable/reference/goal-conventions.md`。
 5. 如果存在，读取 `.codestable/reference/approval-conventions.md`。
-6. 代码编辑、review、commit、finish 或 merge 前，如果存在，读取
-   `.codestable/reference/execution-conventions.md`。
+6. 代码编辑、commit、finish 或 merge 前，如果存在，读取
+   `.codestable/reference/worktree-conventions.md`；Task agent review / 验收前读取
+   `.codestable/reference/agent-conventions.md`。
 7. 检查 `.codestable/goals/` 中是否已有匹配的 active goal。
 8. 当 goal 指向已有领域时，搜索 `.codestable/compound/` 和相关 feature / issue /
    refactor 文档。
@@ -158,7 +159,7 @@ unresolved assumptions 和 next action。保持简洁，只在 goal 边界或状
 把 `state.yaml.status` 改为 `complete` 前：
 
 1. 用 fresh evidence 跑正常验证。
-2. 按 `.codestable/reference/execution-conventions.md` 的 Task agent 选择规则启动
+2. 按 `.codestable/reference/agent-conventions.md` 的 Task agent 选择规则启动
    Task agent，对记录的 owner acceptance criteria 和实际产品 / 产物行为做功能验收。
 3. 把结果写入 `functional-acceptance.md`，包括 reviewer、scope、acceptance checks、
    functional evidence、verdict、residual risks 和 follow-up。

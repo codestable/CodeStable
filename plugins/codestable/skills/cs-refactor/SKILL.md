@@ -8,7 +8,7 @@ argument-hint: "[--stage scan|design|apply] [--mode standard|fastforward] <targe
 
 ## 启动必读
 
-开始任何判断或动作前，先执行 CodeStable preflight：读 `.codestable/attention.md`；缺失先 `cs-onboard`；不读外部 AI 入口替代（详见 `.codestable/reference/execution-conventions.md`）。
+动作前先跑 CodeStable preflight：读 `.codestable/attention.md`（缺失先 `cs-onboard`）；不要用 `AGENTS.md`/`CLAUDE.md` 等外部入口代替它；细则见 `.codestable/reference/execution-conventions.md`。
 
 `cs-refactor` 是重构的唯一推荐入口。它统一判定标准模式和 fastforward 模式，核心底线是行为等价：一旦会改变外部可观察行为，就转 `cs-feat` 或 `cs-issue`。
 

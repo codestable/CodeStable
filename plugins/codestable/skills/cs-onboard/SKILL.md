@@ -62,7 +62,8 @@ argument-hint: "[--mode refresh-runtime]"
 └── reference/                  跨子技能共享参考（onboard 整目录释放）
     ├── shared-conventions.md / tools.md / maintainer-notes.md
     ├── approval-conventions.md / goal-conventions.md / execution-conventions.md
-    └── spec-governance-tools.md / branch-guard-hooks.md / tools-context.md
+    ├── agent-conventions.md / worktree-conventions.md / tools-context.md
+    └── spec-governance-tools.md / branch-guard-hooks.md
 ```
 
 > `gates/`、`tools/` 与 `reference/` 由 onboard 整目录复制，自动带上 workflow gate 配置、gate 工具与共享口径。`hooks/` 是可选的分支保护层，详见下文「分支保护 hook」。
@@ -283,7 +284,7 @@ ocr llm test                                             # 必须看到 ✓ Conn
 
 - **未经确认就移动 / 删除已有文件**——迁移核心原则是用户拍板
 - **替用户填 attention.md 实质内容**——必须项目 owner 来定，AI 只提供模板
-- **重新引入 `AGENTS.md` / `CLAUDE.md` 兼容路径**——CodeStable 的启动注意事项入口固定为 `.codestable/attention.md`
+- **把 `AGENTS.md` / `CLAUDE.md` 当作 attention 替代源**——CodeStable 的启动注意事项入口固定为 `.codestable/attention.md`
 - **建完骨架立刻开始 feature/issue**——onboard 是"搭环境"不是"开始干活"
 - **低置信度直接执行**——低 = 必须问
 - **`.codestable/gates/`、`.codestable/tools/` 和 `.codestable/reference/` 走"不覆盖"保守策略**——这些目录**必须**用技能包新版本覆盖，否则升级后用户停留在过时口径

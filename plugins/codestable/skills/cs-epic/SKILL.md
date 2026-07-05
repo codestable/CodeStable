@@ -8,7 +8,7 @@ argument-hint: "[--stage planning|review|goal-package] <epic>"
 
 ## 启动必读
 
-开始任何判断或动作前，先执行 CodeStable preflight：读 `.codestable/attention.md`；缺失先 `cs-onboard`；不读外部 AI 入口替代（详见 `.codestable/reference/execution-conventions.md`）。
+动作前先跑 CodeStable preflight：读 `.codestable/attention.md`（缺失先 `cs-onboard`）；不要用 `AGENTS.md`/`CLAUDE.md` 等外部入口代替它；细则见 `.codestable/reference/execution-conventions.md`。
 
 `cs-epic` 是大需求端到端入口。用户文档统一叫 epic；为兼容历史产物，第一版内部目录、frontmatter 和工具仍使用 `roadmap`。用户确认 roadmap 和所有子 feature design 后，默认生成 goal 包并尝试通过可见 Task agent goal driver 长程执行；派发失败则打印 `/goal` 指令让用户粘贴执行。
 
@@ -83,7 +83,7 @@ roadmap 已确认后，子 feature design 阶段是一个连续 batch loop，不
 - planning：`references/planning/protocol.md`，必要时 `references/planning/reference.md`、`references/planning/support/codebase-design.md`
 - review：`references/review/protocol.md`
 - goal-package：`references/goal/protocol.md`，并复制 `references/goal/support/protocol*.md` 和 `references/goal/support/goal-command-template.md`
-- goal driver：`.codestable/reference/execution-conventions.md` 的 Goal driver 派发规则
+- goal driver：`.codestable/reference/agent-conventions.md` 的 Goal driver 派发规则
 - child feature：通过 `cs-feat` 主入口推进，不直接调用旧阶段技能；调用时带内部上下文 `epic_child_batch: true`，让单 feature 人工 checkpoint 推迟到 `cs-epic` 的批量确认
 
 ---

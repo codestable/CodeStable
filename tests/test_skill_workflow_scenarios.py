@@ -130,6 +130,8 @@ def init_isolated_repo(tmp_path: Path) -> Path:
     git(repo, "config", "user.email", "workflow-test@example.invalid")
     write(repo / ".codestable/attention.md", "# Attention\n\n- Report language: zh.\n")
     write(repo / ".codestable/reference/execution-conventions.md", skill_text("cs-onboard", "references/execution-conventions.md"))
+    write(repo / ".codestable/reference/agent-conventions.md", skill_text("cs-onboard", "references/agent-conventions.md"))
+    write(repo / ".codestable/reference/worktree-conventions.md", skill_text("cs-onboard", "references/worktree-conventions.md"))
     write(repo / "src/app.py", "def hello():\n    return 'hello'\n")
     git(repo, "add", ".")
     git(repo, "commit", "-m", "baseline")
@@ -628,11 +630,15 @@ def test_workflow_runtime_details_are_centralized_in_preflight() -> None:
         "Runtime 资产恢复",
         "runtime capability",
         ".codestable/runtime-manifest.json",
-        "当前插件包里的 `cs-onboard/tools/codestable-runtime-sync.py` 自动同步",
+        "用当前插件包里的",
+        "`cs-onboard/tools/codestable-runtime-sync.py` 自动同步",
         "--check --json",
-        "`--check` 自动同步",
+        "去掉 `--check`",
         "`workflow-next`",
-        "managed paths 有未提交改动",
+        "managed-paths-dirty",
+        "不自动覆盖",
+        ".codestable/reference/agent-conventions.md",
+        ".codestable/reference/worktree-conventions.md",
     )
     assert_doc_contains(
         "cs-feat",
@@ -655,10 +661,10 @@ def test_workflow_runtime_details_are_centralized_in_preflight() -> None:
 def test_goal_driver_selection_requires_visibility_and_nested_reviewer() -> None:
     assert_doc_contains(
         "cs-onboard",
-        "references/execution-conventions.md",
+        "references/agent-conventions.md",
         "宿主显式暴露用户可见的 run id",
         "宿主显式支持 driver 在其运行环境内再启动独立 Task agent reviewer",
-        "直接回退打印 `/goal`",
+        "回退打印 fenced",
     )
 
     assert goal_driver_decision(paseo=True) == Action("dispatch", "paseo")
@@ -671,13 +677,13 @@ def test_goal_driver_selection_requires_visibility_and_nested_reviewer() -> None
 def test_task_agent_lifecycle_closes_consumed_agents_and_cleans_only_on_capacity_failure() -> None:
     assert_doc_contains(
         "cs-onboard",
-        "references/execution-conventions.md",
-        "## Task agent 生命周期",
+        "references/agent-conventions.md",
+        "## Task Agent 生命周期",
         "先消费并落盘结果，再调用宿主提供的 `close_agent`",
         "不要关闭 still-running、pending、permission-needed",
         "不要预先批量清理旧 agent",
         "`agent thread limit reached`",
-        "按最老优先关闭一小批，再重试本次 create/spawn 一次",
+        "按最老优先关闭一小批，再重试本次 create / spawn 一次",
     )
     assert_doc_contains(
         "cs-goal",

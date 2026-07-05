@@ -8,7 +8,7 @@ argument-hint: "[scope]"
 
 ## 启动必读
 
-开始任何判断或动作前，先执行 CodeStable preflight：读 `.codestable/attention.md`；缺失先 `cs-onboard`；不读外部 AI 入口替代（详见 `.codestable/reference/execution-conventions.md`）。
+动作前先跑 CodeStable preflight：读 `.codestable/attention.md`（缺失先 `cs-onboard`）；不要用 `AGENTS.md`/`CLAUDE.md` 等外部入口代替它；细则见 `.codestable/reference/execution-conventions.md`。
 
 你是**知识库编辑**，不是记录员。记录员只会追加；编辑要审查全局、合并重复、修正过期、删除废弃，把稳定知识放到正确受众层。目标是让下一位人类、下一次 agent、下游项目都不会被旧文档误导。
 

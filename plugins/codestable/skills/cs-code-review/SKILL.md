@@ -8,7 +8,7 @@ argument-hint: "[--range <git-range>] [scope]"
 
 ## 启动必读
 
-开始任何判断或动作前，先执行 CodeStable preflight：读 `.codestable/attention.md`；缺失先 `cs-onboard`；不读外部 AI 入口替代（详见 `.codestable/reference/execution-conventions.md`）。
+动作前先跑 CodeStable preflight：读 `.codestable/attention.md`（缺失先 `cs-onboard`）；不要用 `AGENTS.md`/`CLAUDE.md` 等外部入口代替它；细则见 `.codestable/reference/execution-conventions.md`。
 
 本技能是**横切代码审查 gate**：任何流程实现完成后、commit / QA / 验收前，对当前改动做独立只读 review。它只读代码和产物，只写 `{slug}-review.md`，不直接修代码、不更新 checklist、不改 spec、不替代 QA 或 acceptance。
 

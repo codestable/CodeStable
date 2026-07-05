@@ -233,12 +233,15 @@ def test_onboard_runtime_refresh_is_explicit_and_repeatable() -> None:
     assert "Runtime 资产恢复" in conventions
     assert "runtime capability" in conventions
     assert ".codestable/runtime-manifest.json" in conventions
-    assert "当前插件包里的 `cs-onboard/tools/codestable-runtime-sync.py` 自动同步" in conventions
+    assert "用当前插件包里的\n`cs-onboard/tools/codestable-runtime-sync.py` 自动同步" in conventions
     assert "--check --json" in conventions
-    assert "`--check` 自动同步" in conventions
+    assert "去掉 `--check`" in conventions
     assert "不要用\n项目 `.codestable/tools/` 里的旧副本做版本判定" in conventions
     assert "`workflow-next`" in conventions
-    assert "managed paths 有未提交改动" in conventions
+    assert "managed-paths-dirty" in conventions
+    assert "不自动覆盖" in conventions
+    assert ".codestable/reference/agent-conventions.md" in conventions
+    assert ".codestable/reference/worktree-conventions.md" in conventions
     assert "不要从技能包深层路径绕过项目副本" in tools_doc
     assert "version-mismatch" in tools_doc
     assert "tooling.runtime.capabilities" in tools_doc
@@ -252,7 +255,7 @@ def test_feat_and_epic_document_goal_driver_dispatch() -> None:
     feat = (SKILLS / "cs-feat/SKILL.md").read_text(encoding="utf-8")
     epic = (SKILLS / "cs-epic/SKILL.md").read_text(encoding="utf-8")
     router = (SKILLS / "cs/SKILL.md").read_text(encoding="utf-8")
-    conventions = (SKILLS / "cs-onboard/references/execution-conventions.md").read_text(encoding="utf-8")
+    agent_conventions = (SKILLS / "cs-onboard/references/agent-conventions.md").read_text(encoding="utf-8")
     feat_goal = (SKILLS / "cs-feat/references/goal/protocol.md").read_text(encoding="utf-8")
     epic_goal = (SKILLS / "cs-epic/references/goal/protocol.md").read_text(encoding="utf-8")
 
@@ -260,8 +263,8 @@ def test_feat_and_epic_document_goal_driver_dispatch() -> None:
     assert "references/goal/protocol.md" in feat
     assert "goal 包、impl" in router
     assert "可见 driver 长程执行" in router
-    assert "Goal driver" in conventions
-    assert "可见 Task agent" in conventions
+    assert "Goal Driver 派发" in agent_conventions
+    assert "可见 Task agent" in agent_conventions
     assert "派发失败" in feat_goal
     assert "派发失败" in epic_goal
     assert "fenced `/goal`" in feat_goal
@@ -272,7 +275,7 @@ def test_goal_mode_overrides_stage_user_waits() -> None:
     impl = (SKILLS / "cs-feat/references/implementation/protocol.md").read_text(encoding="utf-8")
     impl_reference = (SKILLS / "cs-feat/references/implementation/support/reference.md").read_text(encoding="utf-8")
     accept = (SKILLS / "cs-feat/references/acceptance/protocol.md").read_text(encoding="utf-8")
-    conventions = (SKILLS / "cs-onboard/references/execution-conventions.md").read_text(encoding="utf-8")
+    agent_conventions = (SKILLS / "cs-onboard/references/agent-conventions.md").read_text(encoding="utf-8")
     feat_goal = (SKILLS / "cs-feat/references/goal/protocol.md").read_text(encoding="utf-8")
     epic_goal_support = (SKILLS / "cs-epic/references/goal/support/protocol.md").read_text(encoding="utf-8")
     epic_goal = (SKILLS / "cs-epic/references/goal/protocol.md").read_text(encoding="utf-8")
@@ -286,11 +289,11 @@ def test_goal_mode_overrides_stage_user_waits() -> None:
     # acceptance 的 goal 例外要同时覆盖单 feature goal 和 epic goal。
     assert "`cs-feat` / `cs-epic` 的 goal 协议" in accept
     # 原生子 agent 当 driver 前必须确认它还能启动独立 reviewer；不能就回退打印 /goal。
-    assert "只有同时满足下面两条才可用" in conventions
-    assert "不能靠 driver 自审" in conventions
+    assert "只有同时满足两条才可用" in agent_conventions
+    assert "不能靠 driver 自审" in agent_conventions
     # 自动 driver 也必须以 literal /goal 启动，不能退化成普通 implementation prompt。
-    assert "literal `/goal` 指令作为 driver 初始任务" in conventions
-    assert "普通“执行/实现这个 feature”" in conventions
+    assert "literal `/goal` 指令作为 driver 初始任务" in agent_conventions
+    assert "普通“执行/实现这个 feature”" in agent_conventions
     assert "driver 初始 prompt 必须是上面生成的同一条 literal `/goal` 指令" in feat_goal
     assert "literal `/goal` 指令作为 driver 初始任务启动 driver" in epic_goal
     # 单 feature goal 包必须带接管条款和 handoff 标记，与 epic goal 包对齐。
@@ -306,8 +309,8 @@ def test_goal_mode_overrides_stage_user_waits() -> None:
     assert "review、blocking 或用户确认 checkpoint" in readme
     assert "review, blocking, or user-confirmation checkpoints" in readme_en
     # 重入不重复派发：派发成功要写回 driver 标识，重入按派发规则判定。
-    assert "driver_kind" in conventions
-    assert "不重复派发" in conventions
+    assert "driver_kind" in agent_conventions
+    assert "不重复派发" in agent_conventions
     assert "driver_kind: none" in feat_goal
     assert "driver_kind: none" in epic_goal
 
@@ -374,8 +377,8 @@ def test_epic_defers_child_design_approval_to_batch_checkpoint() -> None:
 
 
 CANONICAL_PREFLIGHT = (
-    "开始任何判断或动作前，先执行 CodeStable preflight：读 `.codestable/attention.md`；"
-    "缺失先 `cs-onboard`；不读外部 AI 入口替代（详见 `.codestable/reference/execution-conventions.md`）。"
+    "动作前先跑 CodeStable preflight：读 `.codestable/attention.md`（缺失先 `cs-onboard`）；"
+    "不要用 `AGENTS.md`/`CLAUDE.md` 等外部入口代替它；细则见 `.codestable/reference/execution-conventions.md`。"
 )
 
 PREFLIGHT_CANONICAL_SKILLS = [
@@ -410,7 +413,7 @@ def test_public_skills_run_codestable_preflight() -> None:
     # cs-note 是约定认可的唯一例外：attention.md 缺失时可先建骨架再写入。
     note = (SKILLS / "cs-note/SKILL.md").read_text(encoding="utf-8")
     assert "只有 attention.md 缺失时" in note
-    assert "不要回退到外部 AI 入口文件" in note
+    assert "不要用 `AGENTS.md` / `CLAUDE.md` 等外部入口代替它" in note
 
     # 兼容入口保持薄壳，不自带 preflight；preflight 由主入口协议执行。
     for skill in COMPATIBILITY_ENTRIES:

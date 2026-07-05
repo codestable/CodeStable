@@ -8,7 +8,7 @@ argument-hint: "[--stage design|design-review|impl|qa|accept|goal-package] [--mo
 
 ## 启动必读
 
-开始任何判断或动作前，先执行 CodeStable preflight：读 `.codestable/attention.md`；缺失先 `cs-onboard`；不读外部 AI 入口替代（详见 `.codestable/reference/execution-conventions.md`）。
+动作前先跑 CodeStable preflight：读 `.codestable/attention.md`（缺失先 `cs-onboard`）；不要用 `AGENTS.md`/`CLAUDE.md` 等外部入口代替它；细则见 `.codestable/reference/execution-conventions.md`。
 
 `cs-feat` 是 feature 的唯一推荐入口。用户只需要持续调用本技能；本技能根据仓库事实恢复当前阶段，并在 design gate 停下来等用户确认。用户确认 design 后，默认生成单 feature goal 包并尝试通过可见 Task agent goal driver 长程执行；派发失败则打印 `/goal` 指令让用户粘贴执行。
 

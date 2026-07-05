@@ -8,7 +8,7 @@ argument-hint: "[request]"
 
 ## 启动必读
 
-开始任何判断或动作前，先执行 CodeStable preflight：读 `.codestable/attention.md`；缺失先 `cs-onboard`；不读外部 AI 入口替代（详见 `.codestable/reference/execution-conventions.md`）。
+动作前先跑 CodeStable preflight：读 `.codestable/attention.md`（缺失先 `cs-onboard`）；不要用 `AGENTS.md`/`CLAUDE.md` 等外部入口代替它；细则见 `.codestable/reference/execution-conventions.md`。
 
 `cs` 是轻量分诊入口，只把开放式诉求路由到推荐主入口。它不写 spec、不改 `.codestable/` 产物、不替下游流程执行阶段。
 

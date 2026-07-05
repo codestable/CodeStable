@@ -194,7 +194,7 @@ features:
 
 确认通过后，读取 `support/goal-command-template.md`，替换 `{slug}`，准备一条 fenced `/goal`。
 
-然后按 `.codestable/reference/execution-conventions.md` 的 Goal driver 派发规则执行：
+然后按 `.codestable/reference/agent-conventions.md` 的 Goal driver 派发规则执行：
 
 - 有可见 Paseo subagent 或可见 native Task/Agent 时，用上面生成的同一条 literal `/goal` 指令作为 driver 初始任务启动 driver，并把 agent id / run id / 查看方式告诉用户。
 - driver 不可见、不可追踪、缺授权或派发失败时，不启动后台任务，只打印 fenced `/goal`，让用户粘贴到新的 agent 会话执行。

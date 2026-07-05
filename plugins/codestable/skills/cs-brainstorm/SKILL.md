@@ -34,7 +34,7 @@ brainstorm 是"讨论层"统一入口。
 
 每次都做：
 
-1. **扫一眼仓库**——先执行 CodeStable preflight：读 `.codestable/attention.md`；缺失先 `cs-onboard`；不读外部 AI 入口替代（详见 `.codestable/reference/execution-conventions.md`）；Glob `.codestable/` 发现 features / roadmap / brainstorms / compound / requirements，读 `requirements/CONTEXT.md` 拿术语、扫 `requirements/adrs/` 看已拍板决策、看已有 feature 和 roadmap 和 brainstorm、`grep -r` 关键词 compound/ 看有没有相关坑；Grep 用户描述里的关键词防术语冲突
+1. **扫一眼仓库**——动作前先跑 CodeStable preflight：读 `.codestable/attention.md`（缺失先 `cs-onboard`）；不要用 `AGENTS.md`/`CLAUDE.md` 等外部入口代替它；细则见 `.codestable/reference/execution-conventions.md`；Glob `.codestable/` 发现 features / roadmap / brainstorms / compound / requirements，读 `requirements/CONTEXT.md` 拿术语、扫 `requirements/adrs/` 看已拍板决策、看已有 feature 和 roadmap 和 brainstorm、`grep -r` 关键词 compound/ 看有没有相关坑；Grep 用户描述里的关键词防术语冲突
 2. **是不是接续之前的工作**：
    - `features/` 下有名字相近的 brainstorm？`roadmap/` 下有相近子目录？`brainstorms/` 下有相关创意记录？
    - 没有 → 当新讨论

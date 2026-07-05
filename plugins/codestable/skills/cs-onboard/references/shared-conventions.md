@@ -82,7 +82,7 @@ onboard 完成后骨架（`cs-onboard` 负责搭建）：
 - 沉淀类：`compound/YYYY-MM-DD-{slug}.md`，日期用**归档当天**，纯 markdown 无 frontmatter（cs-keep 产出）
 - 领域术语：`requirements/CONTEXT.md`（单 context）或 `requirements/{ctx}/CONTEXT.md`（多 context）；cs-domain lazy 创建
 - 架构决策：`requirements/adrs/NNN-{slug}.md`（系统级）或 `requirements/{ctx}/adrs/NNN-{slug}.md`（子 context）；3 位编号，cs-domain 产出
-- 项目注意事项入口固定为 `.codestable/attention.md`，所有 CodeStable 子技能启动前必须读取；不再兼容 `AGENTS.md` / `CLAUDE.md` 等外部入口
+- 项目注意事项入口固定为 `.codestable/attention.md`，所有 CodeStable 子技能启动前必须读取；不要用 `AGENTS.md` / `CLAUDE.md` 等外部入口代替它
 
 ### 单 context ↔ 多 context 拓扑
 
@@ -279,6 +279,6 @@ feature-design / issue-analyze / issue-fix 动手前到 `.codestable/compound/` 
 
 ## 9. 执行约定与 worktree
 
-实现执行拓扑、worktree gate、code review、finish gate、context packet 和 Task agent 选择拆在 `.codestable/reference/execution-conventions.md`，approval 报告口径在 `approval-conventions.md`。
+preflight 和 runtime 恢复在 `.codestable/reference/execution-conventions.md`；worktree、finish 和 context packet 在 `worktree-conventions.md`；Task agent 与 Goal driver 在 `agent-conventions.md`；approval 报告口径在 `approval-conventions.md`。
 
 - **不要让 AI 在主协调检出里 `git switch` / `git checkout`**——需要执行分支时用 git worktree；可用 `branch-guard-hooks.md` 配 command hook 硬拦在 `main`/`master` 上的直接实现。

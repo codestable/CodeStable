@@ -8,7 +8,7 @@ argument-hint: "[--since-days N] [--session current|<id-or-path>] [--github] <fe
 
 ## 启动必读
 
-开始任何判断或动作前，先执行 CodeStable preflight：读 `.codestable/attention.md`；缺失先 `cs-onboard`；不读外部 AI 入口替代（详见 `.codestable/reference/execution-conventions.md`）。
+动作前先跑 CodeStable preflight：读 `.codestable/attention.md`（缺失先 `cs-onboard`）；不要用 `AGENTS.md`/`CLAUDE.md` 等外部入口代替它；细则见 `.codestable/reference/execution-conventions.md`。
 
 `cs-feedback` 收集用户使用 CodeStable skills 的体验问题，把“这次哪里跑偏”转成可修复的维护 issue。它不修业务代码，也不直接改其他 skill；它只产出反馈报告，并在用户确认后尽量帮忙上报 GitHub。
 

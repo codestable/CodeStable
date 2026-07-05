@@ -8,7 +8,7 @@ argument-hint: "[--mode tutorial|api] <topic>"
 
 ## 启动必读
 
-开始任何判断或动作前，先执行 CodeStable preflight：读 `.codestable/attention.md`；缺失先 `cs-onboard`；不读外部 AI 入口替代（详见 `.codestable/reference/execution-conventions.md`）。
+动作前先跑 CodeStable preflight：读 `.codestable/attention.md`（缺失先 `cs-onboard`）；不要用 `AGENTS.md`/`CLAUDE.md` 等外部入口代替它；细则见 `.codestable/reference/execution-conventions.md`。
 
 `cs-docs` 是对外文档写作的唯一推荐入口，只覆盖开发者/用户指南和 API 参考。阶段收尾、知识库卫生、agent 入口同步仍走独立的 `cs-docs-neat`。
 
