@@ -51,7 +51,7 @@ CodeStable 不是所有事情都进 epic。小 bug、小功能、局部 chore、
 判断出口时使用：
 
 - **独立 issue**：目标、范围、验证能说清；不需要长期变更上下文；不依赖一组未定架构取舍。
-- **探索型 issue**：目标是摸清 project spec 的某个缺口，在 issue 内形成当前结论、当前理解和证据索引，关闭时由人确认是否合并进 project spec。
+- **探索型 issue**：目标是摸清 project spec 的某个缺口，在 issue 工作区内形成一组候选文章，关闭时由人确认并按 spec 规范合并进 project spec。
 - **新 epic**：大需求、跨模块、会分多批 issue、规格可能反复变化、需要一份 epic spec 记录当前方案和架构考量。
 - **已有 epic 的本轮 issue**：epic spec 已有“本轮可计划范围”，只需要切出可关闭 issue。
 
@@ -70,7 +70,7 @@ CodeStable 不是所有事情都进 epic。小 bug、小功能、局部 chore、
 - refactor：`templates/entities/refactor-issue.md`
 - chore：`templates/entities/chore-issue.md`
 
-探索型 issue 也写入 `.cs/issues/YYYY/MM/DD/open-{短语}.md`，但模板专用；必须使用 `cs-spec-explore/templates/entities/explore-issue.md`，由 `cs-spec-explore` 执行和补文档。
+探索型 issue 写入目录 `.cs/issues/YYYY/MM/DD/open-{短语}/`，模板专用；入口 `index.md` 必须使用 `cs-spec-explore/templates/entities/explore-index.md`，候选文章使用 `cs-spec-explore/templates/entities/explore-article.md`，由 `cs-spec-explore` 执行和补文档。
 
 epic issue 也按其场景选择 bug / feature / refactor / chore 模板，写入 `.cs/issues/YYYY/MM/DD/open-{短语}.md`，frontmatter 的 `epic` 填对应 `.cs/epics/YYYY/MM/DD/{短语}/` 路径，并在“归属”里写相关 epic spec。
 

@@ -1,4 +1,4 @@
 interface:
   display_name: "CS Spec Explore"
   short_description: "用探索型 issue 补 project spec 缺口"
-  default_prompt: "Use $cs-spec-explore to create or execute an exploratory issue, write the investigation document inside that issue, and prepare confirmed conclusions for later project spec merge without directly editing .cs/spec."
+  default_prompt: "Use $cs-spec-explore to align with the user, create or execute an exploratory issue workspace, write candidate spec articles inside it, and prepare confirmed articles for later project spec merge without directly editing .cs/spec."

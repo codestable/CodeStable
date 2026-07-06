@@ -176,7 +176,7 @@ Issues under an epic close back into the epic spec first. Only when a human conf
 
 Small bugs, small features, and local chores do not need an epic; they can become independent issues directly. Large needs enter an epic, then get split from the epic spec in batches. An issue carries one verifiable change, not the whole requirement world.
 
-The close rule is simple: independent issue → project spec; exploratory issue → human-confirmed issue document merge into project spec; epic issue → epic spec; user-confirmed epic close → project spec.
+The close rule is simple: independent issue → project spec; exploratory issue → human-confirmed candidate articles merged into project spec according to spec rules; epic issue → epic spec; user-confirmed epic close → project spec.
 
 ---
 
@@ -193,7 +193,7 @@ The close rule is simple: independent issue → project spec; exploratory issue 
 <tr><td><b>Design entry</b></td><td><code>cs-design</code></td><td>Write a tutorial-style implementation design for one issue: functional split, request/data flow, design focus points, boundaries, change route, validation, and detailed test strategy when needed</td></tr>
 <tr><td><b>Execution entry</b></td><td><code>cs-do</code></td><td>Implement from the issue design, verify, and write back the execution record</td></tr>
 <tr><td><b>Close entry</b></td><td><code>cs-close</code></td><td>Close an issue or epic, sinking conclusions to project/epic specs by ownership, and commit related code plus .cs writebacks</td></tr>
-<tr><td><b>System understanding</b></td><td><code>cs-spec-explore</code></td><td>Turn project-spec gaps into exploratory issues, write the discussable document inside the issue, then merge on confirmed close</td></tr>
+<tr><td><b>System understanding</b></td><td><code>cs-spec-explore</code></td><td>Turn project-spec gaps into exploratory issue workspaces, write discussable candidate articles, then merge on confirmed close</td></tr>
 <tr><td rowspan="2"><b>Support files</b></td><td><code>cs-note</code></td><td>Sink pitfalls, tricks, research, and command traps into <code>notes/</code>, or one-line startup facts into <code>facts.md</code></td></tr>
 <tr><td><code>cs-maketools</code></td><td>Let a human guide AI through an unknown workflow, then sink notes, a facts reference, and optional tools</td></tr>
 <tr><td rowspan="4"><b>Principles</b></td><td><code>cs-how-codedesign</code></td><td>Design module interfaces and capability ownership by making modules deep and placing seams where change is real</td></tr>
@@ -234,7 +234,7 @@ CodeStable isn't a single linear pipeline — it's a **project spec + epic spec 
    cs-design ──▶ design one issue's implementation (functional split / request-data flow / design focus points / boundaries / change route / validation; detailed test strategy when needed)
    cs-do     ──▶ implement, verify, and write back the execution record
    cs-close  ──▶ independent issue → project spec; epic issue → epic spec; epic close → project spec
-   cs-spec-explore ─▶ exploratory issue: issue document → human-confirmed close → project spec
+   cs-spec-explore ─▶ exploratory issue workspace: candidate articles → human-confirmed close → project spec
 ═══════════════════════════════════════════════════════════════
             ▼ any time something is worth recording ▼
  Support files · knowledge sink (compounding engineering)
@@ -265,8 +265,9 @@ your-project/
 │   │       ├── index.md
 │   │       └── ...           # Recursive reading path; each layer may have its own index.md
 │   │
-│   ├── issues/               # Closeable work items, sharded by creation date, including feature/bug/chore/explore
-│   │   └── YYYY/MM/DD/{status}-{短语}.md
+│   ├── issues/               # Closeable work items, sharded by creation date
+│   │   ├── YYYY/MM/DD/{status}-{短语}.md   # ordinary issues
+│   │   └── YYYY/MM/DD/{status}-{短语}/     # exploratory issue workspaces
 │   ├── epics/                # Large-change lines
 │   │   └── YYYY/MM/DD/{短语}/
 │   │       ├── index.md      # Epic orientation, state, and issue list
@@ -286,8 +287,8 @@ your-project/
 - All local artifacts aggregate under `.cs/`, so "how did we handle that change last time" is three seconds away
 - `spec/` is the project spec, organizing mainline requirements, architecture considerations, shared language, and reading paths for a developer entering the project
 - `epics/` are large-change lines; each epic spec carries additions, changes, and reversals until the epic closes and graduates back into the project spec
-- `issues/` can carry exploratory work; the exploration document stays in the issue for discussion, then graduated conclusions merge into project spec after human-confirmed close
-- Talks and notes default to `YYYY/MM/DD/{短语}.md` date shards, epics use `YYYY/MM/DD/{短语}/` workspaces, while issues use `YYYY/MM/DD/{status}-{短语}.md`; search recursively under each area
+- `issues/` can carry exploratory work; candidate articles, user corrections, and evidence stay in the issue workspace for discussion, then merge into project spec according to spec rules after human-confirmed close
+- Talks and notes default to `YYYY/MM/DD/{短语}.md` date shards, epics use `YYYY/MM/DD/{短语}/` workspaces, ordinary issues use `YYYY/MM/DD/{status}-{短语}.md`, and exploratory issues use `YYYY/MM/DD/{status}-{短语}/` workspaces; search recursively under each area
 - `notes/` is the knowledge notes area — plain markdown, no frontmatter, full-text searchable. Daily "remember this" work goes through `cs-note`
 - `cs-maketools` turns human-guided unknown workflows into `notes/`, adds a `facts.md` reference, and only writes `tools/` when automation is stable
 - When one Markdown file exceeds 150 lines, split by progressive disclosure into same-directory resources instead of hard-compressing the entry file
