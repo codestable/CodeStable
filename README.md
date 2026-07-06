@@ -286,7 +286,7 @@ CodeStable 不是一条线性流水，而是**project spec + epic spec + issues*
 - 所有本地产物聚在 `.cs/` 下，"上次那个变更当时怎么搞的"三秒能找到
 - `spec/` 是 project spec，面向第一次进入项目的开发者组织主线需求、架构考量、统一语言和阅读路径
 - `epics/` 是大需求变更线，目录内的 epic spec 承载过程中的补充、修改和推翻，关闭 epic 后再合并回 project spec
-- `issues/` 可以承载探索型任务；探索文档留在 issue 中讨论，用户确认关闭后再把毕业结论合并进 project spec
+- `issues/` 可以承载探索型任务；当前结论、当前理解和证据索引留在 issue 中讨论，用户确认关闭后再把毕业结论合并进 project spec
 - talks / notes 默认写入 `YYYY/MM/DD/{短语}.md` 日期分片，epics 写入 `YYYY/MM/DD/{短语}/` 工作区，issues 写入 `YYYY/MM/DD/{status}-{短语}.md`；查找时递归搜索对应目录
 - `notes/` 是知识笔记，纯 markdown 无 frontmatter，靠全文检索——好写好搜；日常“记下来”统一走 `cs-note`
 - `cs-maketools` 会把人带路跑通的未知流程写入 `notes/`，在 `facts.md` 加引用，必要时再沉淀到 `tools/`
