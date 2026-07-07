@@ -14,10 +14,10 @@ n=每变体 72~90（fixtures × 3 模型 × k3）。
 | cs-docs | 0.528 | 0.944 | **0.958** | **+0.430** |
 | cs-refactor | 0.750 | — | **0.972** | +0.222 |
 | cs-docs-neat | 0.889 | —（直接替代式，无中间态） | **1.000** | +0.111 |
-| cs-goal | 0.765 | — | **0.877** | +0.112 |
-| **均值** | **0.807** | — | **0.965** | **+0.158** |
+| cs-goal | 0.765 | — | **0.951** | +0.186 |
+| **均值** | **0.807** | — | **0.975** | **+0.168** |
 
-cs-goal 补注（2026-07-07）：本轮加入「迭代内 review 经附近**可见 Task agent** 独立执行、不在 goal driver 主线程自审」（对齐 cs-feat/cs-epic 模式，rt-g04 判别"由谁执行"：baseline 0.89 vs original 0.33）+ `AcceptanceAgentUnavailable` 枚举 + CheckpointReason「grill 前不适用」总限定。两轮 live 优化用满后残留：rt-g02 baseline 0.33（中小模型把"新 goal 未谈验收"吸进 checkpoint 枚举——driver 型 skill 的入口/checkpoint 区分难点，接受为已知行为差异）；rt-g03 0.67（模型忽略"含 interview 证据可重建"条件）。cs-goal 为 driver 型、决策空间大，绝对分低于 stage router 属预期。
+cs-goal 补注（2026-07-07，两轮）：第一轮加「迭代内 review 经附近**可见 Task agent** 独立执行、不在 goal driver 主线程自审」（rt-g04 判别"由谁执行"：baseline 0.89 vs original 0.33）+ `AcceptanceAgentUnavailable` 枚举 + CheckpointReason「grill 前不适用」限定，0.765→0.877。第二轮（结构性，owner 授权）按 build-cs-skill full-protocol 清单复审发现 **Spec 生命周期不完整**：`selectNextAttempt` 缺 grill 入口分支与重建条件对偶分支、含不可达死分支——补全后 0.877→**0.951**（sonnet/gpt 满分）。**关键数据点**：rt-g02 在两轮措辞限定下 0.33→0.33 纹丝不动，补 grill guard 后一轮 0.33→0.89——措辞优化无效时该查结构缺失（已回写 Measured Rules 6）。剩余：rt-g03 baseline 0.67（haiku 对"有证据仍可重建"保守答 NeedsHuman，接受为模型行为差异）。
 
 ## 结论（对预注册 H1/H2 的裁决）
 

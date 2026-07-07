@@ -95,6 +95,7 @@ A full protocol refactor must include trigger contract, Spec, process protocol a
 3. **增益集中在非顶级模型与复杂/嵌套分支**（epic 批量上下文、fastforward 资格、多产物状态恢复）。顶级模型对表达形式不敏感。
 4. **给中小模型的分支澄清要显式排除错误选项**（负向澄清），只加正向描述可能引入新歧义：cs-feat ff 分支加「并说明」后 haiku 从全对变全错（答成 NeedsHuman），改为「结果是 RoutedTo Design（不是 NeedsHuman、不是 checkpoint）」后三模型全对。
 5. **decision fixture 的 oracle 必须宽容语义等价措辞**（`result_type_any`/`target_any`），且先抽查 observed 再下 verdict——未校准的严格 oracle 会对无 Spec 词汇的旧版本系统性不公平（cs-docs original 校准前 0.222 → 校准后 0.528）。
+6. **措辞优化两轮无效 → 查结构缺失，别继续磨措辞**。模型在某分支上持续答错且答案集中在"最接近的枚举项"，通常是 Spec 生命周期有分支没形式化（模型无 guard 可走）：cs-goal rt-g02 两轮枚举限定 0.33→0.33，补上 grill 入口 guard 后一轮 0.33→0.89。routing 函数必须覆盖从触发到退出的**完整**生命周期（含入口/重建/降级分支），guard 顺序即优先级，不可达的尾分支是 bug。
 
 ## Anti-Patterns
 
