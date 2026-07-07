@@ -80,6 +80,7 @@ class HarnessResult:
     usage: dict[str, Any] | None = None          # {input_tokens, output_tokens, cost_usd} 若 harness 回传
     transcript_path: str | None = None
     error: str | None = None
+    workdir: str | None = None
 
 
 @dataclass

@@ -181,6 +181,31 @@ def build_routing_prompt(fixture: Fixture, variant_text: str) -> str:
     return "\n".join(parts)
 
 
+def build_e2e_prompt(fixture: Fixture, variant_text: str) -> str:
+    """e2e 执行型：agent 在真实 seed 仓库工作目录中按 skill 流程处理 issue。
+
+    workdir 是真实 seed 仓库（runner 负责准备），prompt 不内嵌 diff。
+    """
+    scenario = (fixture.raw or {}).get("scenario") or {}
+    issue_report = scenario.get("issue_report", "")
+    parts = [
+        _INTRO,
+        "===== SKILL.md 开始 =====",
+        variant_text.strip(),
+        "===== SKILL.md 结束 =====\n",
+        "你在一个已 onboard 的真实仓库工作目录中（当前目录即仓库根），"
+        "按该 skill 的流程处理下面这个 issue，直接修改文件并运行测试验证。",
+        "\n## Issue 报告",
+        issue_report.strip(),
+        "\n## 输出要求",
+        "- 修复代码直接落盘到仓库文件（不要只输出 diff）。",
+        "- 按 skill 契约生成产物（如 `.codestable/issues/<issue-id>/fix-note.md` 记录根因与修改说明）。",
+        "- 运行仓库已有测试（`python3 -m pytest tests -q`）确认回归绿色。",
+        "- 最后用一段话总结：改了哪些文件、根因是什么、验证结果如何。",
+    ]
+    return "\n".join(parts)
+
+
 _BUILDERS = {
     "review": build_review_prompt,
     "fix": build_fix_prompt,
@@ -188,4 +213,5 @@ _BUILDERS = {
     "design": build_design_prompt,
     "docs": build_docs_prompt,
     "routing": build_routing_prompt,
+    "e2e": build_e2e_prompt,
 }

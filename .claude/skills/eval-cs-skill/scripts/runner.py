@@ -32,6 +32,7 @@ import scorers as scorers_pkg          # noqa: E402
 from _model import EvalResult, MEASURED, SOFT, UNDERPOWERED, render_tagged, tagged, write_json  # noqa: E402
 from buildprompt import build_prompt   # noqa: E402
 from config import ExperimentConfig, judge_issues, load_config, repo_root, resolve_variant_text  # noqa: E402
+from e2e_env import prepare_e2e_workdir  # noqa: E402
 from fixtures import load_fixtures      # noqa: E402
 
 
@@ -123,32 +124,34 @@ def run(config: ExperimentConfig, fixtures, cells, scorer_names, k: int, exp_dir
                 er = EvalResult(fixture_id=fx.id, variant=variant, model=model, harness=h, k_index=ki)
                 try:
                     with tempfile.TemporaryDirectory(prefix="cs-eval-") as tmp:
-                        hr = harness.invoke(prompt, model, Path(tmp), timeout_s=600)
+                        # e2e fixture：在 invoke 前准备真实 seed 仓库，并把 workdir 指向它
+                        invoke_workdir = Path(tmp)
+                        if fx.answer_type == "e2e-outcome":
+                            repo = prepare_e2e_workdir(fx, tmp, exp_dir or Path("."))
+                            invoke_workdir = repo
+                        hr = harness.invoke(prompt, model, invoke_workdir, timeout_s=600)
+                        hr.workdir = str(invoke_workdir)
+                        er.metrics = metrics.capture(hr, prompt)
+                        if hr.error:
+                            er.status = "error"
+                            er.evidence.append({"error": hr.error})
+                            results.append(er)
+                            if checkpoint_path:
+                                _append_checkpoint(checkpoint_path, er)
+                            continue
+                        # 打分：只跑与 fixture.answer_type 匹配的 scorer
+                        statuses = []
+                        for sname in scorer_names:
+                            if not scorers_pkg.applies(sname, fx.answer_type):
+                                continue
+                            sc = scorers_pkg.get_scorer(sname)(fx, hr, config, root)
+                            er.scores.update(sc.get("scores", {}))
+                            er.evidence.extend(sc.get("evidence", []))
+                            statuses.append(sc.get("status", "passed"))
+                        er.status = "failed" if "failed" in statuses else "passed"
                 except Exception as exc:  # 单 cell 失败（504/网络等）不毁整段
                     er.status = "error"
                     er.evidence.append({"error": f"{type(exc).__name__}: {str(exc)[:200]}"})
-                    results.append(er)
-                    if checkpoint_path:
-                        _append_checkpoint(checkpoint_path, er)
-                    continue
-                er.metrics = metrics.capture(hr, prompt)
-                if hr.error:
-                    er.status = "error"
-                    er.evidence.append({"error": hr.error})
-                    results.append(er)
-                    if checkpoint_path:
-                        _append_checkpoint(checkpoint_path, er)
-                    continue
-                # 打分：只跑与 fixture.answer_type 匹配的 scorer
-                statuses = []
-                for sname in scorer_names:
-                    if not scorers_pkg.applies(sname, fx.answer_type):
-                        continue
-                    sc = scorers_pkg.get_scorer(sname)(fx, hr, config, root)
-                    er.scores.update(sc.get("scores", {}))
-                    er.evidence.extend(sc.get("evidence", []))
-                    statuses.append(sc.get("status", "passed"))
-                er.status = "failed" if "failed" in statuses else "passed"
                 results.append(er)
                 if checkpoint_path:
                     _append_checkpoint(checkpoint_path, er)

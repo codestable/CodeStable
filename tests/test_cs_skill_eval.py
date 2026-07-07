@@ -387,3 +387,168 @@ def test_api_post_retries_on_504(monkeypatch):
     monkeypatch.setattr(api.time, "sleep", lambda s: None)  # 不真睡
     assert api._post("http://x", {}, {"a": 1}, timeout_s=5) == {"ok": True}
     assert calls["n"] == 3  # 前 2 次 504 重试，第 3 次成功
+
+
+# ---- e2e-outcome：fixture 校验 ----
+
+def _e2e_fixture_dict(**overrides):
+    base = {
+        "id": "e2e-01",
+        "answerType": "e2e-outcome",
+        "task": {"kind": "e2e"},
+        "scenario": {
+            "seed": "task-api",
+            "bug_id": "g01",
+            "issue_report": "API 返回 500",
+            "hidden_tests": ["hidden/test_bug_g01.py"],
+        },
+    }
+    base.update(overrides)
+    return base
+
+
+def test_e2e_fixture_validation_good():
+    assert fx_mod.validate_fixture_dict(_e2e_fixture_dict()) == []
+
+
+def test_e2e_fixture_validation_missing_scenario():
+    d = _e2e_fixture_dict()
+    del d["scenario"]
+    problems = fx_mod.validate_fixture_dict(d)
+    assert any("scenario" in p for p in problems)
+
+
+def test_e2e_fixture_validation_missing_scenario_fields():
+    for missing_key in ("seed", "bug_id", "issue_report", "hidden_tests"):
+        d = _e2e_fixture_dict()
+        del d["scenario"][missing_key]
+        problems = fx_mod.validate_fixture_dict(d)
+        assert any(missing_key in p for p in problems), f"未检测到缺 {missing_key!r}"
+
+
+def test_e2e_fixture_validation_wrong_kind():
+    d = _e2e_fixture_dict()
+    d["task"]["kind"] = "review"
+    problems = fx_mod.validate_fixture_dict(d)
+    assert any("kind" in p for p in problems)
+
+
+# ---- build_e2e_prompt ----
+
+def test_build_e2e_prompt_contains_issue_and_skill(tmp_path):
+    from buildprompt import build_prompt
+    raw = _e2e_fixture_dict()
+    raw["scenario"]["issue_report"] = "接口返回 NullPointerException"
+    fx = Fixture(id="e2e-01", answer_type="e2e-outcome", answer=[],
+                 task=raw["task"], raw=raw)
+    prompt = build_prompt(fx, "SKILL_BODY_HERE", False)
+    assert "SKILL_BODY_HERE" in prompt
+    assert "接口返回 NullPointerException" in prompt
+    assert "fix-note" in prompt          # 产物契约提示
+    assert "Issue 报告" in prompt
+
+
+# ---- e2e_outcome scorer（全离线，构造假 repo）----
+
+def _make_fake_repo(tmp_path, *, with_fixnote=False):
+    """构造最小 repo：tests/test_ok.py 恒绿，hidden 测试（外部传入）。"""
+    repo = tmp_path / "repo"
+    tests = repo / "tests"
+    tests.mkdir(parents=True)
+    (tests / "test_ok.py").write_text("def test_always_pass(): assert True\n")
+    if with_fixnote:
+        note_dir = repo / ".codestable" / "issues" / "g01"
+        note_dir.mkdir(parents=True)
+        (note_dir / "fix-note.md").write_text("根因：xxx\n")
+    return repo
+
+
+def _make_hidden(tmp_path, *, pass_test=True):
+    hidden_src = tmp_path / "hidden"
+    hidden_src.mkdir(exist_ok=True)
+    if pass_test:
+        (hidden_src / "test_bug_g01_pass.py").write_text("def test_pass(): assert True\n")
+    else:
+        (hidden_src / "test_bug_g01_fail.py").write_text("def test_fail(): assert False\n")
+    return hidden_src
+
+
+def _e2e_fixture_obj(exp_dir: str, hidden_rel_paths: list) -> Fixture:
+    raw = _e2e_fixture_dict()
+    raw["scenario"]["hidden_tests"] = hidden_rel_paths
+    raw["_exp_dir"] = exp_dir
+    return Fixture(id="e2e-01", answer_type="e2e-outcome", answer=[],
+                   task=raw["task"], raw=raw)
+
+
+def _hr_with_workdir(workdir: str):
+    hr = HarnessResult(output="done", model="m", harness="mock", wall_ms=1, turns=1)
+    hr.workdir = workdir
+    return hr
+
+
+def test_e2e_scorer_hidden_pass_half(tmp_path):
+    """一绿一红 hidden test → hidden_pass=0.5。"""
+    scorer = scorers_pkg.get_scorer("e2e_outcome")
+    repo = _make_fake_repo(tmp_path)
+
+    # 准备 hidden 源文件：一个绿、一个红，放在 exp_dir/hidden/
+    hidden_src = tmp_path / "exp" / "hidden"
+    hidden_src.mkdir(parents=True)
+    (hidden_src / "test_green.py").write_text("def test_pass(): assert True\n")
+    (hidden_src / "test_red.py").write_text("def test_fail(): assert False\n")
+
+    fx = _e2e_fixture_obj(
+        str(tmp_path / "exp"),
+        ["hidden/test_green.py", "hidden/test_red.py"],
+    )
+    hr = _hr_with_workdir(str(repo))
+    result = scorer(fx, hr, None, None)
+    assert result["scores"]["hidden_pass"]["value"] == 0.5
+    assert result["scores"]["hidden_pass"]["tag"] == MEASURED
+
+
+def test_e2e_scorer_regression_pass(tmp_path):
+    """tests/ 全绿 → regression_pass=1.0。"""
+    scorer = scorers_pkg.get_scorer("e2e_outcome")
+    repo = _make_fake_repo(tmp_path)
+    fx = _e2e_fixture_obj(str(tmp_path / "exp"), [])
+    hr = _hr_with_workdir(str(repo))
+    result = scorer(fx, hr, None, None)
+    assert result["scores"]["regression_pass"]["value"] == 1.0
+
+
+def test_e2e_scorer_artifact_ok_present(tmp_path):
+    scorer = scorers_pkg.get_scorer("e2e_outcome")
+    repo = _make_fake_repo(tmp_path, with_fixnote=True)
+    fx = _e2e_fixture_obj(str(tmp_path / "exp"), [])
+    hr = _hr_with_workdir(str(repo))
+    result = scorer(fx, hr, None, None)
+    assert result["scores"]["artifact_ok"]["value"] == 1.0
+
+
+def test_e2e_scorer_artifact_ok_absent(tmp_path):
+    scorer = scorers_pkg.get_scorer("e2e_outcome")
+    repo = _make_fake_repo(tmp_path, with_fixnote=False)
+    fx = _e2e_fixture_obj(str(tmp_path / "exp"), [])
+    hr = _hr_with_workdir(str(repo))
+    result = scorer(fx, hr, None, None)
+    assert result["scores"]["artifact_ok"]["value"] == 0.0
+
+
+def test_e2e_scorer_workdir_none():
+    scorer = scorers_pkg.get_scorer("e2e_outcome")
+    raw = _e2e_fixture_dict()
+    raw["_exp_dir"] = ""
+    fx = Fixture(id="e2e-01", answer_type="e2e-outcome", answer=[], task=raw["task"], raw=raw)
+    hr = HarnessResult(output="", model="m", harness="mock", wall_ms=1)
+    # workdir 未设 → 全 0
+    result = scorer(fx, hr, None, None)
+    assert result["scores"]["hidden_pass"]["value"] == 0.0
+    assert result["status"] == "failed"
+
+
+def test_e2e_scorer_applies_only_e2e():
+    assert scorers_pkg.applies("e2e_outcome", "e2e-outcome")
+    assert not scorers_pkg.applies("e2e_outcome", "findings-recall")
+    assert not scorers_pkg.applies("e2e_outcome", "routing-decision")
