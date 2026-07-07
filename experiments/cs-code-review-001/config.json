@@ -13,7 +13,7 @@
   ],
   "scorers": [
     "planted_defect",
-    "llm_judge"
+    "recall_judge"
   ],
   "fixture_classes": [
     "planted-defect",

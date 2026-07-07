@@ -80,6 +80,17 @@ def test_llm_judge_offline_soft():
     assert 0.0 <= out["scores"]["judge_quality"]["value"] <= 1.0
 
 
+def test_recall_judge_token_fallback_offline():
+    # 无 judge_model → recall_judge 直接走 token 回退，确定性、不发 api；tag 恒 soft
+    scorer = scorers_pkg.get_scorer("recall_judge")
+    hit = scorer(_fx(["SQL injection via SELECT query"]), _hr("- SQL injection in SELECT query"), None, None)
+    assert hit["scores"]["recall_judge"]["value"] == 1.0
+    assert hit["scores"]["recall_judge"]["tag"] == SOFT
+    assert "token" in hit["evidence"][0]["source"]
+    miss = scorer(_fx(["race condition in scheduler"]), _hr("looks fine"), None, None)
+    assert miss["scores"]["recall_judge"]["value"] == 0.0
+
+
 # ---- dod_gate（合成 checklist）----
 
 def test_dod_gate_pass_and_fail(tmp_path):
@@ -115,8 +126,8 @@ def test_runner_end_to_end(tmp_path):
     data = json.loads(out.read_text(encoding="utf-8"))
     agg = data["aggregate"]["baseline"]
     assert agg["scores"]["recall"]["tag"] == MEASURED
-    # judge 是 soft，聚合后绝不能被标成 measured（认知诚实）
-    assert agg["scores"]["judge_quality"]["tag"] == SOFT
+    # recall_judge 是 soft（离线走 token 回退），聚合后绝不能被标成 measured（认知诚实）
+    assert agg["scores"]["recall_judge"]["tag"] == SOFT
     assert agg["n"] >= 10
 
 

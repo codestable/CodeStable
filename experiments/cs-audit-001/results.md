@@ -9,9 +9,8 @@
 
 | variant | 指标 | 值 |
 |---|---|---|
-| baseline | judge_compliance | 1.0 [soft: mean over n=3] |
-| baseline | judge_quality | 0.4 [soft: mean over n=3] |
 | baseline | recall | 1.0 [measured: mean over n=3] |
+| baseline | recall_judge | 1.0 [soft: mean over n=3] |
 | baseline | cost_usd | 0.0 [soft: mean n=3] |
 | baseline | input_tokens | 1010.67 [soft: mean n=3] |
 | baseline | output_tokens | 17.33 [soft: mean n=3] |

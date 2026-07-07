@@ -9,7 +9,7 @@ from .base import applies, available, get_scorer  # noqa: F401
 from . import planted_defect  # noqa: F401
 
 # 后续阶段的 scorer；缺依赖不阻断确定性路径
-for _mod in ("dod_gate", "llm_judge"):
+for _mod in ("dod_gate", "llm_judge", "recall_judge"):
     try:
         importlib.import_module(f".{_mod}", __name__)
     except Exception:  # noqa: BLE001
