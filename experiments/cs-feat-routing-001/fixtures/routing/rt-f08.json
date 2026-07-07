@@ -1,0 +1,16 @@
+{
+  "id": "rt-f08",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "designStatus": "Approved",
+      "reviewStatus": "Passed",
+      "qaStatus": "Passed",
+      "acceptanceStatus": "Passed"
+    }
+  },
+  "expect": {
+    "result_type": "Completed"
+  }
+}

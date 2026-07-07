@@ -1,0 +1,18 @@
+{
+  "id": "rt-p02",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "roadmapStatus": "Draft",
+      "reviewStatus": "Missing"
+    }
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target_any": [
+      "Review",
+      "roadmap review"
+    ]
+  }
+}

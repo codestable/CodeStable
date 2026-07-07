@@ -1,0 +1,18 @@
+{
+  "id": "rt-p09",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "allDesignApproved": true,
+      "hasGoalPackage": true
+    }
+  },
+  "expect": {
+    "result_type": "GoalHandoff",
+    "result_type_any": [
+      "GoalHandoff",
+      "RoutedTo"
+    ]
+  }
+}

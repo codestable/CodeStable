@@ -1,0 +1,16 @@
+{
+  "id": "rt-i01",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "issueDir": "（无匹配目录）",
+      "hasReport": false
+    },
+    "utterance": "登录接口偶发 500，帮我修一下"
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target": "Report"
+  }
+}

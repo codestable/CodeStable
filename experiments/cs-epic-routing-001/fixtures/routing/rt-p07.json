@@ -1,0 +1,19 @@
+{
+  "id": "rt-p07",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "childrenDesign": "AllPassed（所有未 dropped child 都有 design+checklist+passed review）",
+      "allDesignApproved": false
+    }
+  },
+  "expect": {
+    "result_type": "HumanCheckpoint",
+    "target_any": [
+      "ConfirmAllChildDesign",
+      "统一确认所有 design",
+      "统一确认"
+    ]
+  }
+}

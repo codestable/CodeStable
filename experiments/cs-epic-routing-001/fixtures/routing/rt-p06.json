@@ -1,0 +1,19 @@
+{
+  "id": "rt-p06",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "roadmapStatus": "Confirmed",
+      "childrenDesign": "Pending（2/5 child 已 design-review passed，其余缺）"
+    }
+  },
+  "expect": {
+    "result_type": "ChildDesignBatch",
+    "result_type_any": [
+      "ChildDesignBatch",
+      "RoutedTo"
+    ],
+    "must_not_target": "ConfirmAllChildDesign"
+  }
+}

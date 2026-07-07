@@ -1,0 +1,23 @@
+{
+  "id": "rt-i03",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "hasReport": true,
+      "rootCause": "Clear（读代码已定位：单处 off-by-one）",
+      "smallFix": true,
+      "crossModule": false
+    }
+  },
+  "expect": {
+    "result_type": "HumanCheckpoint",
+    "target_any": [
+      "ConfirmFastPath",
+      "FastPath",
+      "fix",
+      "快速通道"
+    ],
+    "must_not_target": "Analyze"
+  }
+}

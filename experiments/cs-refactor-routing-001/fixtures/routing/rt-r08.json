@@ -1,0 +1,18 @@
+{
+  "id": "rt-r08",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "applyDone": true,
+      "reviewStatus": "Missing"
+    }
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target_any": [
+      "CodeReview",
+      "cs-code-review"
+    ]
+  }
+}

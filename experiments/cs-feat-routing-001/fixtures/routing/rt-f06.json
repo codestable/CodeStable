@@ -1,0 +1,15 @@
+{
+  "id": "rt-f06",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "designStatus": "Approved",
+      "hasGoalPackage": false
+    }
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target": "GoalPackage"
+  }
+}

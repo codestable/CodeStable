@@ -1,0 +1,21 @@
+{
+  "id": "rt-i06",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "hasReport": true,
+      "hasAnalysis": true,
+      "codeStatus": "Changed",
+      "hasFixNote": true,
+      "reviewStatus": "Missing"
+    }
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target_any": [
+      "CodeReview",
+      "cs-code-review"
+    ]
+  }
+}

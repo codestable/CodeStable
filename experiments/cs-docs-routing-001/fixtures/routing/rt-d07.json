@@ -1,0 +1,18 @@
+{
+  "id": "rt-d07",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "docStatus": "Outdated"
+    }
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target_any": [
+      "TutorialStage",
+      "tutorial",
+      "更新"
+    ]
+  }
+}

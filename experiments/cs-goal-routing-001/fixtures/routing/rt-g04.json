@@ -1,0 +1,30 @@
+{
+  "id": "rt-g04",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "state.yaml": "status: active",
+      "本轮 iteration": "代码已改完、测试通过",
+      "当前决策": "code review gate 该怎么执行：goal driver 主线程直接自审本轮 diff，还是另派 agent？"
+    },
+    "utterance": "到 review 这步了，这个 review 谁来做？"
+  },
+  "expect": {
+    "result_type_any": [
+      "RoutedTo",
+      "Iterating",
+      "GoalHandoff"
+    ],
+    "result_type": "RoutedTo",
+    "target_any": [
+      "Task agent",
+      "可见 Task agent",
+      "独立 reviewer",
+      "reviewer",
+      "独立审查",
+      "另派"
+    ],
+    "must_not_target": "主线程自审"
+  }
+}

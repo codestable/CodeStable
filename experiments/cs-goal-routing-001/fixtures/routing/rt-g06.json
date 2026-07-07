@@ -1,0 +1,20 @@
+{
+  "id": "rt-g06",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "blocker_signature": "flaky-auth-timeout",
+      "blocker_count": 3
+    }
+  },
+  "expect": {
+    "result_type": "HumanCheckpoint",
+    "target_any": [
+      "RepeatedBlocker",
+      "blocker",
+      "approval-report",
+      "owner"
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "id": "rt-f01",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "featureDir": ".codestable/features/2026-07-07-oauth-login",
+      "designStatus": "Missing",
+      "reviewStatus": "Missing"
+    }
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target": "Design"
+  }
+}

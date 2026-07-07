@@ -1,0 +1,20 @@
+{
+  "id": "rt-d05",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "docStatus": "Missing"
+    },
+    "utterance": "写一篇教开发者接入 webhook 的指南"
+  },
+  "expect": {
+    "result_type": "HumanCheckpoint",
+    "target_any": [
+      "ConfirmNewDoc",
+      "目标读者",
+      "落点路径",
+      "新建文档前确认"
+    ]
+  }
+}

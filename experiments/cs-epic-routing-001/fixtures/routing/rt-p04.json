@@ -1,0 +1,21 @@
+{
+  "id": "rt-p04",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "roadmapStatus": "Draft（review passed 但用户尚未确认规划）",
+      "reviewStatus": "Passed"
+    }
+  },
+  "expect": {
+    "result_type": "HumanCheckpoint",
+    "target_any": [
+      "ConfirmRoadmap",
+      "确认 epic 规划",
+      "确认规划",
+      "roadmap confirmation"
+    ],
+    "must_not_target": "ChildDesignBatch"
+  }
+}

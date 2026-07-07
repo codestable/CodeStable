@@ -1,0 +1,14 @@
+{
+  "id": "rt-i10",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "匹配目录": "2026-07-01-auth-timeout 与 2026-07-03-auth-refresh 都含 auth"
+    },
+    "utterance": "auth 那个问题继续处理下"
+  },
+  "expect": {
+    "result_type": "NeedsHuman"
+  }
+}

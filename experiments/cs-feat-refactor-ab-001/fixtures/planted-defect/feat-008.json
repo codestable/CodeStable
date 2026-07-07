@@ -1,0 +1,13 @@
+{
+  "id": "feat-008",
+  "answerType": "findings-recall",
+  "answer": [
+    "二次确认与软删除可恢复",
+    "逐项权限校验",
+    "部分失败的事务/回滚与审计日志"
+  ],
+  "task": {
+    "kind": "design",
+    "spec": "支持批量删除选中的记录"
+  }
+}

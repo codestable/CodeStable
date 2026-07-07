@@ -1,0 +1,14 @@
+{
+  "id": "rt-p10",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "匹配 roadmap": "auth-revamp 与 auth-sso 两个 epic 都在进行"
+    },
+    "utterance": "继续推进 auth 那个大需求"
+  },
+  "expect": {
+    "result_type": "NeedsHuman"
+  }
+}

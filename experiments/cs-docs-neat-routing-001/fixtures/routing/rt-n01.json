@@ -1,0 +1,14 @@
+{
+  "id": "rt-n01",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "memory 状态": "两条记忆对『部署走 CI 还是手动』记载矛盾，代码/文档无从佐证"
+    },
+    "utterance": "阶段结束了，整理下文档和记忆"
+  },
+  "expect": {
+    "result_type": "NeedsHuman"
+  }
+}

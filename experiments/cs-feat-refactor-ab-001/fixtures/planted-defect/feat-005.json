@@ -1,0 +1,13 @@
+{
+  "id": "feat-005",
+  "answerType": "findings-recall",
+  "answer": [
+    "幂等，防重复触发重复执行",
+    "失败重试与告警",
+    "时区与 DST 对触发时间的影响"
+  ],
+  "task": {
+    "kind": "design",
+    "spec": "加一个每天定时发送日报的任务"
+  }
+}

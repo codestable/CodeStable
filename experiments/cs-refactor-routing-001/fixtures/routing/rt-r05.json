@@ -1,0 +1,21 @@
+{
+  "id": "rt-r05",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "hasDesign": true,
+      "designStatus": "Draft"
+    }
+  },
+  "expect": {
+    "result_type": "HumanCheckpoint",
+    "target_any": [
+      "DesignConfirmation",
+      "design 确认",
+      "确认",
+      "review 放行"
+    ],
+    "must_not_target": "Apply"
+  }
+}

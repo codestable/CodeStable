@@ -1,0 +1,28 @@
+{
+  "name": "cs-feat-refactor-ab-001",
+  "skill_under_test": "cs-feat",
+  "variants": [
+    "baseline",
+    "original"
+  ],
+  "model_list": [
+    "claude-sonnet-4-6",
+    "claude-haiku-4-5",
+    "gpt-5.5",
+    "gpt-5.4"
+  ],
+  "k": 5,
+  "harnesses": [
+    "api"
+  ],
+  "scorers": [
+    "planted_defect",
+    "recall_judge"
+  ],
+  "fixture_classes": [
+    "planted-defect"
+  ],
+  "budget_usd": 5.0,
+  "judge_model": "claude-opus-4-8",
+  "inject_context": true
+}

@@ -1,0 +1,22 @@
+{
+  "id": "rt-g01",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      ".codestable/attention.md": "缺失"
+    },
+    "utterance": "把这批失败的测试修到全绿"
+  },
+  "expect": {
+    "result_type": "NeedsHuman",
+    "result_type_any": [
+      "NeedsHuman",
+      "RoutedTo"
+    ],
+    "target_any": [
+      "cs-onboard",
+      "onboard"
+    ]
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "rt-r04",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "hasScan": true,
+      "scanSelected": true,
+      "hasDesign": false
+    }
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target_any": [
+      "Design",
+      "设计"
+    ]
+  }
+}

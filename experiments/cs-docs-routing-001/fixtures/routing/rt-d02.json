@@ -1,0 +1,26 @@
+{
+  "id": "rt-d02",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "docStatus": "Missing",
+      "目标读者": "不明（可能是终端用户也可能是集成开发者）"
+    },
+    "utterance": "写点文档"
+  },
+  "expect": {
+    "result_type": "NeedsHuman",
+    "result_type_any": [
+      "NeedsHuman",
+      "HumanCheckpoint"
+    ],
+    "target_any": [
+      "reader",
+      "读者",
+      "AmbiguousReader",
+      "clarify",
+      "文档类型"
+    ]
+  }
+}

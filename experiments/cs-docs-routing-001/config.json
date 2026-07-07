@@ -1,0 +1,26 @@
+{
+  "name": "cs-docs-routing-001",
+  "skill_under_test": "cs-docs",
+  "variants": [
+    "baseline",
+    "hardened",
+    "original"
+  ],
+  "model_list": [
+    "claude-sonnet-4-6",
+    "claude-haiku-4-5",
+    "gpt-5.5"
+  ],
+  "k": 3,
+  "harnesses": [
+    "api"
+  ],
+  "scorers": [
+    "routing_decision"
+  ],
+  "fixture_classes": [
+    "routing"
+  ],
+  "budget_usd": 5.0,
+  "inject_context": false
+}

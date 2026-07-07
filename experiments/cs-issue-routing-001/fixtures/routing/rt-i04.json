@@ -1,0 +1,17 @@
+{
+  "id": "rt-i04",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "hasReport": true,
+      "hasAnalysis": true,
+      "codeStatus": "NotStarted",
+      "hasFixNote": false
+    }
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target": "Fix"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "rt-d06",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "docStatus": "Current",
+      "codeDrift": "Drifted（相关 API 已改签名）"
+    }
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target_any": [
+      "TutorialStage",
+      "tutorial",
+      "更新"
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "rt-i05",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "hasReport": true,
+      "hasAnalysis": true,
+      "codeStatus": "Changed（git diff 有改动）",
+      "hasFixNote": false
+    }
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target": "Fix"
+  }
+}

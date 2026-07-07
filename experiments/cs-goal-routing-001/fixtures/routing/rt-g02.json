@@ -1,0 +1,25 @@
+{
+  "id": "rt-g02",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "goals/": "无匹配 active goal",
+      "owner 给出": "有界目标但验收标准/预算未谈"
+    },
+    "utterance": "自主迭代把导出功能做到验收通过"
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "result_type_any": [
+      "RoutedTo",
+      "HumanCheckpoint"
+    ],
+    "target_any": [
+      "grill",
+      "阶段 1",
+      "interview",
+      "对齐"
+    ]
+  }
+}

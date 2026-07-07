@@ -1,0 +1,19 @@
+{
+  "id": "rt-p01",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "roadmapStatus": "Missing"
+    },
+    "utterance": "把整个多租户支持做出来"
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target_any": [
+      "Planning",
+      "规划",
+      "拆解"
+    ]
+  }
+}

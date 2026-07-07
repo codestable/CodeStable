@@ -1,0 +1,14 @@
+{
+  "id": "rt-i08",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "hasFixNote": true,
+      "reviewStatus": "Passed"
+    }
+  },
+  "expect": {
+    "result_type": "Completed"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "id": "rt-r01",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "refactorDir": "（无）"
+    },
+    "utterance": "重构下单流程，顺便把优惠券逻辑改成支持叠加"
+  },
+  "expect": {
+    "result_type": "NeedsHuman",
+    "result_type_any": [
+      "NeedsHuman",
+      "GoalHandoff",
+      "RoutedTo"
+    ],
+    "target_any": [
+      "cs-feat",
+      "cs-issue",
+      "behavior",
+      "行为",
+      "not behavior-preserving"
+    ]
+  }
+}

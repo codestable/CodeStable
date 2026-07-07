@@ -1,0 +1,15 @@
+{
+  "id": "rt-g07",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "acceptancePassed": true,
+      "functional-acceptance.md": "verdict: pass 已写入",
+      "final iteration": "已引用验收报告"
+    }
+  },
+  "expect": {
+    "result_type": "Completed"
+  }
+}

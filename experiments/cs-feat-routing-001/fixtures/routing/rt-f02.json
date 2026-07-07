@@ -1,0 +1,25 @@
+{
+  "id": "rt-f02",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "designStatus": "Draft",
+      "reviewStatus": "Passed",
+      "epicChildBatch": false
+    }
+  },
+  "expect": {
+    "result_type": "HumanCheckpoint",
+    "target": "ConfirmDesign",
+    "must_not_target": "GoalPackage",
+    "target_any": [
+      "ConfirmDesign",
+      "design 整体确认",
+      "design confirmation",
+      "design approval",
+      "design overall review",
+      "整体确认"
+    ]
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "id": "rt-g09",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "终端验收": "可见 Task agent 无法启动，按生命周期重试仍失败",
+      "普通验证": "全绿"
+    }
+  },
+  "expect": {
+    "result_type": "HumanCheckpoint",
+    "result_type_any": [
+      "HumanCheckpoint",
+      "NeedsHuman"
+    ],
+    "target_any": [
+      "approval-report",
+      "owner-stop",
+      "owner",
+      "无法启动",
+      "unavailable",
+      "AcceptanceAgentUnavailable",
+      "RiskAcceptance",
+      "容量失败"
+    ],
+    "must_not_target": "complete"
+  }
+}

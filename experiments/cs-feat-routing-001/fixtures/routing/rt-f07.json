@@ -1,0 +1,20 @@
+{
+  "id": "rt-f07",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "designStatus": "Approved",
+      "hasGoalPackage": true,
+      "codeStatus": "Complete",
+      "reviewStatus": "Missing"
+    }
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target_any": [
+      "CodeReview",
+      "cs-code-review"
+    ]
+  }
+}

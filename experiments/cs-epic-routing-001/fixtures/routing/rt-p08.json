@@ -1,0 +1,20 @@
+{
+  "id": "rt-p08",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "childrenDesign": "AllPassed",
+      "allDesignApproved": true,
+      "hasGoalPackage": false
+    }
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target_any": [
+      "GoalPackage",
+      "goal 包",
+      "goal-package"
+    ]
+  }
+}

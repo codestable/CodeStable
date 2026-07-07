@@ -1,0 +1,18 @@
+{
+  "id": "rt-p05",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "roadmapStatus": "Confirmed",
+      "childrenDesign": "Pending（5 个 child 全部缺 design）"
+    }
+  },
+  "expect": {
+    "result_type": "ChildDesignBatch",
+    "result_type_any": [
+      "ChildDesignBatch",
+      "RoutedTo"
+    ]
+  }
+}

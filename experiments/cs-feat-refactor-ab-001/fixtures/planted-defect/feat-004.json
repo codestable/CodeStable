@@ -1,0 +1,13 @@
+{
+  "id": "feat-004",
+  "answerType": "findings-recall",
+  "answer": [
+    "分页边界：page=0/负数/超出总页",
+    "稳定排序，避免翻页漏项或重复",
+    "总数统计与大偏移的性能"
+  ],
+  "task": {
+    "kind": "design",
+    "spec": "给列表接口加分页"
+  }
+}

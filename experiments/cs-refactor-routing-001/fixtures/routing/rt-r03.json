@@ -1,0 +1,19 @@
+{
+  "id": "rt-r03",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "hasScan": true,
+      "scanSelected": false
+    }
+  },
+  "expect": {
+    "result_type": "HumanCheckpoint",
+    "target_any": [
+      "ScanSelection",
+      "勾选",
+      "scan selection"
+    ]
+  }
+}

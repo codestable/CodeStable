@@ -1,0 +1,24 @@
+{
+  "id": "rt-n05",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "触发": "cs-feat acceptance 刚通过，阶段结束"
+    },
+    "utterance": "收尾同步一下"
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target_any": [
+      "SizeCheck",
+      "Phase 0",
+      "尺寸",
+      "枚举",
+      "Enumerate",
+      "Phase 1",
+      "runNeat",
+      "preflight"
+    ]
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "id": "feat-003",
+  "answerType": "findings-recall",
+  "answer": [
+    "文件大小上限",
+    "文件类型/内容校验，防恶意文件",
+    "并发上传与同名文件冲突"
+  ],
+  "task": {
+    "kind": "design",
+    "spec": "支持用户上传头像图片"
+  }
+}

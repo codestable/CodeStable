@@ -1,0 +1,19 @@
+{
+  "id": "rt-r06",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "designStatus": "Approved",
+      "pendingHuman": true
+    }
+  },
+  "expect": {
+    "result_type": "HumanCheckpoint",
+    "target_any": [
+      "HumanValidation",
+      "HUMAN 验证",
+      "人工验证"
+    ]
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "rt-p03",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "roadmapStatus": "Draft",
+      "reviewStatus": "Blocking"
+    }
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target_any": [
+      "Planning",
+      "修订"
+    ],
+    "must_not_target": "GoalPackage"
+  }
+}

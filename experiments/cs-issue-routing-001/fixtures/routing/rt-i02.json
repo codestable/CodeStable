@@ -1,0 +1,17 @@
+{
+  "id": "rt-i02",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "hasReport": true,
+      "rootCause": "Unknown",
+      "hasAnalysis": false,
+      "codeStatus": "NotStarted"
+    }
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target": "Analyze"
+  }
+}

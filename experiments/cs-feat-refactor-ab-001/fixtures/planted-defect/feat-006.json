@@ -1,0 +1,13 @@
+{
+  "id": "feat-006",
+  "answerType": "findings-recall",
+  "answer": [
+    "回调幂等，重复回调只处理一次",
+    "回调验签，防伪造",
+    "金额与币种校验及异步对账一致性"
+  ],
+  "task": {
+    "kind": "design",
+    "spec": "接入第三方支付的异步回调"
+  }
+}

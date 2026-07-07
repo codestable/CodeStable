@@ -1,0 +1,23 @@
+{
+  "id": "rt-n02",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "docs/architecture.md": "2100 行（超 1500 上限）",
+      "用户约束": "大文档拆分前必须先经我确认"
+    }
+  },
+  "expect": {
+    "result_type": "NeedsHuman",
+    "result_type_any": [
+      "NeedsHuman",
+      "HumanCheckpoint"
+    ],
+    "target_any": [
+      "拆分",
+      "确认",
+      "split"
+    ]
+  }
+}

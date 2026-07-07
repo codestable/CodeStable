@@ -1,0 +1,13 @@
+{
+  "id": "feat-002",
+  "answerType": "findings-recall",
+  "answer": [
+    "重置 token 过期时间",
+    "token 单次使用后失效",
+    "账号枚举防护，不泄露邮箱是否存在"
+  ],
+  "task": {
+    "kind": "design",
+    "spec": "实现邮箱找回密码功能"
+  }
+}

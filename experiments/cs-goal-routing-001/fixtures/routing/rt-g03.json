@@ -1,0 +1,26 @@
+{
+  "id": "rt-g03",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "state.yaml": "status: active",
+      "goal.md 起点报告": "缺失",
+      "对话": "含 interview 证据"
+    }
+  },
+  "expect": {
+    "result_type_any": [
+      "RoutedTo",
+      "Iterating"
+    ],
+    "result_type": "RoutedTo",
+    "target_any": [
+      "起点报告",
+      "goal.md",
+      "start report",
+      "重建",
+      "阶段 2"
+    ]
+  }
+}

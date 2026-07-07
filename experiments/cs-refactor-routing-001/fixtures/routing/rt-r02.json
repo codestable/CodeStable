@@ -1,0 +1,19 @@
+{
+  "id": "rt-r02",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "hasScan": false,
+      "targetModule": "src/checkout/order_service.py（用户已点名该文件）"
+    },
+    "utterance": "这个模块太乱了，帮我重构"
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target_any": [
+      "Scan",
+      "扫描"
+    ]
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "id": "feat-007",
+  "answerType": "findings-recall",
+  "answer": [
+    "空查询与超长查询的处理",
+    "输入转义防注入",
+    "超时降级与结果分页"
+  ],
+  "task": {
+    "kind": "design",
+    "spec": "加一个全文搜索接口"
+  }
+}

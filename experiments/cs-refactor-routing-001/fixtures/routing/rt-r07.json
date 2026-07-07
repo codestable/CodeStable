@@ -1,0 +1,20 @@
+{
+  "id": "rt-r07",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "designStatus": "Approved",
+      "pendingHuman": false,
+      "applyDone": false
+    }
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target_any": [
+      "Apply",
+      "执行",
+      "apply"
+    ]
+  }
+}

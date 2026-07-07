@@ -1,0 +1,22 @@
+{
+  "id": "rt-n03",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "诉求": "为公开 CLI 生成一篇完整 API 参考"
+    },
+    "utterance": "给 CLI 写一份 API 参考文档"
+  },
+  "expect": {
+    "result_type_any": [
+      "RoutedTo",
+      "GoalHandoff"
+    ],
+    "result_type": "RoutedTo",
+    "target_any": [
+      "cs-docs",
+      "api"
+    ]
+  }
+}

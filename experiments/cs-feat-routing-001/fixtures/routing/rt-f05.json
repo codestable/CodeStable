@@ -1,0 +1,24 @@
+{
+  "id": "rt-f05",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "designStatus": "Draft",
+      "reviewStatus": "Passed",
+      "epicChildBatch": true
+    }
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target_any": [
+      "cs-epic",
+      "return-to-cs-epic"
+    ],
+    "must_not_target": "ConfirmDesign",
+    "result_type_any": [
+      "RoutedTo",
+      "ChildDesignBatch"
+    ]
+  }
+}

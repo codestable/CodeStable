@@ -1,0 +1,19 @@
+{
+  "id": "rt-i09",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "issueDir": "（无）"
+    },
+    "utterance": "想给设置页加一个导出为 CSV 的新功能"
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target": "cs-feat",
+    "result_type_any": [
+      "RoutedTo",
+      "GoalHandoff"
+    ]
+  }
+}

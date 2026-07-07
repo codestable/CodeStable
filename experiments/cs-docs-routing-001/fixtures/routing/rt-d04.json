@@ -1,0 +1,18 @@
+{
+  "id": "rt-d04",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "manifest": "HasManifest",
+      "entryStatus": "Pending（3 个条目待生成）"
+    }
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target_any": [
+      "ApiStage",
+      "api"
+    ]
+  }
+}

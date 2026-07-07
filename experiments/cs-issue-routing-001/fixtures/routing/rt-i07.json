@@ -1,0 +1,16 @@
+{
+  "id": "rt-i07",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "hasFixNote": true,
+      "reviewStatus": "Blocking（review 有 blocking finding）"
+    }
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target": "Fix",
+    "must_not_target": "Completed"
+  }
+}

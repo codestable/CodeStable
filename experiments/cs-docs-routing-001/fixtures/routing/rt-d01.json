@@ -1,0 +1,23 @@
+{
+  "id": "rt-d01",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "诉求": "README 与 agent 入口全局同步 + 记忆整理"
+    },
+    "utterance": "把 README、agent 入口和 .codestable 记忆全部同步整理一遍"
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "result_type_any": [
+      "RoutedTo",
+      "GoalHandoff"
+    ],
+    "target_any": [
+      "NeatHandoff",
+      "cs-docs-neat",
+      "docs-neat"
+    ]
+  }
+}

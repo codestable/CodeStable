@@ -1,0 +1,31 @@
+{
+  "id": "rt-n06",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "memory": "『rsync 单文件部署要完整路径』教训第 3 次出现在记忆里",
+      "CLAUDE.md": "无此规则"
+    },
+    "utterance": "整理记忆"
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "result_type_any": [
+      "RoutedTo",
+      "Completed"
+    ],
+    "target_any": [
+      "毕业",
+      "promote",
+      "Edit",
+      "实际修改",
+      "Phase 3",
+      "CLAUDE.md",
+      "agent 入口",
+      "runNeat",
+      "Phase 1",
+      "枚举"
+    ]
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "id": "rt-g05",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "state.yaml": "status: active",
+      "普通验证": "单测/lint/build 全绿",
+      "functional-acceptance.md": "不存在"
+    },
+    "utterance": "看起来都绿了，收尾吧"
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "result_type_any": [
+      "RoutedTo",
+      "HumanCheckpoint",
+      "Iterating"
+    ],
+    "target_any": [
+      "Task agent",
+      "功能验收",
+      "functional-acceptance",
+      "验收",
+      "acceptance"
+    ],
+    "must_not_target": "complete"
+  }
+}

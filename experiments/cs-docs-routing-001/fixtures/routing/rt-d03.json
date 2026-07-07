@@ -1,0 +1,22 @@
+{
+  "id": "rt-d03",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "manifest": "NoManifest"
+    },
+    "intent": {
+      "requestedMode": "api"
+    },
+    "utterance": "给 CLI 命令生成参考文档"
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target_any": [
+      "ApiStage",
+      "api",
+      "参考"
+    ]
+  }
+}

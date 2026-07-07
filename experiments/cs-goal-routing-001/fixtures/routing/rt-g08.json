@@ -1,0 +1,20 @@
+{
+  "id": "rt-g08",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "下一步": "需要 merge 到 main 并部署到生产"
+    }
+  },
+  "expect": {
+    "result_type": "HumanCheckpoint",
+    "target_any": [
+      "RiskAcceptance",
+      "merge",
+      "deploy",
+      "批准",
+      "approval"
+    ]
+  }
+}
