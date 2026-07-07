@@ -1,7 +1,13 @@
 ---
 name: cs-docs
-description: Docs 主入口。触发：写/更新开发者指南、用户指南、API 参考；不包含 docs-neat 收尾整理。
+description: "Docs 主入口。触发：写/更新开发者指南、用户指南、API 参考；不包含 docs-neat 收尾整理。不要用于新功能实现(cs-feat)、修 bug / 诊断报错(cs-issue)、大需求拆解(cs-epic)、领域建模(cs-domain)、ADR 决策记录(best-adr)。"
 argument-hint: "[--mode tutorial|api] <topic>"
+contracts:
+  - grep: "restoreDocsStage"
+  - grep: "progressive reference loading"
+  - grep: "manifest.yaml"
+  - not-grep: "git push"
+  - not-grep: "read all references"
 ---
 
 # cs-docs
@@ -39,20 +45,70 @@ argument-hint: "[--mode tutorial|api] <topic>"
 
 ---
 
-## 状态机
+## Spec
 
-启动后先扫既有文档和公开表面：`docs/`、`README*`、用户点名路径、相关源码导出/API/命令。按仓库事实恢复：
+```haskell
+csDocs :: DocsRequest -> DocsOutcome
 
-| 仓库事实 | 下一步 |
-|---|---|
-| 用户要任务教程/使用指南，且没有对应 guide | 读取 `references/tutorial/protocol.md` 新建 |
-| 已有 guide，但相关代码/spec 已变或 status 为 `outdated` | 读取 `references/tutorial/protocol.md` 更新 |
-| 用户要 API/组件/命令参考，且无 manifest 或条目缺失 | 读取 `references/api/protocol.md` 初始化或补条目 |
-| API manifest / 条目存在且有 `pending`、`draft` 或 `outdated` | 读取 `references/api/protocol.md` 生成或增量更新 |
-| 目标文档已 `current` 且用户只要小改 | 做聚焦编辑，保持事实可追溯 |
-| 诉求是全局同步、README/agent 入口/记忆整理 | 转 `cs-docs-neat` |
+data DocsRequest = DocsRequest
+  { requestedMode : Maybe Mode           -- tutorial | api
+  , userTopic     : Maybe Text
+  , repoFacts     : RepoFacts            -- 优先于 args / 聊天历史
+  }
 
-用户说“继续写文档”时，也按文件和 frontmatter / manifest 状态判断，不靠聊天历史。
+data Mode = Tutorial | Api
+
+data Stage = TutorialStage | ApiStage | FocusedEdit | NeatHandoff
+
+data DocsState = DocsState              -- 全部从 docs/ + manifest.yaml + 源码公开表面恢复
+  { targetDoc   : Maybe Path
+  , docStatus   : Missing | Draft | Current | Outdated  -- frontmatter status
+  , manifest    : NoManifest | HasManifest             -- docs/api/manifest.yaml
+  , entryStatus : Pending | Draft | Current | Outdated | Skipped
+  , codeDrift   : InSync | Drifted       -- 相关源码/spec 是否已变
+  }
+
+data DocsOutcome
+  = RoutedTo Stage
+  | HumanCheckpoint CheckpointReason
+  | Completed DocsSummary
+  | NeedsHuman Reason
+
+data CheckpointReason = ConfirmNewDoc | ConfirmOverwrite | ConfirmContractWording
+-- 目标读者/类型模糊不是 checkpoint：走 NeedsHuman "which reader?"（见 restoreDocsStage 与 Failure Behavior）
+```
+
+`restoreDocsStage` 从仓库事实选下一步（全局同步 / 记忆整理 → 路由 `cs-docs-neat`）：
+
+```haskell
+restoreDocsStage :: DocsState -> EntryIntent -> DocsOutcome
+restoreDocsStage(s, intent)
+  | needsGlobalSync(intent)                              -> RoutedTo NeatHandoff   -- 全局同步/README/agent 入口/记忆整理，转 `cs-docs-neat`
+  | ambiguousReader(s, intent)                           -> NeedsHuman "which reader?"
+  | intent.mode == Api || wantsReference(intent)         -> RoutedTo ApiStage      -- 无 manifest 则初始化，缺条目则补
+  | s.manifest == HasManifest && s.entryStatus in [Pending, Draft, Outdated]
+                                                         -> RoutedTo ApiStage      -- 生成或增量更新条目
+  | wantsTaskGuide(intent) && s.docStatus == Missing     -> RoutedTo TutorialStage -- 新建
+  | s.docStatus == Current && s.codeDrift == Drifted     -> RoutedTo TutorialStage -- 更新
+  | s.docStatus == Outdated                              -> RoutedTo TutorialStage -- 更新
+  | s.docStatus == Current && smallEdit(intent)          -> RoutedTo FocusedEdit   -- 聚焦编辑，保持事实可追溯
+  | otherwise                                            -> RoutedTo TutorialStage
+```
+
+`restoreDocsStage` 是唯一路由真相：启动后先扫既有文档和公开表面（`docs/`、`README*`、用户点名路径、相关源码导出/API/命令）恢复 `DocsState`，按上方分支选下一步。用户说“继续写文档”时，也按文件和 frontmatter / manifest 状态判断，不靠聊天历史。
+
+---
+
+## Workflow
+
+主执行主线（每次调用按序走；各 stage "怎么做" 的厚规则见对应 protocol，本节只定顺序与边界）：
+
+1. **`preflight`** — 读 `.codestable/attention.md`；缺失则 `route to cs-onboard`；不得用 `AGENTS.md`/`CLAUDE.md` 代替 CodeStable attention。
+2. **`parseEntryIntent`** — 优先级 `flag > compat-preset > utterance`；`repoFacts override requestedMode`；空参不推断 mode，先按仓库事实恢复。
+3. **`restoreDocsStage`** — 扫 `docs/`、`README*`、`manifest.yaml` + 相关源码公开表面恢复 `DocsState`，选 next stage；全局同步 / 记忆整理（非对外文档）→ `route to cs-docs-neat`。
+4. **`loadStageProtocol`** — progressive reference loading：进某 stage 才加载该 stage 一个 protocol，禁止 eager 读全部 references。
+5. **`executeOrRoute`** — 先读代码和既有文档再落盘；tutorial/api 生成或增量更新，`status` 落到合法值；遇 `HumanCheckpoint` 必停。
+6. **`exitRecoverable`** — 文档 `status` / manifest 状态明确、可从源码追溯，next stage 或 checkpoint reason 明确。
 
 ---
 
@@ -72,6 +128,12 @@ argument-hint: "[--mode tutorial|api] <topic>"
 1. 新建文档前：目标读者、文档类型（tutorial / api）和落点路径。
 2. 覆盖或重写已有 `current` 文档前：确认旧内容确实过期，不是并行有效版本。
 3. 文档表述会改变 user-facing 契约或公开理解时：让用户确认口径后再落盘。
+
+---
+
+## Failure Behavior
+
+返回 `NeedsHuman` 当：`.codestable/attention.md` 缺失（→ `cs-onboard`）；无法识别目标文档或落点路径；目标读者/文档类型模糊无法从仓库事实判定；requested mode 与仓库事实冲突；文档表述会改变 user-facing 契约或公开理解而用户未确认口径；诉求实为全局同步 / 记忆整理（→ `cs-docs-neat`）；写 API 时源码事实源不足只能靠猜。报告：当前目标文档、阻塞原因、下一步用户动作、已写文件、是否可安全重试。
 
 ---
 

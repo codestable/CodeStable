@@ -1,6 +1,12 @@
 ---
 name: cs-goal
-description: Goal 自主达成。触发：明确终点/验收/预算、持续迭代到完成，或 grill me 后开工。
+description: "Goal 自主达成。触发：明确终点/验收/预算、持续迭代到完成，或 grill me 后开工。不要用于单个功能的规划与实现(cs-feat)、大需求端到端拆解(cs-epic)、bug 诊断修复(cs-issue)、行为等价重构(cs-refactor)、对外文档(cs-docs)；也不用于没有实现终点的纯 design / roadmap / brainstorm / audit。"
+contracts:
+  - grep: "state.yaml"
+  - grep: "functional-acceptance"
+  - grep: "owner-stop"
+  - grep: "可见 Task agent"
+  - not-grep: "git push"
 ---
 
 # cs-goal
@@ -18,7 +24,61 @@ iteration 中创建或引用对应 feature / issue / refactor 产物。
 
 产物模板、`state.yaml` schema、报告标题和恢复规则见 `reference.md`。
 
----
+`cs-goal` 是 goal driver（单一职责，非 stage 编排型 workflow）；下方 `## Spec` 是前门契约，正文阶段 1/2/3、owner-stop、complete/blocked 规则是方法论主体。
+
+## Spec
+
+```haskell
+csGoal :: GoalRequest -> GoalOutcome
+
+data GoalRequest = GoalRequest
+  { ownerGoal  : Maybe Text          -- 有界终点 / 验收 / 预算；缺则先 grill
+  , repoFacts  : RepoFacts           -- .codestable/goals/ + state.yaml，优先于聊天历史
+  , attention  : Maybe Attention     -- .codestable/attention.md；缺则 route to cs-onboard
+  }
+
+data GoalState = GoalState           -- 从 .codestable/goals/YYYY-MM-DD-{slug}/ 恢复
+  { goalDir          : Maybe Path
+  , status           : Active | Complete | Blocked   -- state.yaml 为机器 source of truth
+  , hasStartReport   : Bool          -- goal.md 起点报告；实现前必须存在
+  , currentIteration : Int           -- 最后一个已完成 iteration 编号
+  , acceptancePassed : Bool          -- Task agent functional-acceptance verdict = pass
+  , blockerSignature : Maybe Text
+  , blockerCount     : Int           -- 同一 blocker 连续 iteration 次数
+  }
+
+data GoalOutcome
+  = Iterating GoalState               -- 自主继续，已写 iteration 报告 + 刷新 state.yaml
+  | HumanCheckpoint CheckpointReason  -- strict owner-stop：先写 approval-report.md 再停
+  | Completed GoalSummary             -- acceptance + Task agent 验收 + final iteration 齐备
+  | NeedsHuman Reason
+
+data CheckpointReason      -- 全部枚举仅指已运行 goal 的 owner-stop：新 goal 未 grill 前的
+                           -- 信息缺口（验收/预算/终点未谈）一律先走阶段 1 grill，不触发 checkpoint
+  = AcceptanceConflict     -- 仅指已运行 goal 的验收标准自身冲突/不足以判断完成；
+                           -- 验证全绿但未跑终端验收 → 先启动可见 Task agent 验收，也不是本 checkpoint
+  | AmbiguousTerminal      -- objective / start / terminal 存在重大歧义
+  | ScopeBoundaryChange    -- 会改变 goal 之外的 long-term spec / public contract / capability
+  | RepeatedBlocker        -- 同一 blocker 连续三次 iteration
+  | BudgetExhausted        -- budget 用尽或接近用尽
+  | RiskAcceptanceNeeded   -- 需人类风险接受 / secrets / 破坏性 / 外部购买 / merge / deploy 批准
+  | AcceptanceAgentUnavailable -- 可见 Task agent（终端验收/独立 review）无法启动且按生命周期
+                           -- 重试仍失败：写 approval-report 后 owner-stop，不自验收
+```
+
+`selectNextAttempt` 从 `state.yaml` 恢复状态并选下一步（决策细则见「阶段 3」「严格 Owner
+Stop」「Complete 与 Blocked 规则」；此处只固定分支形态）：
+
+```haskell
+selectNextAttempt :: GoalState -> GoalOutcome
+selectNextAttempt(s)
+  | attentionMissing                                   -> NeedsHuman "route to cs-onboard"
+  | ownerStopTriggered(s)                              -> HumanCheckpoint (ownerStopReason s)
+  | not s.hasStartReport                               -> Iterating (writeStartReport s)  -- 实现前
+  | s.status == Active && not s.acceptancePassed       -> Iterating (nextMinimalAttempt s)
+  | s.acceptancePassed                                 -> Completed (summary s)
+  | s.blockerCount >= 3                                -> HumanCheckpoint RepeatedBlocker
+```
 
 ## 启动
 
@@ -40,14 +100,9 @@ iteration 中创建或引用对应 feature / issue / refactor 产物。
 
 ## 使用场景
 
-owner 表达有界目标时使用 `cs-goal`：
-
-- "starting from this broken state, make the tests pass";
-- "reach this acceptance result";
-- "run autonomously and self-iterate";
-- "keep trying until complete or blocked";
-- "grill me first, then implement";
-- "I care about the outcome, not the technical choices".
+owner 表达有界目标时使用 `cs-goal`：修好这个坏状态直到测试全过、达到某验收结果、
+自主迭代到 complete 或 blocked、"grill me first, then implement"、
+"I care about the outcome, not the technical choices"。
 
 不要用于：
 
@@ -139,8 +194,11 @@ unresolved assumptions 和 next action。保持简洁，只在 goal 边界或状
 当 `state: active` 时循环：
 
 1. 从 `state.yaml` 选择最小有用的下一次尝试。
-2. 按既有 CodeStable 约束实现；适用时包括 review、spec-governance 和
-   commit 规则。
+2. 按既有 CodeStable 约束实现；spec-governance 和 commit 规则适用时同样遵守。
+   涉及 review gate（`cs-code-review`）时，按 `.codestable/reference/agent-conventions.md`
+   通过附近**可见 Task agent** 启动独立 reviewer 审查本轮 diff——与 cs-feat / cs-epic
+   同一模式，**不在 goal driver 主线程自审**；reviewer 无法启动时按 Task agent 生命周期
+   重试，仍失败记录降级原因（self-review 需在报告中显式标注）。
 3. 用 fresh 命令或证据验证。
 4. 修改 `state.yaml.current_iteration` 前，根据 `state.yaml.current_iteration` 和已有
    `iterations/{nnn}*.md` 文件推导下一个三位数 iteration 编号；不要覆盖旧报告。
@@ -157,8 +215,8 @@ unresolved assumptions 和 next action。保持简洁，只在 goal 边界或状
 把 `state.yaml.status` 改为 `complete` 前：
 
 1. 用 fresh evidence 跑正常验证。
-2. 按 `.codestable/reference/agent-conventions.md` 的 Task agent 选择规则启动
-   Task agent，对记录的 owner acceptance criteria 和实际产品 / 产物行为做功能验收。
+2. 按 `.codestable/reference/agent-conventions.md` 的 Task agent 选择规则启动附近
+   **可见 Task agent**，对记录的 owner acceptance criteria 和实际产品 / 产物行为做功能验收。
 3. 把结果写入 `functional-acceptance.md`，包括 reviewer、scope、acceptance checks、
    functional evidence、verdict、residual risks 和 follow-up。
 4. 结果被写入并引用后，按 Task agent 生命周期关闭该验收 agent；关闭失败只记录 warning。
@@ -183,6 +241,23 @@ fixture 输出复核，或其他和 owner 相关的证明。单测、lint 和 bu
 - 下一步需要明确的人类风险接受、secrets、破坏性操作、外部购买、merge / deployment 批准。
 
 普通技术选择、测试失败、实现备选和局部 refactor 由 AI 负责，除非跨过以上 stop 条件。
+
+---
+
+## Failure Behavior
+
+`cs-goal` 停下的两种形态：
+
+- `NeedsHuman`：无法启动 goal driver。`.codestable/attention.md` 缺失（→ `cs-onboard`）；
+  owner 未给终点且 grill 也无法收敛出有界 goal；已有 active goal 但缺起点报告且无法从
+  state 与 interview 证据重建。
+- `HumanCheckpoint`：driver 触发 strict owner-stop（见「严格 Owner Stop」枚举的
+  `CheckpointReason`）。停前先写 `.codestable/goals/YYYY-MM-DD-{slug}/approval-report.md`，
+  除非最新 iteration 报告已含完整决策上下文、选项、推荐、权衡、证据、后果和下一步。
+
+两种情况都要报告：当前 goal 目录、`state.yaml.status`、阻塞或 checkpoint 原因、需要的
+owner 决策或下一步动作、已写文件（起点报告 / 最新 iteration / approval-report），以及是否
+可安全重试或继续。不要在 acceptance 未过时假装完成，也不要自验收 goal 为 complete。
 
 ---
 

@@ -1,7 +1,15 @@
 ---
 name: cs-epic
-description: Epic 主入口。触发：大需求/系统级能力/执行整个 epic；规划、review、feature design、goal 包。
+description: "Epic 主入口。用于大需求或系统级能力的端到端拆解与长程执行：planning、review、子 feature design（批量）、goal 包。不要用于单个功能(cs-feat)、bug 修复(cs-issue)、行为等价重构(cs-refactor)、对外文档(cs-docs)。"
 argument-hint: "[--stage planning|review|goal-package] <epic>"
+contracts:
+  - grep: "restoreEpicStage"
+  - grep: "epic_child_batch: true"
+  - grep: "codestable-workflow-next.py epic"
+  - grep: "统一确认所有 design"
+  - grep: "final_answer_allowed: false"
+  - not-grep: "git push"
+  - not-grep: "read all references"
 ---
 
 # cs-epic
@@ -28,6 +36,76 @@ argument-hint: "[--stage planning|review|goal-package] <epic>"
 
 ---
 
+## Spec
+
+```haskell
+csEpic :: EpicRequest -> EpicOutcome
+
+data EpicRequest = EpicRequest
+  { requestedStage : Maybe Stage         -- planning | review | goal-package
+  , userGoal       : Maybe Text
+  , repoFacts      : RepoFacts           -- 优先于 args / 聊天历史
+  }
+
+data Stage = Planning | Review | ChildDesignBatch | GoalPackage
+
+data EpicState = EpicState               -- 从 .codestable/roadmap/{slug}/ 与子 features/ 恢复
+  { roadmapStatus     : Missing | Draft | ReviewPassed | Confirmed
+  , reviewStatus      : Missing | Passed | Blocking | Blocked
+  , childrenDesign    : AllPassed | Pending   -- items.yaml 里所有未 dropped child 是否都有 design+checklist+passed review
+  , allDesignApproved : Bool
+  , hasGoalPackage    : Bool
+  }
+
+data EpicOutcome
+  = RoutedTo Stage
+  | ChildDesignBatch                     -- 逐项进入 cs-feat（epic_child_batch: true），不逐个停用户
+  | HumanCheckpoint CheckpointReason
+  | GoalHandoff Command
+  | Completed EpicSummary
+  | NeedsHuman Reason
+
+data CheckpointReason = ConfirmRoadmap | ConfirmAllChildDesign | GoalDriverUnavailable | AmbiguousEpicTarget
+```
+
+```haskell
+restoreEpicStage :: EpicState -> Intent -> EpicOutcome
+restoreEpicStage(s, intent)
+  | ambiguousTarget(s, intent)                              -> NeedsHuman "which epic?"
+  | s.roadmapStatus == Missing                              -> RoutedTo Planning      -- 大需求未拆解
+  | s.roadmapStatus == Draft && s.reviewStatus == Missing   -> RoutedTo Review        -- roadmap draft 无 passed review
+  | s.reviewStatus in [Blocking, Blocked]                   -> RoutedTo Planning      -- 修订后重跑 review
+  | s.reviewStatus == Passed && s.roadmapStatus /= Confirmed
+      -> HumanCheckpoint ConfirmRoadmap        -- roadmap review passed 但用户未确认：停下让用户确认 epic 规划
+  | s.roadmapStatus == Confirmed && s.childrenDesign == Pending
+      -> ChildDesignBatch                      -- 逐项进 cs-feat（epic_child_batch: true）；design 保持 `draft`，不逐个让用户确认
+                                               -- 仍有子 feature 未完成 design-review 就继续下一个，不停用户
+  | s.childrenDesign == AllPassed && not s.allDesignApproved
+      -> HumanCheckpoint ConfirmAllChildDesign -- 停下让用户统一确认所有 design，确认后逐份标 approved
+  | s.allDesignApproved && not s.hasGoalPackage             -> RoutedTo GoalPackage
+  | s.hasGoalPackage                                        -> GoalHandoff "/goal"    -- 派发失败输出可粘贴 /goal 并停止
+```
+
+`restoreEpicStage` 是唯一路由真相：扫 `.codestable/roadmap/{slug}/` 与子 features/ 恢复 `EpicState`，按上方分支选下一步；各 stage 加载哪个 protocol 见「Reference 加载」。子 design 阶段是连续 `ChildDesignBatch` loop（见「Child design batch loop」），在 `ConfirmAllChildDesign`（统一确认所有 design）之前不得 final answer。`HumanCheckpoint` 三点见下方「人工 checkpoint」。
+
+`cs-epic` 不在主线程直接执行长程 goal；只能通过可见 Task agent goal driver 派发。没有可见 driver 或派发失败时，回退为用户手动粘贴 `/goal`。
+
+---
+
+## Workflow
+
+主执行主线（每次调用按序走；planning/review/goal 的厚规则见对应 protocol，本节只定顺序与边界）：
+
+1. **`preflight`** — 读 `.codestable/attention.md`；缺失则 `route to cs-onboard`；不得用 `AGENTS.md`/`CLAUDE.md` 代替 CodeStable attention。
+2. **`parseEntryIntent`** — 优先级 `flag > compat-preset > utterance`；`repoFacts override requestedStage`；空参不推断 stage。
+3. **`restoreEpicStage`** — 扫 `.codestable/roadmap/` + 子 features/ + goal 包恢复 `EpicState`，选 next stage。
+4. **`loadStageProtocol`** — progressive reference loading：进某 stage 才加载该 stage 一个 protocol，禁止 eager 读全部 references。
+5. **`ChildDesignBatch` loop** — roadmap 确认后，逐个子 feature 经 `cs-feat`（`epic_child_batch: true`）连续推进 design/design-review；每轮先跑 `codestable-workflow-next.py epic`，输出 `final_answer_allowed: false` 时不得结束本轮；单个 child 完成只是内部进度，不停用户、不 final answer。
+6. **`HumanCheckpoint` / `GoalHandoff`** — 所有 child design-review passed 后停下让用户统一确认所有 design，确认后逐份标 approved；再生成 goal 包，经可见 Task agent goal driver 派发，派发失败则输出可粘贴 `/goal`。
+7. **`exitRecoverable`** — artifact 已落盘、next stage 明确、或 checkpoint reason 明确，任一即可让下次调用从 `repoFacts` 恢复。
+
+---
+
 ## 文件放哪儿
 
 ```text
@@ -46,25 +124,7 @@ argument-hint: "[--stage planning|review|goal-package] <epic>"
 
 ---
 
-## 状态机
-
-| 仓库事实 | 下一步 |
-|---|---|
-| 大需求未拆解 | 读取 `references/planning/protocol.md` |
-| roadmap draft 无 passed review | 读取 `references/review/protocol.md` |
-| roadmap review blocking / blocked | 回 planning 修订后重跑 review |
-| roadmap review passed 但用户未确认 | 停下让用户确认 epic 规划 |
-| roadmap 已确认，子 feature design 未完成 | 逐项进入 `cs-feat` design/design-review，并带内部上下文 `epic_child_batch: true`；design 保持 `draft`，不逐个让用户确认 |
-| 仍有子 feature 未完成 design-review | 继续下一个子 feature，不停用户 |
-| 所有子 feature design-review passed 但未整体确认 | 停下让用户统一确认所有 design，确认后逐份标 `approved` |
-| 所有 design approved，goal 包未生成 | 读取 `references/goal/protocol.md` |
-| goal 包已生成 | 按 Goal driver 派发；派发失败则输出可粘贴 `/goal` 指令并停止 |
-
-`cs-epic` 不在主线程直接执行长程 goal；只能通过可见 Task agent goal driver 派发。没有可见 driver 或派发失败时，回退为用户手动粘贴 `/goal`。
-
----
-
-### Child design batch loop
+## Child design batch loop
 
 roadmap 已确认后，子 feature design 阶段是一个连续 batch loop，不是单次子任务：
 

@@ -1,6 +1,13 @@
 ---
 name: cs-audit
-description: 系统审计。触发：审查系统、扫描 bug/安全/性能/架构债，产出发现清单。
+description: "系统审计。触发：审查系统、扫描 bug/安全/性能/架构债，产出发现清单。不要用于审查单次改动 diff(cs-code-review)、修已知 bug(cs-issue)、实现功能(cs-feat)、行为等价重构(cs-refactor)、沉淀已知经验(cs-keep)；这是仓库级只读投查，只发现不定修。"
+contracts:
+  - grep: "audit-index"
+  - grep: "audit-finding"
+  - grep: "superseded-by"
+  - grep: "只发现不定修"
+  - not-grep: "git push"
+  - not-grep: "git commit"
 ---
 
 # cs-audit
@@ -12,6 +19,56 @@ description: 系统审计。触发：审查系统、扫描 bug/安全/性能/架
 `cs-issue` 等你报 bug，`cs-refactor` 等你指优化点，`cs-keep` 等你说"这事记一下"——但"我也不知道哪有问题，你先扫一遍看看"这个诉求没人接。`cs-audit` 补上这块：**在用户限定的范围内主动扫描，产出一份按严重度 × 性质交叉分类的发现清单**。
 
 本技能只发现、不定修。修是 `cs-issue` / `cs-refactor` 的事。
+
+`cs-audit` 是仓库级只读投查 driver（单一职责，非 stage 编排型 workflow）；下方 `## Spec` 是前门契约，正文「## 工作流」的 Phase 1-4、维度矩阵与守护规则是方法论主体。
+
+## Spec
+
+```haskell
+csAudit :: AuditRequest -> AuditOutcome
+
+data AuditRequest = AuditRequest
+  { scopeHint  : Maybe ScopeHint    -- 关键词 / 模块目录 / 一段话；缺则先 Phase 1 收敛
+  , dimensions : [Dimension]        -- 用户圈定；空则全扫 5 维
+  , repoFacts  : RepoFacts          -- .codestable/audits/ + adrs/，优先于聊天历史
+  , attention  : Maybe Attention    -- .codestable/attention.md；缺则 route to cs-onboard
+  }
+
+data ScopeHint = Keyword Text | ModulePath Path | FreeText Text
+data Dimension = Bug | Security | Performance | Maintainability | ArchDrift
+
+data AuditState = AuditState        -- 从 .codestable/audits/YYYY-MM-DD-{slug}/ 恢复
+  { auditDir       : Maybe Path
+  , scopeConfirmed : Bool           -- Phase 1 已与用户确认范围（read-only，不改代码）
+  , hasIndex       : Bool           -- index.md 是否已写（先 index 后 finding）
+  , findingCount   : Int            -- 已产出 finding 数（每维 ≤ 5）
+  , adrsPresent    : Bool           -- .codestable/requirements/adrs/ 是否存在（arch-drift 对照源）
+  }
+
+data AuditOutcome
+  = Scanning AuditState             -- 只读扫描 + 落 index/finding，不产生代码改动
+  | HumanCheckpoint CheckpointReason
+  | Completed AuditSummary          -- index 交叉表 + 每条 finding 齐备（含零发现结论）
+  | NeedsHuman Reason
+
+data CheckpointReason
+  = ConfirmScope        -- Phase 1 收敛后请用户确认扫描范围与维度
+  | WholeRepoRefused    -- 用户要求全仓库盲扫：推回去，先收敛到最常改 / 最近出问题的区域
+  | ArchDriftNoAdr      -- 需判架构偏离但 adrs/ 缺失：不得凭记忆，请用户补 ADR 或缩范围
+```
+
+`selectAuditStep` 从仓库事实选下一步（决策细则见「## 工作流」各 Phase 与「## 守护规则」；此处只固定分支形态，只读不定修）：
+
+```haskell
+selectAuditStep :: AuditState -> AuditRequest -> AuditOutcome
+selectAuditStep(s, req)
+  | attentionMissing                                   -> NeedsHuman "route to cs-onboard"
+  | wholeRepoBlindScan(req)                            -> HumanCheckpoint WholeRepoRefused
+  | not s.scopeConfirmed                                -> HumanCheckpoint ConfirmScope
+  | archDriftRequested(req) && not s.adrsPresent        -> HumanCheckpoint ArchDriftNoAdr
+  | s.scopeConfirmed && not scanExitCriteriaMet(s)      -> Scanning (nextDimensionScan s)
+  | scanExitCriteriaMet(s)                              -> Completed (summary s)  -- 含零发现结论
+```
 
 ---
 
@@ -126,6 +183,17 @@ index.md 末尾给优先级建议：
 - **只发现不定修**——cs-audit 不出代码改动。出现"顺便修了"就算越界
 - **架构偏离引用 ADR**——不准凭记忆判断架构应该长什么样，必须读 `.codestable/requirements/adrs/` 对照
 - **旧审计标注过期**——同名模块新审计覆盖旧审计时，旧 index 标 `status: superseded` + `superseded-by: {新目录}`
+
+---
+
+## Failure Behavior
+
+`cs-audit` 停下的两种形态（都只发现不定修，不触碰代码）：
+
+- `NeedsHuman`：无法启动只读投查 driver。`.codestable/attention.md` 缺失（→ `cs-onboard`）；用户既无关键词 / 模块 / 描述，Phase 1 也收敛不出可执行范围；诉求实为审查单次 diff（→ `cs-code-review`）、修已知 bug（→ `cs-issue`）或实现功能（→ `cs-feat`）而非仓库级投查。
+- `HumanCheckpoint`：driver 触发上方 `CheckpointReason`。`ConfirmScope`：Phase 1 收敛后请用户确认扫描范围与维度再动手；`WholeRepoRefused`：用户要求全仓库盲扫，推回去先缩到最常改 / 最近出问题的区域；`ArchDriftNoAdr`：要判架构偏离但 `.codestable/requirements/adrs/` 缺失，不得凭记忆，请用户补 ADR 或去掉 arch-drift 维度。
+
+两种情况都要报告：当前 audit 目录（如已建）、`index.md` 与已写 finding 数、阻塞或 checkpoint 原因、需要的用户决策或下一步动作、是否可安全重试或继续。不在范围未确认时盲扫，不在无 ADR 时臆断架构应有形态，不出任何代码改动。
 
 ---
 
