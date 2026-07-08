@@ -6,7 +6,6 @@ contracts:
   - grep: "restoreFeatureStage"
   - grep: "progressive reference loading"
   - grep: "must not auto-approve design"
-  - grep: "独立 Task agent reviewer"
   - grep: "design-review passed"
   - not-grep: "git push"
   - not-grep: "read all references"
@@ -126,9 +125,7 @@ restoreFeatureStage(s, intent)
 进入某阶段才加载**该阶段一个 protocol**，不在启动时读全部（progressive reference loading）：
 
 - design → `references/design/protocol.md`（必要时 support/intent-template.md、codebase-design.md）
-- design-review → `references/design-review/protocol.md`。**gate 必需独立 Task agent reviewer**：
-  主 agent 本地审查不得定稿 review、不得给 `passed`；design 修订后的**每一轮重审同样适用**
-  （round 2+ 不得以"本地重审"代替），降级须 approval-report + 用户明确授权（细则见 protocol）。
+- design-review → `references/design-review/protocol.md`
 - goal-package → `references/goal/protocol.md`
 - implementation → `references/implementation/protocol.md`（必要时 support/reference.md、tdd.md）
 - code review → 公开横切 skill `cs-code-review`

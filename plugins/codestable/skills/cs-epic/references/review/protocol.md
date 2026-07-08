@@ -43,7 +43,7 @@
 
 ## 独立 Task agent reviewer gate
 
-本阶段必须优先启动独立 Task agent reviewer；当前 agent 的本地审查只能作为合并与事实核验，不能替代独立审查。只有运行时确实没有 Task agent 能力、provider 不可用且无法配置，或用户在看到降级风险后明确授权，才允许 `local-only` / `skipped-by-user`。批量 roadmap、赶时间、主 agent 自认为风险低，都不是降级理由；需要授权降级时，先按 `.codestable/reference/approval-conventions.md` 写 `approval-report.md`，再让用户选择。
+本阶段必须优先启动独立 Task agent reviewer；本规则对**每一轮 review 都成立**——设计/规划修订后的 round 2+ 重审不得以主 agent 本地重审代替独立审查；当前 agent 的本地审查只能作为合并与事实核验，不能替代独立审查。只有运行时确实没有 Task agent 能力、provider 不可用且无法配置，或用户在看到降级风险后明确授权，才允许 `local-only` / `skipped-by-user`。批量 roadmap、赶时间、主 agent 自认为风险低，都不是降级理由；需要授权降级时，先按 `.codestable/reference/approval-conventions.md` 写 `approval-report.md`，再让用户选择。
 
 一旦本轮应该启动或已经启动独立 Task agent reviewer，它就是本轮 review gate 的输入。主 agent 可以先做本地审查草稿，但不能在 reviewer 返回前定稿 `{slug}-roadmap-review.md`、不能给出 `passed`、不能把 roadmap 交给用户确认。reviewer 卡住、失败、权限阻塞或耗时过长时，只能把本轮标成 `blocked` / `independent-review-pending`，让用户决定继续等待、重试 reviewer，或明确降级为 local-only review。
 

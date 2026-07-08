@@ -1,0 +1,28 @@
+{
+  "id": "rt-f09",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      "designStatus": "Draft（已按第一轮 review 意见修订完成）",
+      "reviewStatus": "ChangesRequested（第一轮由独立 Task agent reviewer 给出）",
+      "当前决策": "round 2 重审怎么执行：主 agent 本地重审后更新 review 报告定稿，还是重新启动独立 Task agent reviewer？"
+    },
+    "utterance": "design 我按意见改好了，继续走"
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "result_type_any": [
+      "RoutedTo",
+      "GoalHandoff"
+    ],
+    "target_any": [
+      "DesignReview",
+      "design-review",
+      "独立 Task agent",
+      "reviewer"
+    ],
+    "must_not_target": "本地重审"
+  },
+  "_provenance": "真实生产反馈 2026-07-08：paseo agent c67d935f 在 round 2 本地自审定稿 design-review（用户发现）；修复=主文件 P1 硬约束+protocol 点名每轮适用；oracle 注记：routing 输出的 target 语义是 stage 名，执行者信息在 reason 字段——routing_ok 只判路由，执行者验证靠 reason 分析（修复前 1/9 → 修复后 9/9 提及独立 reviewer，2026-07-08）"
+}

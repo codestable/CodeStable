@@ -7,6 +7,7 @@ contracts:
   - grep: "epic_child_batch: true"
   - grep: "codestable-workflow-next.py epic"
   - grep: "统一确认所有 design"
+  - grep: "独立 Task agent reviewer"
   - grep: "final_answer_allowed: false"
   - not-grep: "git push"
   - not-grep: "read all references"
@@ -141,7 +142,10 @@ roadmap 已确认后，子 feature design 阶段是一个连续 batch loop，不
 ## Reference 加载
 
 - planning：`references/planning/protocol.md`，必要时 `references/planning/reference.md`、`references/planning/support/codebase-design.md`
-- review：`references/review/protocol.md`
+- review：`references/review/protocol.md`。**gate 必需独立 Task agent reviewer**：主 agent 本地
+  审查不得定稿、不得给 `passed`；roadmap 修订后的**每一轮重审同样适用**，降级须
+  approval-report + 用户明确授权（细则见 protocol）。子 feature design-review 经 `cs-feat`
+  同受此约束。
 - goal-package：`references/goal/protocol.md`，并复制 `references/goal/support/protocol*.md` 和 `references/goal/support/goal-command-template.md`
 - goal driver：`.codestable/reference/agent-conventions.md` 的 Goal driver 派发规则
 - child feature：通过 `cs-feat` 主入口推进，不直接调用旧阶段技能；调用时带内部上下文 `epic_child_batch: true`，让单 feature 人工 checkpoint 推迟到 `cs-epic` 的批量确认
