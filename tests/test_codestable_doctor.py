@@ -8,7 +8,9 @@ from pathlib import Path
 
 
 sys.dont_write_bytecode = True
-TOOLS_DIR = Path(__file__).resolve().parents[1] / "plugins/codestable/skills/cs-onboard/tools"
+ROOT = Path(__file__).resolve().parents[1]
+CURRENT_PLUGIN_VERSION = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+TOOLS_DIR = ROOT / "plugins/codestable/skills/cs-onboard/tools"
 sys.path.insert(0, str(TOOLS_DIR))
 
 
@@ -67,8 +69,8 @@ def install_runtime(repo: Path) -> None:
                     {
                         "schema_version": 1,
                         "plugin": "codestable",
-                        "plugin_version": "1.0.0",
-                        "runtime_version": "1.0.0",
+                        "plugin_version": CURRENT_PLUGIN_VERSION,
+                        "runtime_version": CURRENT_PLUGIN_VERSION,
                         "tool_runtime": "skill-global",
                         "managed_paths": [".codestable/gates", ".codestable/reference"],
                     }
@@ -117,7 +119,7 @@ def test_missing_skill_tools_are_blocked_without_requiring_repo_tools(tmp_path: 
     source = tmp_path / "source-skill"
     source.mkdir()
 
-    runtime = runtime_tool.runtime_health(repo, source_skill_dir=source, plugin_version="1.0.0")
+    runtime = runtime_tool.runtime_health(repo, source_skill_dir=source, plugin_version=CURRENT_PLUGIN_VERSION)
 
     assert runtime["status"] == "runtime-incomplete"
     assert runtime["tool_runtime"] == "skill-global"
@@ -150,7 +152,7 @@ def test_runtime_version_mismatch_is_blocked_with_sync_hint(tmp_path: Path) -> N
     runtime = report["tooling"]["runtime"]
     assert runtime["status"] == "version-mismatch"
     assert runtime["installed_plugin_version"] == "0.9.0"
-    assert runtime["expected_plugin_version"] == "1.0.0"
+    assert runtime["expected_plugin_version"] == CURRENT_PLUGIN_VERSION
     assert "runtime sync" in runtime["hint"]
 
 

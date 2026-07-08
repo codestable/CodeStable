@@ -8,6 +8,8 @@ import json
 import sys
 from pathlib import Path
 
+sys.dont_write_bytecode = True
+
 from codestable_runtime import runtime_health, sync_runtime
 
 

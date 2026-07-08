@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1
+
+- CodeStable skill simplification release.
+
 ## 1.0.0
 
 - Simplified CodeStable skill entrypoints around main workflow skills and compatibility wrappers.
