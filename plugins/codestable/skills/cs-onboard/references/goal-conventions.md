@@ -99,13 +99,14 @@ iteration。只有测试不足以完成 goal。
 
 ## 严格 Owner Stop
 
-只在以下情况停止：
+只在以下情况停止（与 `cs-goal` 的 `CheckpointReason` 枚举一一对应；改口径需两处同步）：
 
-- acceptance criteria 冲突。
+- acceptance criteria 冲突，或已不足以判断完成。
 - objective / start / terminal condition 有重大歧义。
 - 继续会改变记录 goal 之外的长期 spec、public contract 或 capability boundary。
 - 同一个 blocker 连续三次 iteration 重复。
 - budget 已用尽或接近用尽。
-- 需要风险接受、secrets、破坏性操作、外部购买、merge 或 deployment 批准。
+- 需要明确的人类风险接受、secrets、破坏性操作、外部购买、merge / deployment 批准。
+- 可见 Task agent（终端验收 / 独立 review）无法启动且按生命周期重试仍失败；写 approval-report 后停下，不自验收。
 
 日常技术选择和普通失败尝试由 AI 负责。

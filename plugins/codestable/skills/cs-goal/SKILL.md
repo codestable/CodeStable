@@ -211,14 +211,7 @@ fixture 输出复核，或其他和 owner 相关的证明。单测、lint 和 bu
 
 ## 严格 Owner Stop
 
-只有以下情况才停下来问 owner：
-
-- acceptance criteria 冲突，或已不足以判断完成。
-- objective、start point 或 terminal condition 存在重大歧义。
-- 继续会改变记录 goal 之外的长期 spec、public contract 或 capability boundary。
-- 同一个 blocker 连续三次 iteration 重复出现。
-- budget 已用尽或接近用尽。
-- 下一步需要明确的人类风险接受、secrets、破坏性操作、外部购买、merge / deployment 批准。
+只有触发 owner-stop 才停下来问 owner；触发条件以 Spec 的 `CheckpointReason` 枚举及其注释为唯一权威（`AcceptanceConflict` / `AmbiguousTerminal` / `ScopeBoundaryChange` / `RepeatedBlocker` / `BudgetExhausted` / `RiskAcceptanceNeeded` / `AcceptanceAgentUnavailable`），本节不另列清单。
 
 普通技术选择、测试失败、实现备选和局部 refactor 由 AI 负责，除非跨过以上 stop 条件。
 

@@ -86,12 +86,19 @@ restoreIssueStage(s, intent)
 
 主执行主线（每次调用按序走；各 stage "怎么做" 的厚规则见对应 protocol，本节只定顺序与边界）：
 
-1. **`preflight`** — 读 `.codestable/attention.md`；缺失则 `route to cs-onboard`；不得用 `AGENTS.md`/`CLAUDE.md` 代替 CodeStable attention。
-2. **`parseEntryIntent`** — 优先级 `flag > compat-preset > utterance`；`repoFacts override requestedStage`；空参不推断 stage。
-3. **`restoreIssueStage`** — 扫 `.codestable/issues/` + artifact + `git diff` 恢复 `IssueState`，选 next stage；新增能力（非 bug）→ `route to cs-feat`。
-4. **`loadStageProtocol`** — progressive reference loading：进某 stage 才加载该 stage 一个 protocol，禁止 eager 读全部 references。
-5. **`executeOrRoute`** — report/analyze 落盘 artifact；fix 循环修复+验证+写 `fix-note`；遇 `HumanCheckpoint` 必停。
-6. **`exitRecoverable`** — `fix-note` 必出（根因/改动/验证/遗留风险），next stage 或 checkpoint reason 明确。
+```haskell
+workflow :: IssueRequest -> IssueOutcome
+workflow = preflight >=> parseEntryIntent >=> restoreIssueStage
+       >=> loadStageProtocol >=> executeOrRoute >=> exitRecoverable
+
+preflight         -- 读 .codestable/attention.md；缺失 -> route to cs-onboard；不得用 AGENTS.md/CLAUDE.md 代替
+parseEntryIntent  -- flag > compat-preset > utterance；repoFacts override requestedStage；空参不推断 stage
+restoreIssueStage -- 扫 .codestable/issues/ + artifact + git diff 恢复 IssueState，选 next stage（见 Spec）；
+                  -- 新增能力（非 bug）-> route to cs-feat
+loadStageProtocol -- stageProtocol 映射（见下节）；进 stage 才加载该 stage 一个 protocol
+executeOrRoute    -- report/analyze 落盘 artifact；fix 循环修复+验证+写 fix-note；遇 HumanCheckpoint 必停
+exitRecoverable   -- fix-note 必出（根因/改动/验证/遗留风险），next stage 或 checkpoint reason 明确
+```
 
 ## 文件放哪儿
 
@@ -106,14 +113,17 @@ restoreIssueStage(s, intent)
 
 ## Progressive Reference Loading
 
-进入某阶段才加载**该阶段一个 protocol**，不在启动时读全部（progressive reference loading）：
+```haskell
+stageProtocol :: Stage -> Protocol
+stageProtocol Report     = "references/report/protocol.md"
+stageProtocol Analyze    = "references/analyze/protocol.md"
+stageProtocol Fix        = "references/fix/protocol.md"   -- 必要时 references/fix/reference.md
+stageProtocol CodeReview = skill "cs-code-review"         -- 公开横切 skill
+stageProtocol FastPath   = stageProtocol Fix              -- 确认后直接 fix（见「快速通道」），仍写 fix-note
 
-- report → `references/report/protocol.md`
-- analyze → `references/analyze/protocol.md`
-- fix → `references/fix/protocol.md`，必要时 `references/fix/reference.md`
-- code review → 公开横切 skill `cs-code-review`
-
-禁止：启动即读全部 references；用 fix 协议做 report；code review 未过就当修复完成。
+-- 惰性加载（progressive reference loading）：进入某阶段才加载该阶段一个 protocol，不在启动时读全部
+-- 禁止：启动即读全部 references；用 fix 协议做 report；code review 未过就当修复完成
+```
 
 ## 快速通道
 
@@ -127,20 +137,38 @@ restoreIssueStage(s, intent)
 
 ## 人工 checkpoint
 
-必须停下等用户明确确认（`HumanCheckpoint`）：
+`ConfirmFastPath` / `AmbiguousIssueTarget` 的触发时机以 Spec 的 `restoreIssueStage` 为唯一权威；`ConfirmReport` / `ConfirmFixPlan` 在对应 stage protocol 完成产物时触发。本节只定义停下后的行为：
 
-1. `ConfirmReport`：report 阶段确认问题描述、复现、期望/实际、环境、严重度。
-2. `ConfirmFixPlan`：analyze 阶段确认推荐修复方案和风险。
-3. `ConfirmFastPath`：走快速通道前确认根因明确、改动小、无跨模块风险。
+```haskell
+onCheckpoint :: CheckpointReason -> Action
+onCheckpoint ConfirmReport        = 停等用户确认问题描述、复现、期望/实际、环境、严重度   -- report 产物落盘后触发
+onCheckpoint ConfirmFixPlan       = 停等用户确认推荐修复方案和风险                       -- analyze 产物落盘后触发
+onCheckpoint ConfirmFastPath      = 停等用户确认根因明确、改动小、无跨模块风险            -- 走快速通道前触发
+onCheckpoint AmbiguousIssueTarget = NeedsHuman "which issue?"
+```
 
 fix 阶段的验证结果和 review blocking 处理按协议循环，不在每步默认打断用户。
 
 ## Failure Behavior
 
-返回 `NeedsHuman` 当：`.codestable/attention.md` 缺失（→ `cs-onboard`）；无可恢复 issue 目标；issue 范围模糊；requested stage 与仓库事实冲突；问题实为新增能力（→ `cs-feat`）；修复需产品判断而非定点修复。报告：当前 issue 目录、阻塞原因、下一步用户动作、已写文件、是否可安全重试。
+```haskell
+needsHuman :: Situation -> Bool
+needsHuman s = attentionMissing s          -- .codestable/attention.md 缺失 -> 先 cs-onboard
+            || noRecoverableIssue s        -- 无可恢复 issue 目标
+            || ambiguousScope s            -- issue 范围模糊
+            || stageConflictsRepoFacts s   -- requested stage 与仓库事实冲突
+            || isNewCapability s           -- 问题实为新增能力 -> cs-feat
+            || needsProductJudgement s     -- 修复需产品判断而非定点修复
+```
+
+报告：当前 issue 目录、阻塞原因、下一步用户动作、已写文件、是否可安全重试。
 
 ## 退出条件
 
-- `{slug}-fix-note.md` 已写明根因、改动、验证和遗留风险。
-- 必要 code review 已通过或阻塞项已清楚交回。
-- 修复暴露新 feature 需求时，不在 issue 内偷做，另开 `cs-feat`。
+```haskell
+mayExit :: State -> Bool
+mayExit s = fixNoteComplete s   -- {slug}-fix-note.md 已写明根因、改动、验证和遗留风险
+         && reviewSettled s     -- 必要 code review 已通过或阻塞项已清楚交回
+```
+
+修复暴露新 feature 需求时，不在 issue 内偷做，另开 `cs-feat`。
