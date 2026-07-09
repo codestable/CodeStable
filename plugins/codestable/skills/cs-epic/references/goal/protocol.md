@@ -78,7 +78,7 @@
 - 按现有 `cs-feat` design 阶段约定，把 items.yaml 对应条目更新为 `in-progress` 并填写 `feature` 字段。
 - design 必须包含：基线预检、必跑验证命令、交付物、验收场景证据类型、清洁度规则、可独立验证 steps。
 
-每完成一个子 feature 的 design-review passed 后，立即运行 `python3 <cs-onboard skill 目录>/tools/codestable-workflow-next.py epic --roadmap .codestable/roadmap/{slug} --json`，按 hook 输出继续处理下一个 planned / in-progress 子 feature；不要停下来要求用户确认该单个 design，也不要把该 design 改成 `approved`。单个 child 完成不是本阶段退出条件，不能用 final answer 把“下一步继续处理下一个 child”交还给用户；若 preflight 刚完成 runtime 同步，从仓库事实恢复 batch loop；除非 hook 返回 `user_gate` / `blocked`、遇到 pending / 授权问题或用户明确要求停止，否则必须在同一轮里继续 batch loop。
+batch loop 的推进与退出纪律（每轮运行 `codestable-workflow-next.py epic`、单个 child 完成不停用户不 final answer、何时才能结束）以 `cs-epic` SKILL.md「Child design batch loop」一节为唯一权威，本协议不复述。本阶段专属约束：不要在 batch loop 中把任何单份 design 改成 `approved`。
 
 这里把 `cs-feat` design 阶段普通模式里的单 feature 用户整体 review 推迟到本协议统一处理：每份 design 先保持 `draft`，不要逐个改 `approved`。全部 feature design 都写完且 design-review 都 passed 后，一次性给用户 review。用户可能反复修改任意一个 design；每次修改后同步更新 checklist，并对实质变化重跑 `cs-feat` design-review 阶段。只有用户明确确认所有 design 后，才输出 `/goal`。
 

@@ -218,7 +218,7 @@ feature-design 发现接口契约不合理 / 漏了 / 描述不准 → **回 `cs
 - [ ] 模块拆分节每个模块职责一句话讲清
 - [ ] 接口契约节写到 feature-design 可拿来当硬约束的级别（函数签名 / 数据结构 / 协议字段 / 错误码）或明确"无跨模块接口"
 - [ ] 涉及跨模块 interface / seam / adapter 时，已记录 depth / locality / dependency strategy 和 adapter 结论
-- [ ] items.yaml 每条有 `slug` / `description` / `depends_on` / `status` / `feature`
+- [ ] items.yaml 每条有 `slug` / `description` / `depends_on` / `status` / `feature` / `minimal_loop`（全表恰好一条 `true`）
 - [ ] 依赖图是 DAG 无循环
 - [ ] 最小闭环条目已标
 - [ ] Top 3 风险、非显然依赖、关键假设已写入主文档或 review 摘要
