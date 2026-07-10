@@ -254,6 +254,30 @@ def test_skill_catalog_documents_no_argument_default() -> None:
     assert "no-argument calls recover or route" in en_text
 
 
+def test_router_docs_project_direct_dispatch_in_both_languages() -> None:
+    zh_phrase = "行动请求同轮直转，咨询请求只给建议"
+    zh_paths = (
+        ROOT / "README.md",
+        ROOT / "WORKFLOW.md",
+        ROOT / "SKILL_CATALOG.md",
+        SKILLS / "cs-onboard/references/system-overview.md",
+    )
+    for path in zh_paths:
+        text = path.read_text(encoding="utf-8")
+        assert zh_phrase in text, path
+        assert "只分诊到主入口" not in text, path
+
+    en_phrase = "Action requests dispatch to the target skill in the current run; advice requests only recommend."
+    en_paths = (ROOT / "README.en.md", ROOT / "WORKFLOW.en.md", ROOT / "SKILL_CATALOG.en.md")
+    for path in en_paths:
+        text = path.read_text(encoding="utf-8")
+        assert en_phrase in text, path
+        assert "Lightweight triage to the right main entry" not in text, path
+
+    assert "告诉你这次该走哪个" not in (ROOT / "README.md").read_text(encoding="utf-8")
+    assert "tells you which `cs-xxx` to run" not in (ROOT / "README.en.md").read_text(encoding="utf-8")
+
+
 def test_onboard_runtime_refresh_is_explicit_and_repeatable() -> None:
     onboard = (SKILLS / "cs-onboard/SKILL.md").read_text(encoding="utf-8")
     conventions = (SKILLS / "cs-onboard/references/execution-conventions.md").read_text(encoding="utf-8")
@@ -298,6 +322,10 @@ def test_onboard_runtime_refresh_is_explicit_and_repeatable() -> None:
     assert "tooling.runtime.capabilities" in tools_doc
     assert "Python 工具脚本从已安装的 `cs-onboard` skill 包运行，不再复制到每个 repo" in readme
     assert "Python tool scripts run from the installed `cs-onboard` skill package instead of being copied into each repo" in readme_en
+    assert "每个已接入项目中显式执行 `/cs-onboard --mode refresh-runtime`" in readme
+    assert "下一次 CodeStable preflight" in readme
+    assert "in every onboarded project" in readme_en
+    assert "the next CodeStable preflight" in readme_en
 
     default_runtime_text = "\n".join([onboard, conventions, tools_doc, feat, feat_design, epic, epic_goal])
     assert "codestable-worktree-gate.py" not in default_runtime_text

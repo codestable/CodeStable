@@ -30,6 +30,7 @@ csAudit :: AuditRequest -> AuditOutcome
 data AuditRequest = AuditRequest
   { scopeHint  : Maybe ScopeHint    -- 关键词 / 模块目录 / 一段话；缺则先 Phase 1 收敛
   , dimensions : [Dimension]        -- 用户圈定；空则全扫 5 维
+  , selectedFinding : Maybe Path    -- 用户从已完成 audit 中选中的 finding
   , repoFacts  : RepoFacts          -- .codestable/audits/ + adrs/，优先于聊天历史
   , attention  : Maybe Attention    -- .codestable/attention.md；缺则 route to cs-onboard
   }
@@ -47,6 +48,7 @@ data AuditState = AuditState        -- 从 .codestable/audits/YYYY-MM-DD-{slug}/
 
 data AuditOutcome
   = Scanning AuditState             -- 只读扫描 + 落 index/finding，不产生代码改动
+  | RoutedTo SkillName              -- 已选 finding：按建议动作同轮加载 issue/refactor
   | HumanCheckpoint CheckpointReason
   | Completed AuditSummary          -- index 交叉表 + 每条 finding 齐备（含零发现结论）
   | NeedsHuman Reason
@@ -63,6 +65,7 @@ data CheckpointReason
 selectAuditStep :: AuditState -> AuditRequest -> AuditOutcome
 selectAuditStep(s, req)
   | attentionMissing                                   -> NeedsHuman "route to cs-onboard"
+  | hasSelectedFinding(req)                            -> RoutedTo (recommendedAction req.selectedFinding)
   | wholeRepoBlindScan(req)                            -> HumanCheckpoint WholeRepoRefused
   | not s.scopeConfirmed                                -> HumanCheckpoint ConfirmScope
   | archDriftRequested(req) && not s.adrsPresent        -> HumanCheckpoint ArchDriftNoAdr
@@ -158,7 +161,7 @@ index.md 末尾给优先级建议：
 - "P1 的 5 条可以排下个迭代"
 - "P2 的 4 条有空再看"
 
-用户选哪条 → 路由到 `cs-issue` 或 `cs-refactor`。`cs-audit` 自己不修。
+用户选中 finding 已构成确认。按 finding 的建议动作，在当前 run 加载 `cs-issue` 或 `cs-refactor`，并传递原始 finding 路径、证据与用户选择，不要求重新调用命令。`cs-audit` 自己不修。
 
 ---
 

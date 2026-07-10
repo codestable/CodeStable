@@ -1,0 +1,17 @@
+{
+  "id": "rt-c10",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      ".codestable/attention.md": "missing",
+      "original_target": "cs-issue"
+    },
+    "utterance": "修复登录接口偶发 500"
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target": "cs-onboard",
+    "must_not_target": "cs-issue"
+  }
+}

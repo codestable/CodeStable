@@ -1,0 +1,16 @@
+{
+  "id": "rt-c09",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      ".codestable/attention.md": "present"
+    },
+    "utterance": "记下这次 timezone 转换踩坑，后面可以复用"
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target": "cs-keep",
+    "must_not_target": "cs-domain"
+  }
+}

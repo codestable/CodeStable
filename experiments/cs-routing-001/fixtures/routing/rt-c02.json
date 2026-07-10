@@ -1,0 +1,15 @@
+{
+  "id": "rt-c02",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      ".codestable/attention.md": "present"
+    },
+    "utterance": "登录接口偶发 500 这种问题该用哪个 skill？只告诉我流程，先别开始"
+  },
+  "expect": {
+    "result_type": "Completed",
+    "target_any": ["cs-issue", "Recommendation cs-issue", "issue recommendation"]
+  }
+}

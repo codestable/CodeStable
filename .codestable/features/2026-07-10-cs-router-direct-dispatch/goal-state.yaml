@@ -1,0 +1,26 @@
+feature: "cs-router-direct-dispatch"
+status: passed
+baseline_ref: "ab39a4be5673554336192e3615d2667bdaac893c"
+stage: complete
+driver_kind: none
+driver_id: ""
+handoff_reason: ""
+handoff_next: ""
+design: ".codestable/features/2026-07-10-cs-router-direct-dispatch/cs-router-direct-dispatch-design.md"
+checklist: ".codestable/features/2026-07-10-cs-router-direct-dispatch/cs-router-direct-dispatch-checklist.yaml"
+review: ".codestable/features/2026-07-10-cs-router-direct-dispatch/cs-router-direct-dispatch-review.md"
+qa: ".codestable/features/2026-07-10-cs-router-direct-dispatch/cs-router-direct-dispatch-qa.md"
+acceptance: ".codestable/features/2026-07-10-cs-router-direct-dispatch/cs-router-direct-dispatch-acceptance.md"
+ledger:
+  - step: S1
+    status: done
+    evidence: "root router contracts + targeted pytest"
+  - step: S2
+    status: done
+    evidence: "shared/secondary dispatch contracts + copy checks"
+  - step: S3
+    status: done
+    evidence: "bilingual docs projection tests"
+  - step: S4
+    status: done
+    evidence: "fixtures + full validation + Fable round 2 approve"

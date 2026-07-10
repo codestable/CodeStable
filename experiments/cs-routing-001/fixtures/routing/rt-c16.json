@@ -1,0 +1,16 @@
+{
+  "id": "rt-c16",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      ".codestable/attention.md": "missing"
+    },
+    "utterance": "这种登录 500 问题该用哪个 skill？只给建议，不要接入仓库"
+  },
+  "expect": {
+    "result_type": "Completed",
+    "target_any": ["cs-issue", "Recommendation cs-issue", "issue recommendation", "issue workflow", "use issue workflow"],
+    "must_not_target": "cs-onboard"
+  }
+}

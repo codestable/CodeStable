@@ -451,47 +451,96 @@ def goal_driver_decision(
     return Action("fallback", "fenced-/goal")
 
 
-def route_request(has_codestable: bool, request: str) -> str:
-    if not has_codestable:
-        return "cs-onboard"
-    request = request.lower()
-    if "bug" in request or "error" in request:
-        return "cs-issue"
-    if "refactor" in request or "optimize" in request:
-        return "cs-refactor"
-    if "api doc" in request or "guide" in request:
-        return "cs-docs"
-    if "feedback" in request or "skill failed" in request or "rule unclear" in request:
-        return "cs-feedback"
-    if "epic" in request or "roadmap" in request or "system" in request:
-        return "cs-epic"
-    if "remember" in request:
-        return "cs-keep"
-    if "unclear" in request or "brainstorm" in request:
-        return "cs-brainstorm"
-    if "requirement" in request:
-        return "cs-req"
-    return "cs-feat"
-
-
 def test_scenario_matrix_covers_every_refactored_skill() -> None:
     covered = set().union(*SCENARIO_COVERAGE.values())
     assert AFFECTED_SKILLS - covered == set()
 
 
-def test_router_scenarios_route_to_main_entries_only(tmp_path: Path) -> None:
-    assert_doc_contains("cs", "SKILL.md", "只把开放式诉求路由到推荐主入口", "主路径不再路由到它们")
-    repo = init_isolated_repo(tmp_path)
+def test_router_classifies_intake_before_selecting_a_target() -> None:
+    assert_doc_contains(
+        "cs",
+        "SKILL.md",
+        "入口模式先于路由目标",
+        "data IntakeMode = Execute | Advise | Explain | Ambiguous",
+        "Completed Recommendation",
+        "Completed Overview",
+        "HumanCheckpoint ClarifyRoute",
+        "preflight 只记录缺失状态",
+    )
 
-    assert route_request(False, "add search") == "cs-onboard"
-    assert route_request((repo / ".codestable").exists(), "fix login bug") == "cs-issue"
-    assert route_request(True, "refactor this module") == "cs-refactor"
-    assert route_request(True, "write api docs") == "cs-docs"
-    assert route_request(True, "feedback: cs skill failed because the rule unclear") == "cs-feedback"
-    assert route_request(True, "plan the billing roadmap") == "cs-epic"
-    assert route_request(True, "this idea is unclear, brainstorm first") == "cs-brainstorm"
-    assert route_request(True, "update requirement boundary") == "cs-req"
-    assert route_request(True, "add export button") == "cs-feat"
+
+def test_router_execute_mode_continues_in_the_current_run() -> None:
+    assert_doc_contains(
+        "cs",
+        "SKILL.md",
+        "RoutedTo target",
+        "当前 run 继续",
+        "原始诉求原样传递",
+        "一个请求同一时刻只转交一个主入口",
+    )
+
+
+def test_router_keeps_route_brief_small_and_mode_specific() -> None:
+    text = skill_text("cs")
+    _, separator, body = text.partition("\n---\n")
+    assert separator
+    assert "Dispatch: continuing-current-run | recommendation-only" in text
+    assert "route brief 只用于 Execute / Advise" in text
+    assert "L0-L4" not in body
+    assert "Route Level Quick Reference" not in body
+
+
+def test_router_priority_and_recovery_boundaries_are_explicit() -> None:
+    assert_doc_contains(
+        "cs",
+        "SKILL.md",
+        "专用 workflow 优先于 `cs-goal`",
+        "已知优化目标",
+        "主动扫描未知问题",
+        "capability / requirement",
+        "canonical 决策",
+        "复用经验",
+        "features/issues/roadmap/goals/refactors/audits/brainstorms/feedback",
+        "`cs-onboard` 是串行前置 gate",
+        "目标 skill 无法加载",
+    )
+
+
+def test_shared_dispatch_conventions_distinguish_exit_confirmation() -> None:
+    assert_doc_contains(
+        "cs-onboard",
+        "references/execution-conventions.md",
+        "## Skill 间同轮转交",
+        "已确认出口",
+        "待确认出口",
+        "不要求重新调用命令",
+        "转交本身不授权",
+    )
+
+
+def test_brainstorm_secondary_routes_keep_one_confirmation_gate() -> None:
+    text = skill_text("cs-brainstorm")
+    for phrase in (
+        "case 1 / case 2 / case 4 是待确认出口",
+        "case 3 的 ready 拆解表述本身视为确认",
+        "用户确认后在当前 run 加载 `cs-feat`",
+        "直接在当前 run 加载 `cs-epic`",
+    ):
+        assert phrase in text
+    assert "停下来等用户触发 design" not in text
+    assert "准备好了就触发 `cs-epic`" not in text
+
+
+def test_audit_selected_finding_dispatches_in_the_current_run() -> None:
+    assert_doc_contains(
+        "cs-audit",
+        "SKILL.md",
+        "用户选中 finding 已构成确认",
+        "当前 run 加载 `cs-issue` 或 `cs-refactor`",
+        "原始 finding",
+        "selectedFinding",
+        "RoutedTo SkillName",
+    )
 
 
 def test_feature_long_range_scenario_simulates_human_design_confirmation(tmp_path: Path) -> None:
@@ -875,7 +924,13 @@ def test_readonly_task_agent_mode_is_provider_aware_and_reachable() -> None:
 
 def test_runtime_reference_copies_match_templates() -> None:
     # 模板(cs-onboard/references/)与项目副本(.codestable/reference/)必须逐字一致(codex review imp-4)。
-    for name in ("shared-conventions.md", "agent-conventions.md", "solution-depth-conventions.md"):
+    for name in (
+        "shared-conventions.md",
+        "agent-conventions.md",
+        "solution-depth-conventions.md",
+        "execution-conventions.md",
+        "system-overview.md",
+    ):
         src = (SKILLS / "cs-onboard" / "references" / name).read_text(encoding="utf-8")
         copy = (ROOT / ".codestable" / "reference" / name).read_text(encoding="utf-8")
         assert src == copy, f"{name}: 模板与项目副本不一致，需 sync"

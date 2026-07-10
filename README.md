@@ -80,7 +80,7 @@ Claude 更新后需要重启 Claude Code 才会应用新版插件。
 npx skills@latest update
 ```
 
-如果旧安装器没有记录来源，重新执行上面的 `npx skills@latest add liuzhengdongfortest/CodeStable` 安装命令即可。
+如果旧安装器没有记录来源，重新执行上面的 `npx skills@latest add liuzhengdongfortest/CodeStable` 安装命令即可。升级时应更新完整 CodeStable 插件，不要只替换根 `cs` skill；runtime 刷新还需要同版本的 `cs-onboard` 及其工具。全局插件升级后，建议在每个已接入项目中显式执行 `/cs-onboard --mode refresh-runtime`，立即刷新并核验 repo-local runtime。即使不手动执行，下一次 CodeStable preflight 也会比较 `.codestable/runtime-manifest.json` 与当前插件版本，在 manifest 缺失、版本不匹配或 runtime capability 缺失且受管路径干净时自动刷新；它不会在后台扫描所有仓库。遇到 `managed-paths-dirty`、未接入或骨架不完整时会停下提示，不会强制覆盖。
 
 只需要一键，开始工作：
 
@@ -94,7 +94,7 @@ npx skills@latest update
 /cs
 ```
 
-`cs` 会读你的诉求，告诉你这次该走哪个 `cs-xxx`。
+`cs` 会先判断你要执行、咨询还是了解体系：行动请求同轮直转，咨询请求只给建议；信息不足时只问一个聚焦问题。
 
 ---
 
@@ -181,7 +181,7 @@ CodeStable 顺着软件编码的真实流程来设计，把开发活动建模成
 
 | 分组 | 技能 | 用途 |
 |---|---|---|
-| 根入口 | `cs` | 不知道用哪个时轻量分诊到主入口 |
+| 根入口 | `cs` | 行动请求同轮直转，咨询请求只给建议；介绍体系时不启动下游流程 |
 | 接入 | `cs-onboard` | 把 CodeStable 接入新仓库或已有零散文档仓库 |
 | 需求 & 领域 | `cs-req` / `cs-domain` | 沉淀能力愿景、领域术语、ADR 和 context 拓扑 |
 | Epic | `cs-epic` | 大需求端到端：规划、review、子 feature design、goal 包 |
@@ -213,7 +213,7 @@ CodeStable 顺着软件编码的真实流程来设计，把开发活动建模成
 
 ## 工作流与运行时
 
-CodeStable 是分层、事件驱动的：`cs` 只分诊到主入口；`cs-feat` / `cs-issue` / `cs-refactor` 按仓库事实恢复阶段并经过 `cs-code-review`，其中 issue / refactor 在 review、blocking 或用户确认 checkpoint 停下；`cs-epic` 编排 planning、批量子 design 和 goal driver；旧阶段技能只保留为兼容入口。
+CodeStable 是分层、事件驱动的：`cs` 先判入口模式，行动请求同轮直转，咨询请求只给建议；`cs-feat` / `cs-issue` / `cs-refactor` 按仓库事实恢复阶段并经过 `cs-code-review`，其中 issue / refactor 在 review、blocking 或用户确认 checkpoint 停下；`cs-epic` 编排 planning、批量子 design 和 goal driver；旧阶段技能只保留为兼容入口。
 
 `cs-onboard` 在项目根生成 `.codestable/`，集中保存 requirements、roadmap、goals、features、issues、refactors、audits、compound、gates 与共享 reference。Python 工具脚本从已安装的 `cs-onboard` skill 包运行，不再复制到每个 repo。
 

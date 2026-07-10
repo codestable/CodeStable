@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.2
+
+- Hardened runtime upgrades: versionless or mismatched manifests now require synchronization, while `/cs-onboard --mode refresh-runtime` refreshes package-owned assets without overwriting dirty managed paths.
+- Updated the root `cs` router so action requests dispatch to the target skill in the current run, while advice and overview requests remain non-executing.
+- Synchronized Codex and Claude marketplace versions and documented complete-plugin plus per-repository upgrade steps.
+
 ## 1.0.1
 
 - CodeStable skill simplification release.

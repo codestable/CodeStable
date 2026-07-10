@@ -1,0 +1,19 @@
+{
+  "id": "rt-c13",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      ".codestable/attention.md": "present",
+      "active_units": [
+        ".codestable/features/2026-07-08-export: active",
+        ".codestable/issues/2026-07-09-login-500: active"
+      ]
+    },
+    "utterance": "继续之前的工作"
+  },
+  "expect": {
+    "result_type": "HumanCheckpoint",
+    "target_any": ["ClarifyRoute", "which active unit", "feature or issue"]
+  }
+}

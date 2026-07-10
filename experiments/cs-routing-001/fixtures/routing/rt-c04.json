@@ -1,0 +1,15 @@
+{
+  "id": "rt-c04",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      ".codestable/attention.md": "present"
+    },
+    "utterance": "帮我改一下"
+  },
+  "expect": {
+    "result_type": "HumanCheckpoint",
+    "target_any": ["ClarifyRoute", "clarify route", "bug / feature / refactor"]
+  }
+}

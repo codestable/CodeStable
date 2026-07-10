@@ -1,0 +1,101 @@
+feature: 2026-07-10-cs-router-direct-dispatch
+created: 2026-07-10
+
+steps:
+  - action: "契约骨架：补入口模式、同轮转交和路线优先级测试，更新旧 router 断言并重写 cs frontmatter/根路由"
+    exit_signal: "测试能验证 Execute/Advise/Explain/Ambiguous 对应 RoutedTo/Completed/HumanCheckpoint，且根 skill 明确当前 run 继续"
+    status: done
+  - action: "共享出口：统一 execution conventions、brainstorm 四种 case 与 audit 的已确认/待确认转交语义，并扩展模板副本一致性测试"
+    exit_signal: "execution-conventions/system-overview 模板与 runtime copy 逐字一致；brainstorm case 1/2/4 待确认，case 3 与 audit finding 已确认"
+    status: done
+  - action: "文档投影：同步中英文 README、WORKFLOW、SKILL_CATALOG 和 system overview"
+    exit_signal: "公开文档都表达行动直转、咨询只建议，并继续只推荐主入口"
+    status: done
+  - action: "验证闭环：补 cs-routing-001 fixtures，运行全套检查并完成 Claude Fable 独立评审"
+    exit_signal: "核心命令通过、package check 只有已记录发布基线，且独立 review 无 unresolved blocking/important finding"
+    status: done
+
+checks:
+  - item: "明确行动请求加载唯一目标 skill 并在当前 run 继续"
+    source: 编排骨架
+    status: passed
+  - item: "咨询与体系介绍只返回 Recommendation/Overview，不启动下游 workflow"
+    source: 验收场景
+    status: passed
+  - item: "实质歧义只问一个聚焦问题，不硬猜目标"
+    source: 验收场景
+    status: passed
+  - item: "专用 feature/issue/refactor/docs/epic workflow 优先于 cs-goal"
+    source: 流程级约束
+    status: passed
+  - item: "已知优化与主动发现分别路由 cs-refactor/cs-audit"
+    source: 验收场景
+    status: passed
+  - item: "canonical 决策与复用经验分别路由 cs-domain/cs-keep"
+    source: 验收场景
+    status: passed
+  - item: "续作浅扫覆盖 features/issues/roadmap/goals/refactors/audits/brainstorms/feedback"
+    source: 编排骨架
+    status: passed
+  - item: "目标 skill 不可加载时停止，不在 cs 内模拟流程"
+    source: 流程级约束
+    status: passed
+  - item: "cs 不写下游产物、不绕过目标 skill checkpoint"
+    source: 范围守护
+    status: passed
+  - item: "不新增路由引擎、新公开 skill 或删除兼容入口"
+    source: 范围守护
+    status: passed
+  - item: "根 skill 不再输出未定义的 L0-L4 route brief"
+    source: 范围守护
+    status: passed
+  - item: "README、catalog、workflow、system overview 与共享约定保持一致"
+    source: 挂载点
+    status: passed
+  - item: "未 onboard 行动请求串行经过 cs-onboard gate，完成后保留原始诉求继续原目标"
+    source: 验收场景
+    status: passed
+  - item: "brainstorm 待确认出口与 audit 已确认出口保持不同 checkpoint 语义"
+    source: 流程级约束
+    status: passed
+  - item: "execution-conventions 与 system-overview 模板/runtime copy 有逐字一致性测试"
+    source: 挂载点
+    status: passed
+  - item: "两个独立诉求先确认执行顺序，不同时转交两个主入口"
+    source: 验收场景
+    status: passed
+  - item: "brainstorm case 1/2/4 为待确认出口，case 3 为已确认出口，硬性边界不再要求重新调用命令"
+    source: 流程级约束
+    status: passed
+  - item: "root frontmatter 只覆盖显式 cs/咨询/介绍/未收敛诉求，并用 contracts 锁直转与禁止 L0-L4"
+    source: 名词契约
+    status: passed
+  - item: "冲突 routing fixtures 使用 must_not_target 锁定禁止分支"
+    source: 验收场景
+    status: passed
+
+dod:
+  commands:
+    - id: CMD-001
+      command: "PYTHONDONTWRITEBYTECODE=1 pytest -q tests/test_skill_entry_simplification.py tests/test_skill_workflow_scenarios.py tests/test_skill_contracts.py"
+      core: true
+      failure_handling: fix-or-block
+    - id: CMD-002
+      command: "PYTHONDONTWRITEBYTECODE=1 pytest -q tests"
+      core: true
+      failure_handling: fix-or-block
+    - id: CMD-003
+      command: "python tools/check-plugin-package.py --root . --json"
+      core: false
+      failure_handling: document-baseline
+    - id: CMD-004
+      command: "python3 plugins/codestable/skills/cs-onboard/tools/codestable-runtime-sync.py --root . --source-skill-dir plugins/codestable/skills/cs-onboard --check --json"
+      core: true
+      failure_handling: fix-or-block
+    - id: CMD-005
+      command: "git diff --check"
+      core: true
+      failure_handling: fix-or-block
+  evidence_required: [command_output, diff_summary, independent_review]
+  cleanliness:
+    debug_output: forbidden

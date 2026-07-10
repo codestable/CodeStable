@@ -21,6 +21,17 @@
 `cs-note` 是唯一例外：`.codestable/` 存在但 `attention.md` 缺失时，它可以创建最小分节骨架
 后写入。
 
+## Skill 间同轮转交
+
+公开 skill 选择另一个主入口后，按已安装 skill 名称加载目标协议，并在当前 run 继续。skill 是独立安装单元；不得靠读取 sibling skill 文件模拟转交。
+
+- **已确认出口**：用户已经选中对象、确认方案或明确表达 ready，当前 skill 直接加载目标协议。比如 audit 选中 finding、brainstorm case 3 已 ready 拆解。
+- **待确认出口**：下一阶段仍需 owner 点头时只停一个 checkpoint；用户确认后在当前 run 加载目标协议，不要求重新调用命令。brainstorm case 1 / case 2 / case 4 属于此类。
+- 原始诉求、用户已选对象、相关产物路径和本会话已确认的 preflight 结论一并传递；目标 skill 仍按自身协议恢复业务事实。
+- 一个请求同一时刻只加载一个主入口；`cs-onboard` 可作为串行前置 gate，完成后再继续原目标。
+- 转交本身不授权写入、外部通信或跳过 checkpoint；这些权限与副作用继续由目标 skill 的协议决定。
+- 目标 skill 不可加载时停下报告，不在当前 skill 内复制或猜测目标流程。
+
 ## Runtime 资产恢复
 
 `.codestable/gates/`、`.codestable/reference/`、`.codestable/.gitignore` 和

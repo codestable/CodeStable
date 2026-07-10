@@ -6,7 +6,7 @@ Main entries accept optional stage / mode flags (for example `/cs-feat --stage q
 
 | Group | Skill | Purpose |
 |---|---|---|
-| Root | `cs` | Lightweight triage to the right main entry |
+| Root | `cs` | Action requests dispatch to the target skill in the current run; advice requests only recommend. |
 | Onboarding | `cs-onboard` | Install CodeStable into a new or previously informal repository |
 | Requirements and domain | `cs-req` | Capture capability intent documents |
 | Requirements and domain | `cs-domain` | Maintain domain terms, ADRs, and context topology |

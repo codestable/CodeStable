@@ -78,7 +78,7 @@ Restart Claude Code after updating so the new plugin version is applied.
 npx skills@latest update
 ```
 
-If an older installer did not record the source, rerun the `npx skills@latest add liuzhengdongfortest/CodeStable` install command above.
+If an older installer did not record the source, rerun the `npx skills@latest add liuzhengdongfortest/CodeStable` install command above. Upgrade the complete CodeStable plugin rather than replacing only the root `cs` skill; runtime refresh also requires the matching `cs-onboard` skill and its tools. After the global plugin upgrade, explicitly run `/cs-onboard --mode refresh-runtime` in every onboarded project to refresh and verify its repo-local runtime immediately. If you skip the command, the next CodeStable preflight compares `.codestable/runtime-manifest.json` with the current plugin version and refreshes automatically when the manifest is missing, the version or runtime capabilities do not match, and managed paths are clean; it does not scan repositories in the background. `managed-paths-dirty`, a repository that is not onboarded, or an incomplete skeleton stops the refresh instead of forcing an overwrite.
 
 One command to start working:
 
@@ -92,7 +92,7 @@ For daily use, when you don't know which skill fits, call the root entry:
 /cs
 ```
 
-`cs` reads your intent and tells you which `cs-xxx` to run.
+`cs` classifies whether you want execution, advice, or an overview. Action requests dispatch to the target skill in the current run; advice requests only recommend. Ambiguous requests get one focused question.
 
 ---
 
@@ -178,7 +178,7 @@ CodeStable models real coding work as a set of **entities** and **flows**.
 
 | Group | Skill | Purpose |
 |---|---|---|
-| Root | `cs` | Lightweight triage to the right main entry |
+| Root | `cs` | Action requests dispatch to the target skill in the current run; advice requests only recommend. |
 | Onboard | `cs-onboard` | Install CodeStable into a repository |
 | Requirements & domain | `cs-req` / `cs-domain` | Capture capability intent, domain terms, ADRs, and context topology |
 | Epic | `cs-epic` | Large demand planning, review, child feature design, and goal package |
@@ -229,7 +229,7 @@ cs
 
 How to read it:
 
-- `cs` only triages to main entries; it no longer routes users to stage skills.
+- `cs` classifies the intake mode before the target. Action requests dispatch to the target skill in the current run; advice requests only recommend. It never routes users to deprecated stage skills.
 - `cs-feat`, `cs-issue`, and `cs-refactor` resume from repository facts. `cs-issue` and `cs-refactor` stop at review, blocking, or user-confirmation checkpoints; `cs-feat` stops only at the design gate, then runs impl, review, QA, and accept long-range via a visible goal driver.
 - `cs-epic` prepares planning and goal packages, then dispatches a visible goal driver; v1 still writes `.codestable/roadmap/`.
 - `cs-code-review` is the cross-cutting gate; `cs-docs-neat` handles hygiene; `cs-docs` writes outward docs.

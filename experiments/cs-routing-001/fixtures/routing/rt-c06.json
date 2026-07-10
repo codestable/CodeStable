@@ -1,0 +1,16 @@
+{
+  "id": "rt-c06",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      ".codestable/attention.md": "present"
+    },
+    "utterance": "扫描 parser 看看哪里可以优化，我还不知道具体问题在哪"
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target": "cs-audit",
+    "must_not_target": "cs-refactor"
+  }
+}

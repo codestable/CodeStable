@@ -1,0 +1,15 @@
+{
+  "id": "rt-c15",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      ".codestable/attention.md": "present"
+    },
+    "utterance": "先修登录 bug，再顺便加 CSV 导出功能"
+  },
+  "expect": {
+    "result_type": "HumanCheckpoint",
+    "target_any": ["ClarifyRoute", "execution order", "which request first"]
+  }
+}

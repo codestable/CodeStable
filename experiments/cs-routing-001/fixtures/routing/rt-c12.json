@@ -1,0 +1,16 @@
+{
+  "id": "rt-c12",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      ".codestable/attention.md": "present",
+      "active_units": [".codestable/refactors/2026-07-09-parser-cleanup: active"]
+    },
+    "utterance": "继续之前的工作"
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target": "cs-refactor"
+  }
+}

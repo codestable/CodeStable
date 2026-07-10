@@ -1,0 +1,16 @@
+{
+  "id": "rt-c08",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      ".codestable/attention.md": "present"
+    },
+    "utterance": "把长期采用 event sourcing 的技术决策写成 ADR"
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target": "cs-domain",
+    "must_not_target": "cs-keep"
+  }
+}

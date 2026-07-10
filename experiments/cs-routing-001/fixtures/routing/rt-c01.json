@@ -1,0 +1,16 @@
+{
+  "id": "rt-c01",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      ".codestable/attention.md": "present",
+      "installed_skills": ["cs-issue"]
+    },
+    "utterance": "修复登录接口偶发 500，保留现有 API 行为"
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target": "cs-issue"
+  }
+}

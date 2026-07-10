@@ -2,7 +2,11 @@
 
 ## Workflow Layers
 
-CodeStable is layered and event-driven. Daily use should start from main entries, not stage skill names:
+CodeStable is layered and event-driven. Daily use should start from main entries, not stage skill names.
+
+The root `cs` entry classifies intake mode first. Action requests dispatch to the target skill in the current run; advice requests only recommend. Overview requests do not start downstream workflows, and ambiguous requests stop for one focused question.
+
+The main-entry relationships are:
 
 ```text
 cs

@@ -1,0 +1,16 @@
+{
+  "id": "rt-c07",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      ".codestable/attention.md": "present"
+    },
+    "utterance": "重构 parser 已知的 token loop，保持行为不变"
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target": "cs-refactor",
+    "must_not_target": "cs-audit"
+  }
+}

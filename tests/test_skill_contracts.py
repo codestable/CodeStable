@@ -28,7 +28,7 @@ FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n(.*)$", re.S)
 # 刚经 build-cs-skill 重构、已声明 contracts 的主入口。删除其 contracts 应是
 # 有意识的动作——此清单防止护栏被静默移除。
 CORE_SKILLS_WITH_CONTRACTS = {
-    "cs-feat", "cs-epic", "cs-issue", "cs-refactor", "cs-docs", "cs-goal",
+    "cs", "cs-feat", "cs-epic", "cs-issue", "cs-refactor", "cs-docs", "cs-goal",
     "cs-code-review", "cs-audit", "cs-domain", "cs-req",
 }
 
@@ -168,3 +168,35 @@ def test_goal_routing_fixtures_use_current_state_schema() -> None:
     assert epic["rt-p12"]["expect"]["result_type"] == "Completed"
     assert epic["rt-p13"]["expect"]["result_type"] == "GoalHandoff"
     assert epic["rt-p14"]["expect"]["result_type"] == "NeedsHuman"
+
+
+def test_cs_router_fixtures_cover_modes_conflicts_and_recovery() -> None:
+    fixtures = _routing_fixture_states("cs-routing-001")
+    assert set(fixtures) == {f"rt-c{i:02d}" for i in range(1, 17)}
+
+    assert fixtures["rt-c01"]["expect"]["result_type"] == "RoutedTo"
+    assert fixtures["rt-c01"]["expect"]["target"] == "cs-issue"
+    assert fixtures["rt-c02"]["expect"]["result_type"] == "Completed"
+    assert fixtures["rt-c03"]["expect"]["result_type"] == "Completed"
+    assert fixtures["rt-c04"]["expect"]["result_type"] == "HumanCheckpoint"
+
+    for fixture_id, forbidden in (
+        ("rt-c05", "cs-goal"),
+        ("rt-c06", "cs-refactor"),
+        ("rt-c08", "cs-keep"),
+    ):
+        assert fixtures[fixture_id]["expect"]["must_not_target"] == forbidden
+
+    assert fixtures["rt-c10"]["expect"]["target"] == "cs-onboard"
+    assert fixtures["rt-c10"]["task"]["state"]["original_target"] == "cs-issue"
+    assert fixtures["rt-c11"]["expect"]["target"] == "cs-issue"
+    assert fixtures["rt-c12"]["expect"]["target"] == "cs-refactor"
+    assert fixtures["rt-c13"]["expect"]["result_type"] == "HumanCheckpoint"
+    assert fixtures["rt-c14"]["expect"]["result_type"] == "NeedsHuman"
+    assert fixtures["rt-c15"]["expect"]["result_type"] == "HumanCheckpoint"
+    assert fixtures["rt-c16"]["expect"]["result_type"] == "Completed"
+    assert "issue workflow" in fixtures["rt-c16"]["expect"]["target_any"]
+
+    # result type 的禁止分支由精确 outcome 断言完成，不能误用只检查 target 的字段。
+    for fixture_id in ("rt-c02", "rt-c03", "rt-c04", "rt-c13", "rt-c15"):
+        assert "must_not_target" not in fixtures[fixture_id]["expect"]
