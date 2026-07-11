@@ -28,7 +28,7 @@ The vertical layout is layering, not strict time order. Long-lived records are r
 
 The event entries are `cs-feat` for new capability, `cs-issue` for bugs, `cs-refactor` for behavior-preserving cleanup, and `cs-docs` for outward documentation. `cs-code-review` remains the cross-cutting implementation review gate.
 
-The knowledge and feedback loop remains cross-cutting: any workflow can use `cs-keep`; `cs-feedback` captures skill failures and rule gaps for issue reporting; milestone cleanup uses `cs-docs-neat` to sync `.codestable/`, README/docs, agent entry files, and memory.
+The knowledge and feedback loop remains cross-cutting: `cs-keep` compounds knowledge; explicit `cs-feedback` calls produce local-private incidents/triage and require separate preview confirmation before upload; `cs-docs-neat` handles milestone hygiene.
 
 Old stage skills remain long-term compatibility entries:
 
@@ -52,6 +52,7 @@ After `/cs-onboard`, the project root contains `.codestable/`:
 ├── refactors/
 ├── audits/
 ├── brainstorms/
+├── feedback/
 ├── compound/
 ├── tools/
 └── reference/

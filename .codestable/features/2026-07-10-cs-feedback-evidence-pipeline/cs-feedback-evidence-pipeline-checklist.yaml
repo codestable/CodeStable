@@ -1,0 +1,117 @@
+feature: 2026-07-10-cs-feedback-evidence-pipeline
+created: 2026-07-10
+
+steps:
+  - action: "行为等价微重构：按 transcript、privacy/model 和 reporter 职责拆分采集器与测试"
+    exit_signal: "现有 CLI/schema v1 行为不变，既有 9 个 feedback tests 全绿，diff 仅含移动、import 和测试重排"
+    status: done
+  - action: "证据编排：引入 metadata-only 会话选择、trigger cutoff、normalized record、反馈事件包和环境/仓库上下文"
+    exit_signal: "JSONL EOF/Claude JSON meta snapshot、correlation/unpaired 均锁定；metadata reader 禁止 read_records 且输出无 body；既有 3 个 current 用例+stale-mtime 新例证明只绕过 time_cutoff"
+    status: done
+  - action: "分诊计算：生成 observation/assessment 分层的 triage、字段来源、质量门和 public allowlist 投影"
+    exit_signal: "triage_ready/regression_ready 由机械规则决定；缺口驱动追问；隐私对抗测试证明 public preview 无禁止内容"
+    status: done
+  - action: "评测交接：shipped converter 只产 candidate，repo-local eval 工具负责正式 promotion"
+    exit_signal: "无 eval/config、profile/input/privacy 或真实 judge gate 失败均不落盘；repo-local 测试覆盖 candidate 正向+旧 skeleton 非零无文件，且只在 test 中连接两单元"
+    status: done
+  - action: "使用入口：更新 cs-feedback 协议、report template、execution conventions 模板/runtime copy及中英文公开文档"
+    exit_signal: "SKILL/template 使用 incident/triage/quality 与 v1 映射；shared/execution conventions 模板/runtime 布局同步；所有文档保持 local-first 和确认后上传"
+    status: done
+  - action: "验证闭环：补 unit/contract/decision fixtures，运行全量 gate 并完成独立代码评审"
+    exit_signal: "targeted/full pytest、runtime sync、diff check 通过；package findings 不新增；review 无 unresolved blocking/important"
+    status: done
+
+checks:
+  - item: "反馈以有序 incident 为 canonical 单元，保留 role、tool pairing、用户纠正和 evidence refs"
+    source: 名词契约
+    status: passed
+  - item: "trigger_cutoff 锚定冻结边界前最后 user record；无 anchor 未就绪，anchor 后记录被排除"
+    source: 编排骨架
+    status: passed
+  - item: "tool 配对按 provider id 优先、无 id 仅无歧义相邻 fallback；incident 按 user-turn 窗口分离"
+    source: 名词契约
+    status: passed
+  - item: "skill 默认 current 不传 since-days；显式 since-days 不传 current；collector current 只绕过 time_cutoff 并报告 ignored，始终保留 trigger_cutoff"
+    source: 编排骨架
+    status: passed
+  - item: "evidence observations 与 triage assessments 分层，推断带 source/confidence/evidence refs"
+    source: 名词契约
+    status: passed
+  - item: "runtime 版本、相关 artifact/status 和 git 文件级状态进入 local-private repo context"
+    source: 验收场景
+    status: passed
+  - item: "triage_ready 与 regression_ready 分开判定，缺口可观察且不编造"
+    source: 流程级约束
+    status: passed
+  - item: "public preview 仅从 allowlist 结构生成，不反向抓报告或原始 transcript"
+    source: 流程级约束
+    status: passed
+  - item: "未就绪 feedback 不得写入正式 experiment fixture 目录"
+    source: 范围守护
+    status: passed
+  - item: "shipped converter 只以 local-private triage 为 canonical 输入并只产 candidate；v1 evidence 仅生成未就绪 candidate"
+    source: 名词契约
+    status: passed
+  - item: "candidate 固定写 feedback 目录；正式 promotion 只在 repo-local eval skill，读取 experiment config 且不形成运行时跨 skill 依赖"
+    source: 名词契约
+    status: passed
+  - item: "profile/最小 input/config 自校成立；空白/占位/敏感字段不落盘；commit-safe 扫描要求合成复现，不静默改写"
+    source: 名词契约
+    status: passed
+  - item: "schema v2 保留 v1 matched_events；public events.failure_type 只用 v1 映射且精确 8 字段，v2 incident_kind 只进 incidents"
+    source: 名词契约
+    status: passed
+  - item: "Codex JSONL 与 Claude JSON/JSONL 同语义产生字段、顺序和配对均同构的 incident"
+    source: 验收场景
+    status: passed
+  - item: "secret、路径、remote、env、原始工具参数、代码块不会进入 public preview"
+    source: 验收场景
+    status: passed
+  - item: "reporter 按文件名硬拒 evidence、triage、regression candidate，并按 local-private 字段二次拒绝"
+    source: 验收场景
+    status: passed
+  - item: "cs-feedback 仍需用户确认 public preview 后才允许 GitHub 上报"
+    source: 范围守护
+    status: passed
+  - item: "不引入后台 telemetry、自动上传、默认全历史扫描或自动修改目标 skill"
+    source: 范围守护
+    status: passed
+  - item: "共享反馈提示与 feedback 产物布局只在 execution/shared conventions 维护并同步模板/runtime copy"
+    source: 挂载点
+    status: passed
+  - item: "ADR-003、README、WORKFLOW、catalog 和 system overview 对反馈闭环表述一致"
+    source: 挂载点
+    status: passed
+  - item: "ADR-003 repo-local tests 同时验证 candidate→promotion 兼容，但 shipped 脚本运行时不得 import eval 工具"
+    source: 挂载点
+    status: passed
+
+dod:
+  commands:
+    - id: CMD-001
+      command: "PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q tests/test_cs_feedback*.py tests/test_cs_skill_bootstrap.py tests/test_skill_entry_simplification.py"
+      core: true
+      failure_handling: fix-or-block
+    - id: CMD-002
+      command: "PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q tests"
+      core: true
+      failure_handling: fix-or-block
+    - id: CMD-003
+      command: "PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q tests/test_cs_skill_eval.py tests/test_cs_skill_convergence.py tests/test_cs_skill_release.py tests/test_cs_skill_bootstrap.py tests/test_cs_skill_selfref.py"
+      core: true
+      failure_handling: fix-or-block
+    - id: CMD-004
+      command: "python3 tools/check-plugin-package.py --root . --json"
+      core: false
+      failure_handling: document-baseline
+    - id: CMD-005
+      command: "python3 plugins/codestable/skills/cs-onboard/tools/codestable-runtime-sync.py --root . --source-skill-dir plugins/codestable/skills/cs-onboard --check --json"
+      core: true
+      failure_handling: fix-or-block
+    - id: CMD-006
+      command: "git diff --check"
+      core: true
+      failure_handling: fix-or-block
+  evidence_required: [command_output, diff_summary, independent_review, privacy_negative_tests]
+  cleanliness:
+    debug_output: forbidden

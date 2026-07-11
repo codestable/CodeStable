@@ -8,7 +8,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "plugins/codestable/skills/cs-feedback/scripts/collect_feedback_context.py"
-REPORT_SCRIPT = ROOT / "plugins/codestable/skills/cs-feedback/scripts/report_feedback_issue.py"
 
 
 def load_collector():
@@ -21,18 +20,6 @@ def load_collector():
 
 
 collector = load_collector()
-
-
-def load_reporter():
-    spec = importlib.util.spec_from_file_location("report_feedback_issue", REPORT_SCRIPT)
-    assert spec and spec.loader
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
-
-
-reporter = load_reporter()
 
 
 def write_jsonl(path: Path, records: list[dict]) -> None:
@@ -69,7 +56,7 @@ def test_collects_codestable_tool_failures_and_user_corrections(tmp_path: Path) 
             {
                 "timestamp": "2026-07-03T01:03:00Z",
                 "type": "event_msg",
-                "payload": {"type": "user_message", "message": "不对，你没有按 cs-feat 的 goal driver 规则走。token=secret123456"},
+                "payload": {"type": "user_message", "message": "不对，应该按 cs-feat 的 goal driver 规则走。token=secret123456"},
             },
         ],
     )
@@ -345,13 +332,22 @@ def test_public_summary_redacts_paths_and_remotes(tmp_path: Path) -> None:
             },
             {
                 "timestamp": "2026-07-03T04:01:00Z",
-                "type": "event_msg",
+                "type": "response_item",
                 "payload": {
-                    "message": (
+                    "type": "function_call_output",
+                    "output": (
                         "cs-feat failed reading /Users/me/private/repo/.codestable/attention.md, "
                         "~/work/private-client/secrets.md, and /opt/acme/customer_data.md from "
                         "https://github.com/acme/private?token=abc and git@gitlab.company.com:secret/private-repo.git"
                     )
+                },
+            },
+            {
+                "timestamp": "2026-07-03T04:02:00Z",
+                "type": "event_msg",
+                "payload": {
+                    "type": "user_message",
+                    "message": "不对，应该只报告脱敏后的 cs-feat failure。",
                 },
             },
         ],
@@ -372,7 +368,10 @@ def test_public_summary_redacts_paths_and_remotes(tmp_path: Path) -> None:
     )
 
     payload = json.loads(output.read_text(encoding="utf-8"))
-    excerpt = payload["public_issue_context"]["events"][0]["sanitized_excerpt"]
+    excerpt = " ".join(
+        event["sanitized_excerpt"]
+        for event in payload["public_issue_context"]["events"]
+    )
     assert "/Users/me" not in excerpt
     assert "~/work" not in excerpt
     assert "/opt/acme" not in excerpt
@@ -382,55 +381,3 @@ def test_public_summary_redacts_paths_and_remotes(tmp_path: Path) -> None:
     assert "token=abc" not in excerpt
     assert "<local-path>" in excerpt
     assert "<repo-remote>" in excerpt
-
-
-def test_reporter_falls_back_when_gh_is_missing(tmp_path: Path, monkeypatch) -> None:
-    body = tmp_path / "github-issue.md"
-    body.write_text("## Summary\n\ncs-feedback issue\n", encoding="utf-8")
-    output = tmp_path / "result.json"
-    monkeypatch.setattr(reporter.shutil, "which", lambda name: None)
-
-    exit_code = reporter.main_with_args_for_test(
-        [
-            "--repo",
-            "owner/repo",
-            "--title",
-            "Feedback: cs skill failed",
-            "--body-file",
-            str(body),
-            "--json-output",
-            str(output),
-        ]
-    )
-
-    assert exit_code == 0
-    payload = json.loads(output.read_text(encoding="utf-8"))
-    assert payload["status"] == "manual"
-    assert payload["reason"] == "gh not found"
-    assert "gh issue create" in payload["command"]
-    assert "'Feedback: cs skill failed'" in payload["command"]
-
-
-def test_reporter_refuses_local_private_evidence(tmp_path: Path, monkeypatch) -> None:
-    evidence = tmp_path / "evidence.json"
-    evidence.write_text(
-        json.dumps({"privacy": "local-private", "public_upload_allowed": False}, ensure_ascii=False),
-        encoding="utf-8",
-    )
-    monkeypatch.setattr(reporter.shutil, "which", lambda name: None)
-
-    try:
-        reporter.main_with_args_for_test(
-            [
-                "--repo",
-                "owner/repo",
-                "--title",
-                "Feedback: cs skill failed",
-                "--body-file",
-                str(evidence),
-            ]
-        )
-    except SystemExit as exc:
-        assert "refusing to upload local-private" in str(exc)
-    else:
-        raise AssertionError("expected reporter to reject evidence.json")

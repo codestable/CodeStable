@@ -1,0 +1,66 @@
+{
+  "gate_id": "dod-runner",
+  "stage": "acceptance",
+  "status": "passed",
+  "blocking": [],
+  "warnings": [
+    "CMD-004: non-core command failed with exit 1"
+  ],
+  "evidence": [
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q tests/test_cs_feedback*.py tests/test_cs_skill_bootstrap.py tests/test_skill_entry_simplification.py",
+      "exit_code": 0,
+      "stdout": "........................................................................ [ 42%]\n........................................................................ [ 84%]\n...........................                                              [100%]\n171 passed in 0.49s\n",
+      "stderr": "",
+      "id": "CMD-001",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q tests",
+      "exit_code": 0,
+      "stdout": "........................................................................ [ 21%]\n........................................................................ [ 42%]\n........................................................................ [ 63%]\n........................................................................ [ 84%]\n.....................................................                    [100%]\n341 passed in 5.47s\n",
+      "stderr": "",
+      "id": "CMD-002",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q tests/test_cs_skill_eval.py tests/test_cs_skill_convergence.py tests/test_cs_skill_release.py tests/test_cs_skill_bootstrap.py tests/test_cs_skill_selfref.py",
+      "exit_code": 0,
+      "stdout": ".................................................................        [100%]\n65 passed in 0.96s\n",
+      "stderr": "",
+      "id": "CMD-003",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "python3 tools/check-plugin-package.py --root . --json",
+      "exit_code": 1,
+      "stdout": "{\n  \"ok\": false,\n  \"findings\": [\n    {\n      \"path\": \"cs-onboard\",\n      \"message\": \"root cs* skill entry must be moved under plugins/codestable/skills\"\n    }\n  ]\n}\n",
+      "stderr": "",
+      "id": "CMD-004",
+      "core": false,
+      "failure_handling": "document-baseline"
+    },
+    {
+      "command": "python3 plugins/codestable/skills/cs-onboard/tools/codestable-runtime-sync.py --root . --source-skill-dir plugins/codestable/skills/cs-onboard --check --json",
+      "exit_code": 0,
+      "stdout": "{\n  \"status\": \"ok\",\n  \"ok\": true,\n  \"hint\": \"runtime assets ok\",\n  \"manifest\": {\n    \"schema_version\": 1,\n    \"plugin\": \"codestable\",\n    \"plugin_version\": \"1.0.2\",\n    \"runtime_version\": \"1.0.2\",\n    \"tool_runtime\": \"skill-global\",\n    \"managed_paths\": [\n      \".codestable/gates\",\n      \".codestable/reference\",\n      \".codestable/.gitignore\",\n      \".codestable/runtime-manifest.json\"\n    ],\n    \"updated_by\": \"codestable-runtime-sync\"\n  },\n  \"installed_plugin_version\": \"1.0.2\",\n  \"expected_plugin_version\": \"1.0.2\",\n  \"capabilities\": {\n    \"base\": {\n      \"ok\": true,\n      \"required_paths\": [\n        \".codestable/attention.md\",\n        \".codestable/reference/execution-conventions.md\",\n        \".codestable/reference/shared-conventions.md\",\n        \".codestable/reference/agent-conventions.md\",\n        \".codestable/reference/tools.md\",\n        \".codestable/runtime-manifest.json\",\n        \"tools/validate-yaml.py\",\n        \"tools/search-yaml.py\",\n        \"tools/codestable-doctor.py\",\n        \"tools/build-review-packet.py\"\n      ],\n      \"repo_paths\": [\n        \".codestable/attention.md\",\n        \".codestable/reference/execution-conventions.md\",\n        \".codestable/reference/shared-conventions.md\",\n        \".codestable/reference/agent-conventions.md\",\n        \".codestable/reference/tools.md\",\n        \".codestable/runtime-manifest.json\"\n      ],\n      \"skill_tool_paths\": [\n        \"tools/validate-yaml.py\",\n        \"tools/search-yaml.py\",\n        \"tools/codestable-doctor.py\",\n        \"tools/build-review-packet.py\"\n      ],\n      \"missing\": [],\n      \"missing_repo\": [],\n      \"missing_skill_tools\": []\n    },\n    \"goal-gates\": {\n      \"ok\": true,\n      \"required_paths\": [\n        \".codestable/gates/roadmap-goal-gates.yaml\",\n        \"tools/codestable-scope-gate.py\",\n        \"tools/codestable-dod-contract-gate.py\",\n        \"tools/codestable-dod-runner.py\",\n        \"tools/codestable-evidence-pack.py\",\n        \"tools/codestable-goal-consistency-gate.py\"\n      ],\n      \"repo_paths\": [\n        \".codestable/gates/roadmap-goal-gates.yaml\"\n      ],\n      \"skill_tool_paths\": [\n        \"tools/codestable-scope-gate.py\",\n        \"tools/codestable-dod-contract-gate.py\",\n        \"tools/codestable-dod-runner.py\",\n        \"tools/codestable-evidence-pack.py\",\n        \"tools/codestable-goal-consistency-gate.py\"\n      ],\n      \"missing\": [],\n      \"missing_repo\": [],\n      \"missing_skill_tools\": []\n    },\n    \"workflow-next\": {\n      \"ok\": true,\n      \"required_paths\": [\n        \"tools/codestable-workflow-next.py\"\n      ],\n      \"repo_paths\": [],\n      \"skill_tool_paths\": [\n        \"tools/codestable-workflow-next.py\"\n      ],\n      \"missing\": [],\n      \"missing_repo\": [],\n      \"missing_skill_tools\": []\n    }\n  },\n  \"missing\": [],\n  \"tool_runtime\": \"skill-global\"\n}\n",
+      "stderr": "",
+      "id": "CMD-005",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "id": "CMD-006",
+      "core": true,
+      "failure_handling": "fix-or-block"
+    }
+  ],
+  "providers": {}
+}

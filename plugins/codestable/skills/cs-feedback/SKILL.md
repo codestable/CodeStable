@@ -1,7 +1,7 @@
 ---
 name: cs-feedback
-description: CodeStable 使用反馈闭环。触发：用户反馈 cs skill 跑偏、工具失败、规则没讲清、agent 被用户纠正，自动采集本机 Codex/Claude 历史并生成可上报 issue。
-argument-hint: "[--since-days N] [--session current|<id-or-path>] [--github] <feedback>"
+description: CodeStable 使用反馈闭环。触发：用户反馈 cs skill 跑偏、工具失败、规则没讲清、agent 被用户纠正；显式调用后采集本机证据并准备可确认的公开 issue。
+argument-hint: "[--since-days N | --session current|<id-or-path>] [--accept-incident <id>] [--github] <feedback>"
 ---
 
 # cs-feedback
@@ -10,129 +10,148 @@ argument-hint: "[--since-days N] [--session current|<id-or-path>] [--github] <fe
 
 动作前先跑 CodeStable preflight：读 `.codestable/attention.md`（缺失先 `cs-onboard`）；不要用 `AGENTS.md`/`CLAUDE.md` 等外部入口代替它；细则见 `.codestable/reference/execution-conventions.md`。
 
-`cs-feedback` 收集用户使用 CodeStable skills 的体验问题，把“这次哪里跑偏”转成可修复的维护 issue。它不修业务代码，也不直接改其他 skill；它只产出反馈报告，并在用户确认后尽量帮忙上报 GitHub。
-
----
+`cs-feedback` 只在用户显式调用后收集 CodeStable 自身的规则、工具或流程问题。它生成
+local-private evidence 与 triage，不修业务代码、不自动改目标 skill、不后台采集、不自动上传。
+GitHub 上报必须先展示 public preview 并得到用户逐次确认。
 
 ## 入口意图
 
 本次调用参数：$ARGUMENTS
 
-无参数默认行为：参数为空或仍是字面 `$ARGUMENTS` 时，不猜具体问题；先问用户一句“这次是哪类失败：工具失败、规则不清、阶段跑偏、上报安装问题，还是其他？”同时仍可运行自动采集，给用户可选证据。
-
-可用参数：
+无参数默认行为：参数为空或仍是字面 `$ARGUMENTS` 时，只问一句“这次是哪类失败：工具失败、规则不清、
+阶段跑偏、安装上报问题，还是其他？”有反馈文本但没有范围参数时，skill 默认当前会话：
+传 `--session current --cwd "$(pwd)"`，不传 `--since-days`。
 
 | 参数 | 行为 |
 |---|---|
-| `--since-days N` | 扫最近 N 天历史，默认 3 |
-| `--session <id-or-path>` | 只扫某个 Codex/Claude session id 或 jsonl 路径 |
-| `--session current` | 尝试按 cwd、mtime 和 transcript metadata 推断当前会话；命中多个候选时必须问用户选择 |
-| `--github` | 生成 GitHub issue public preview；用户确认后才用 `gh issue create` 上报 |
+| `--session current` | metadata-only 定位当前 cwd 的唯一会话；弱匹配或多候选必须让用户选择 |
+| `--session <id-or-path>` | 只采集用户选定的 Codex / Claude 会话 |
+| `--since-days N` | 用户显式要求时跨会话扫描最近 N 天；不再传 `--session current` |
+| `--accept-incident <id>` | 只在 triage 已记录同一 pending incident 时显式采纳；不得由 agent 自行推断 |
+| `--github` | 生成 public preview；不是上传授权 |
 
-其余文本作为用户原始反馈，必须原样写入报告。
+collector 直接调用仍保留 v1 的 `session=None + since_days=3` 默认。若调用方同时传 current
+和 since-days，current 只绕过 `time_cutoff`，输出 `since_days_ignored=true`；最后 user
+record 的 `trigger_cutoff` 始终生效。
 
----
-
-## 文件放哪儿
+## 文件布局
 
 ```text
-.codestable/feedback/{YYYY-MM-DD}-{slug}/
+.codestable/feedback/YYYY-MM-DD-{slug}/
 ├── {slug}-report.md
-├── evidence.json                 # local-private，不上传
-├── public-issue-context.json     # 可公开证据摘要，可选
-└── github-issue.md
+├── evidence.json                 # local-private observations
+├── triage.json                   # local-private assessments + quality
+├── public-issue-context.json     # public allowlist projection，可选
+├── github-issue.md               # 用户确认的公开正文，可选
+└── regression-candidate.json     # local-private eval 交接，可选
 ```
 
-如果当前仓库还没接入 `.codestable/`，先提示 `cs-onboard`；但仍可把 evidence/report 写到 `/tmp/codestable-feedback-{slug}/`，方便用户手动带走。
-
----
+未 onboard 时先提示 `cs-onboard`；仍需保留现场时可写
+`/tmp/codestable-feedback-{slug}/`，但继续按 local-private 处理。
 
 ## 工作流
 
-### 1. 收集线索
+### 1. 定位并冻结会话
 
-先把用户原话分类，不急着定责：
-
-- 工具调用失败：file read、apply patch、MCP、Paseo、git、GitHub、网络、权限、超时。
-- 规则不清：skill 没讲清阶段、参数、fallback、handoff、goal driver、review gate。
-- 流程绕路：agent 做了不必要步骤，被用户纠正后才回到正确路径。
-- 分发安装：Codex / Claude marketplace、版本缓存、branch/ref、插件安装。
-
-### 2. 自动采集
-
-运行：
+默认运行：
 
 ```bash
-python3 {skill_dir}/scripts/collect_feedback_context.py --since-days 3 --feedback "{用户原话}" --output {feedback-dir}/evidence.json --public-output {feedback-dir}/public-issue-context.json
+python3 {skill_dir}/scripts/collect_feedback_context.py --session current --cwd "$(pwd)" --feedback "{用户原话}" --output {feedback-dir}/evidence.json --triage-output {feedback-dir}/triage.json --public-output {feedback-dir}/public-issue-context.json
 ```
 
-如果用户给了 session id/path，加 `--session`。如果用户要“当前会话”，传
-`--session current --cwd "$(pwd)"`；这是 best-effort，不是可靠 oracle。脚本会扫：
+显式 `--since-days N` 时去掉 current/cwd。`ambiguity.candidates` 非空时，metadata-only
+路径不得 flatten、匹配或持久化 message/tool 正文；只让用户选择 session，再用
+`--session <id-or-path>` 重跑。
 
-- Codex：`~/.codex/sessions/**/*.jsonl`
-- Claude：`~/.claude/projects/**/*.jsonl` 和 `~/.claude/sessions/*.json`
+采集器对选定输入只读一次 snapshot：JSONL 记录完整 record EOF，单 JSON 使用不可变 byte
+snapshot；`trigger_cutoff` 后的 assistant/tool record 不进入 evidence。没有 user anchor 时仍可
+保存 incident，但 triage 保持未就绪。
 
-脚本输出两层证据：`evidence.json` 是 local-private，只留本机；`public-issue-context.json` 是 allowlist 摘要，可用于生成 `github-issue.md`。不要把完整 transcript 或 `evidence.json` 原文贴进 GitHub issue。
-当 `evidence.json` 里 `ambiguity.candidates` 非空时，先让用户选 session，不能假装已经定位。
+### 2. 检查 incident 与 triage
 
-### 3. 归纳报告
+`evidence.json` schema v2 以有序 `incidents` 为 canonical 单元，保留 role、tool pairing、
+用户纠正、observation ids、runtime/artifact/git 文件级上下文；旧 `matched_events` 继续作为 v1
+兼容投影。provider id 精确配对标 `provider`，唯一无 id 紧邻配对标 `adjacency`，其他均为
+`unpaired`。
 
-读取 `references/report-template.md`，写 `{slug}-report.md`。报告必须包含：
+`triage.json` 把 Observation 与 Assessment 分开。判断字段必须带 `source` 和
+`evidence_refs`；`source=inferred` 还必须有 `confidence`。未知就写 `unknown`，不猜根因。
 
-- 用户原始反馈。
-- 自动采集范围：provider、时间窗口、命中条数；session 只写短标签或 hash，不写本机路径。
-- 失败点清单：每条有现象、上下文、疑似根因、涉及 skill/reference/script。
-- 用户纠正信号：用户说了什么，agent 之前做了什么绕路。
-- 可执行建议：改哪个 skill / reference / script / test，或标为需要更多样本。
-- 隐私说明：`evidence.json` 只保存在本机，best-effort 脱敏后仍按私有文件处理。
+canonical `incident_kind`：`wrong-route / skipped-gate / missing-artifact / tool-failure /
+goal-driver / unnecessary-detour / install-version / privacy-reporting / unclear-rule / unknown`。
+v1 public `events[].failure_type` 只保留原 6 值域，不写 v2 枚举。
 
-没有自动命中时也要写报告：明确“自动采集未命中”，并列出已尝试的历史位置。
+### 3. Ask User（缺口驱动）
 
-### 4. Ask User（缺口驱动）
+不要固定三问。按 `quality.next_questions` 每次只问最高优先级缺口：
 
-报告落盘后只问当前阻塞质量或隐私确认的那个问题；不要固定三问。按优先级：
+1. session / primary incident 仍歧义：只让用户选择。若 triage 已有
+   `pending_incident_id`，展示 previous/pending 值；用户明确采纳后，用原采集参数加
+   `--accept-incident <pending-id>` 重跑。采纳必须匹配当前 primary 的 fingerprint，保留
+   reproduction，归档旧 assessment/privacy，并把 active privacy review 重置为 `pending`。
+2. target skill、expected、actual 或 observation ref 缺失：只补当前第一项。
+3. triage 已就绪但 regression 缺 input/oracle：只在用户要做回归样本时追问。
+4. 用户要求 GitHub：只问 public preview 是否可以公开。
 
-1. `ambiguity.candidates` 非空：只问用户选哪个 session。
-2. `github-issue.md` 还没生成：先生成 public preview，不问泛泛问题。
-3. preview 缺 expected behavior：问“你期望 agent 当时怎么做？”
-4. preview 缺相关 skill/reference：问“最相关的是哪个 skill 或流程入口？”
-5. 用户要求上报 GitHub：只问“这个 GitHub issue preview 可以公开上报吗？”
+`triage_ready` 要求唯一 incident、trigger cutoff、target skill、expected/actual 和 observation
+refs；`regression_ready` 还要求兼容 profile、最小可重放 input 与 oracle。quality 表示证据完备性，
+不表示问题严重度，也不证明一定是 skill 缺陷。重复采集不得覆盖用户手工补充字段；位置编号
+相同但 fingerprint 不同也必须重新选择。
 
-用户已在原始反馈里说清的，不重复问。
+### 4. 写本地报告与公开投影
 
-### 5. GitHub 上报
+按 `references/report-template.md` 写 `{slug}-report.md`。报告引用 observation ids 与 triage
+quality，不贴完整 transcript。`evidence.json`、`triage.json`、`regression-candidate.json` 永远
+local-private。
+local evidence 只做 best-effort 脱敏，不能因此视为可公开文件。
 
-先生成 `{slug}/github-issue.md` public preview，列出将公开包含 / 不会公开包含的内容。即使用户传 `--github`，也必须先让用户确认 preview；未确认前不调用 `gh issue create`。
+public preview 只能从结构化 allowlist 构建：
 
-允许公开的内容只来自 allowlist：provider、session_label、timestamp_bucket、failure_type、match_type、tool_name、CodeStable skill/reference/script 相对路径、sanitized_excerpt、expected_behavior、actual_behavior、proposed_fix。
+- v1 event 精确 8 字段：provider、session_label、timestamp_bucket、failure_type、match_type、
+  tool_name、skill_or_reference、sanitized_excerpt。
+- v2 incident 精确 7 字段：incident_kind、target_skill、stage_hint、expected_behavior、
+  actual_behavior、impact、proposed_fix。
 
-禁止公开：完整 transcript、`evidence.json` 原文、本机绝对路径、私有 repo 名/remote URL、环境变量、token/secret/API key、大段业务代码或用户长对话、MCP/tool 原始 JSON 参数。
+禁止公开：完整 transcript、本机绝对路径、repo/remote、环境变量、secret、原始 tool JSON、
+代码块或业务代码。不要从人写报告反向抓字段生成 preview。
 
-用户确认可上报后：
+### 5. 可选 regression candidate
+
+shipped skill 只产同目录 local-private candidate：
 
 ```bash
-python3 {skill_dir}/scripts/report_feedback_issue.py --repo liuzhengdongfortest/CodeStable --title "{title}" --body-file {feedback-dir}/github-issue.md
+python3 {skill_dir}/scripts/feedback_to_fixture.py --triage {feedback-dir}/triage.json
 ```
 
-脚本检测 `gh`：
+兼容 `--evidence <v1-public-context>` 也只生成未就绪 candidate。旧 `--failure --experiment`
+/ shipped `--experiment` 直写正式 fixture 必须非零。正式 promotion
+只由 CodeStable 维护仓库的 repo-local `eval-cs-skill` 工具消费 JSON artifact；普通用户仓库
+没有该工具时保留 candidate，不形成运行时跨 skill 依赖。
 
-- `gh` 可用且已登录：直接 `gh issue create`，回填 issue URL 到报告。
-- `gh` 不可用或未登录：不失败，把命令和 issue body 路径交给用户手动执行。
+### 6. GitHub 上报
 
----
+即使用户传 `--github`，也必须先让用户确认 preview；未确认不调用 GitHub。确认后只上传
+`github-issue.md`：
+
+```bash
+python3 {skill_dir}/scripts/report_feedback_issue.py --repo liuzhengdongfortest/CodeStable --title "{title}" --body-file {feedback-dir}/github-issue.md --confirm-public-preview
+```
+
+reporter 按文件名硬拒 evidence、triage、candidate，按 `privacy=local-private` 二次拒绝，并在
+网络边界再次扫描 public body。`gh` 缺失、未登录或网络失败时只返回 manual fallback；若需要
+访问 GitHub，按宿主规则检测本机代理后重试。
 
 ## 退出条件
 
-- [ ] `{slug}-report.md` 已落盘，含用户反馈、自动采集范围、失败点和建议。
-- [ ] `evidence.json` 已落盘并标记 local-private，或报告说明自动采集为什么不可用。
-- [ ] 已生成 `github-issue.md` public preview，且不含禁止公开内容。
-- [ ] 用户要求上报时，已创建 GitHub issue 或给出可手动执行的 `gh issue create` 命令。
-- [ ] 没有把 token、密钥、完整无关 transcript 写进报告。
-
----
+- [ ] report、evidence、triage 已落盘，或报告说明采集不可用。
+- [ ] primary incident 与 `quality.triage_ready` 状态明确；未知字段未编造。
+- [ ] public preview（如生成）只含 allowlist，用户未确认时没有网络上报。
+- [ ] candidate（如生成）仍在 feedback 目录，未就绪输入未进入正式 fixtures。
+- [ ] 没有后台采集、自动上传、自动修改目标 skill 或默认全历史扫描。
 
 ## 相关文档
 
-- `references/report-template.md` — feedback report 和 GitHub issue 模板。
-- `scripts/collect_feedback_context.py` — 本机 Codex / Claude 历史采集。
-- `scripts/report_feedback_issue.py` — GitHub issue 创建 / fallback。
+- `references/report-template.md` — 本地报告、triage 补充和 GitHub body 模板。
+- `scripts/collect_feedback_context.py` — evidence / triage / public projection 编排。
+- `scripts/feedback_to_fixture.py` — candidate-only 转换。
+- `scripts/report_feedback_issue.py` — 确认后的 GitHub 创建 / fallback。

@@ -192,7 +192,7 @@ CodeStable 顺着软件编码的真实流程来设计，把开发活动建模成
 | 重构流程 | `cs-refactor` | 行为等价重构，含标准模式和 fastforward mode |
 | 横切审查 | `cs-code-review` | 实现完成后、commit 前的只读代码审查 gate |
 | 审计 | `cs-audit` | 主动扫描 bug、安全、性能、可维护性和架构偏离 |
-| 反馈 | `cs-feedback` | 收集 CodeStable skill 使用问题，自动采集本机历史并准备 GitHub issue |
+| 反馈 | `cs-feedback` | 显式采集当前会话为 local-private incident/triage；确认 preview 后才可上报 |
 | 知识沉淀 | `cs-keep` / `cs-note` | 沉淀 compound 知识或短项目注意事项 |
 | 对外文档 | `cs-docs` | 写开发者指南、用户指南、API 参考 |
 | 文档收尾 | `cs-docs-neat` | 同步 `.codestable/`、README/docs、agent 入口和记忆 |
@@ -215,7 +215,7 @@ CodeStable 顺着软件编码的真实流程来设计，把开发活动建模成
 
 CodeStable 是分层、事件驱动的：`cs` 先判入口模式，行动请求同轮直转，咨询请求只给建议；`cs-feat` / `cs-issue` / `cs-refactor` 按仓库事实恢复阶段并经过 `cs-code-review`，其中 issue / refactor 在 review、blocking 或用户确认 checkpoint 停下；`cs-epic` 编排 planning、批量子 design 和 goal driver；旧阶段技能只保留为兼容入口。
 
-`cs-onboard` 在项目根生成 `.codestable/`，集中保存 requirements、roadmap、goals、features、issues、refactors、audits、compound、gates 与共享 reference。Python 工具脚本从已安装的 `cs-onboard` skill 包运行，不再复制到每个 repo。
+`cs-onboard` 在项目根生成 `.codestable/`，集中保存 requirements、roadmap、goals、features、issues、refactors、audits、feedback、compound、gates 与共享 reference。Python 工具脚本从已安装的 `cs-onboard` skill 包运行，不再复制到每个 repo。
 
 - `requirements/` 保存长期能力、术语和 ADR；`roadmap/` 保存待执行规划。
 - feature / issue / refactor 各自按工作项聚合产物；`compound/` 是统一知识沉淀目录。

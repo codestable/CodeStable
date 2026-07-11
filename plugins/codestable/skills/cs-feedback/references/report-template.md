@@ -21,78 +21,121 @@ github_issue: ""
 
 ## 自动采集范围
 
-- since_days: {N}
-- session_filter: {session_filter_or_none}
+- mode: {current | selected-session | since-days}
+- session_filter: {current_or_selected_or_none}
+- since_days_ignored: {true_or_false}
 - local_private_evidence: `evidence.json`
-- public_preview: `github-issue.md`
-- matched_events: {count}
+- local_private_triage: `triage.json`
+- public_preview: `public-issue-context.json`
+- incidents: {count}
+- primary_incident: {incident_id_or_unknown}
 
-## 失败点清单
+## 反馈事件包
 
-| # | 类型 | 相关 skill | 现象 | 证据 |
+| Incident | Kind | Target / Stage | Cutoff | Observation refs |
 |---|---|---|---|---|
-| 1 | tool-failure / unclear-rule / agent-detour / goal-driver / install-distribution / privacy-reporting | `cs-feat` | {一句话} | {provider/session_label/timestamp_bucket} |
+| `incident-01` | {incident_kind} | `{skill}` / `{stage}` | `{record_or_unknown}` | `obs-0001`, `obs-0002` |
 
-## 关键上下文
+## 客观观察
 
-{按失败点摘要 evidence 里的 context，不贴完整 transcript。}
+| Ref | Role / Type | 事实摘要 |
+|---|---|---|
+| `obs-0001` | assistant / message | {只摘要脱敏事实，不写根因} |
+| `obs-0002` | tool / tool_result | {工具结果摘要} |
+
+## 分析判断
+
+| 字段 | 值 | Source | Confidence | Evidence refs |
+|---|---|---|---|---|
+| expected_behavior | {value_or_unknown} | {user_or_unknown} | - | {refs} |
+| actual_behavior | {value_or_unknown} | {transcript_or_unknown} | - | {refs} |
+| impact | {value_or_unknown} | {inferred_or_unknown} | {confidence_or_dash} | {refs} |
+| proposed_fix | {value_or_unknown} | {source_or_unknown} | {confidence_or_dash} | {refs} |
+
+`cause_status` 默认 `unclassified`。Observation 不写疑似根因；Assessment 无依据时保持
+`unknown`，`source=inferred` 必须同时有 confidence 和 evidence refs。
+
+## 质量门
+
+- triage_ready: {true_or_false}
+- regression_ready: {true_or_false}
+- incident_fingerprint: {sha256_or_unknown}
+- previous_incident: {id_or_none}
+- pending_incident: {id_or_none}
+- missing_fields: {list}
+- next_questions: {最多当前最高优先级一项}
+- reasons: {list}
+
+`pending_incident` 非空时，先让用户核对 previous/pending。只有用户明确采纳，才用同一组采集
+参数追加 `--accept-incident {pending-id}`；采纳后重新检查 assessment 与 public preview。
+
+## 本机环境
+
+- provider / model / host: {values_or_unknown}
+- runtime: {version_and_status_or_unknown}
+- related_artifacts: {仅 repo-relative path + status}
+- git_status: {仅 status + repo-relative filename，不贴 diff 或文件内容}
 
 ## 隐私说明
 
-- `evidence.json` 是本机私有证据，`public_upload_allowed=false`。
-- GitHub issue 只使用 `github-issue.md` public preview，不上传 `evidence.json` 原文。
-- 虽然 evidence 已 best-effort 脱敏，仍可能含业务上下文，应按私有文件处理。
+- `evidence.json`、`triage.json`、`regression-candidate.json` 是 local-private。
+- evidence 已 best-effort 脱敏，仍可能含业务上下文，不得上传。
+- GitHub 只使用用户确认后的 `github-issue.md`，且该正文只从 public allowlist 渲染。
+- 不公开完整 transcript、绝对路径、remote/env、secret、原始工具参数或代码块。
 
-## 用户纠正信号
+## Regression 交接
 
-{用户指出 agent 绕路、做错阶段、没有按 skill 行为执行的原话和前后动作。}
-
-## 疑似根因
-
-{规则缺口 / 脚本缺口 / 分发缓存 / agent 执行偏差 / 需要更多样本。}
-
-## 建议修改
-
-- {改哪个 skill / reference / script / test}
+- candidate: {path_or_not_requested}
+- promotion_blockers: {list}
+- 正式 fixture: {repo_local_promotion_result_or_not_ready}
 
 ## 上报状态
 
+- Public preview confirmed: {yes_or_no}
 - GitHub issue: {url_or_pending}
 - Manual fallback: {command_or_none}
 ```
 
 ## `github-issue.md`
 
+该正文只从 `public-issue-context.json` 的 allowlist 字段渲染；不要复制用户原话、报告路径或
+local-private 文件正文。
+
 ```markdown
 ## Summary
 
-{一句话说明 CodeStable skill 使用问题。}
+{sanitized one-line incident summary}
 
-## User Feedback
+## Incident
 
-{用户原始反馈}
-
-## Evidence
-
-- Report: `{report_path}`
-- Local private evidence: kept on the user's machine, not uploaded
-- Matched events: {count}
-- Public evidence fields: provider, session_label, timestamp_bucket, failure_type, match_type, tool_name, skill_or_reference, sanitized_excerpt
-
-## Suspected Area
-
-- Skill/reference/script/test: {paths_or_unknown}
-- Failure type: {tool-failure|unclear-rule|agent-detour|goal-driver|install-distribution|privacy-reporting|unknown}
-
-## Context
-
-{只放 public allowlist 摘要；不贴完整 transcript、本机绝对路径、私有 repo 名、remote URL、环境变量、token、MCP/tool 原始 JSON 参数或大段业务代码。}
+- Kind: {incident_kind}
+- Target skill: {target_skill}
+- Stage hint: {stage_hint}
 
 ## Expected Behavior
 
-{用户期望或报告推断出的正确行为。}
+{public expected_behavior or unknown}
+
+## Actual Behavior
+
+{public actual_behavior or unknown}
+
+## Impact
+
+{public impact or unknown}
 
 ## Proposed Fix
 
-{建议补规则、脚本或测试。}
+{public proposed_fix or unknown}
+
+## Evidence
+
+- Matched public events: {count}
+- Public evidence fields: provider, session_label, timestamp_bucket, failure_type, match_type,
+  tool_name, skill_or_reference, sanitized_excerpt, incident_kind, target_skill, stage_hint,
+  expected_behavior, actual_behavior, impact, proposed_fix
+- Local private evidence remains on the user's machine and is not uploaded.
 ```
+
+生成后再次确认：正文不含完整 transcript、本机绝对路径、repo/remote、环境变量、secret、
+原始 MCP/tool JSON 参数、代码块或大段业务代码。

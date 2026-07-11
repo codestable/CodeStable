@@ -28,7 +28,7 @@ cs
 
 第 3 层是事件入口：新需求走 `cs-feat`，bug 走 `cs-issue`，腐化走 `cs-refactor`，对外文档走 `cs-docs`。`cs-code-review` 是横切代码审查 gate，feature / issue / refactor 链路都经它产 `{slug}-review.md`。
 
-横切层是知识与反馈飞轮：任何流程都可以把值得复用的经验经 `cs-keep` 沉淀到 compound；`cs-feedback` 收集 skill 使用失败和规则缺口，准备上报 issue；`cs-docs-neat` 在里程碑收尾时同步 `.codestable/`、README/docs、`CLAUDE.md` / `AGENTS.md` 和 agent 记忆。
+横切层是知识与反馈飞轮：`cs-keep` 沉淀 compound；`cs-feedback` 仅在显式调用后生成 local-private incident/triage，public preview 经确认后才可上报；`cs-docs-neat` 在里程碑收尾时同步文档与记忆。
 
 旧阶段技能仍是长期兼容入口，但不再作为主路径展示：
 
@@ -52,6 +52,7 @@ cs
 ├── refactors/
 ├── audits/
 ├── brainstorms/
+├── feedback/
 ├── compound/
 ├── tools/
 └── reference/

@@ -206,7 +206,7 @@ MAIN_ENTRY_ARGUMENT_HINTS = {
     "cs-refactor": "[--stage scan|design|apply] [--mode standard|fastforward] <target>",
     "cs-docs": "[--mode tutorial|api] <topic>",
     "cs-epic": "[--stage planning|review|goal-package] <epic>",
-    "cs-feedback": "[--since-days N] [--session current|<id-or-path>] [--github] <feedback>",
+    "cs-feedback": "[--since-days N | --session current|<id-or-path>] [--accept-incident <id>] [--github] <feedback>",
     "cs-code-review": "[--range <git-range>] [scope]",
     "cs-docs-neat": "[scope]",
 }
@@ -658,14 +658,21 @@ def test_feedback_skill_is_registered_and_uses_progressive_disclosure() -> None:
 
     assert "CodeStable 使用反馈闭环" in feedback
     assert "--session current" in feedback
+    assert "--accept-incident" in feedback
     assert "best-effort" in feedback
     assert "ambiguity.candidates" in feedback
     assert "Ask User（缺口驱动）" in feedback
     assert "不要固定三问" in feedback
     assert "即使用户传 `--github`，也必须先让用户确认 preview" in feedback
     assert "public-issue-context.json" in feedback
+    assert "--triage-output" in feedback
+    assert "triage_ready" in feedback and "regression_ready" in feedback
+    assert "regression-candidate.json" in feedback
+    assert "--confirm-public-preview" in feedback
+    assert "旧 `--failure --experiment`" in feedback
     assert "禁止公开" in feedback
     assert "local_private_evidence" in template
+    assert "local_private_triage" in template
     assert "Public evidence fields" in template
     assert "完整 transcript" in template
     assert collector.is_file()

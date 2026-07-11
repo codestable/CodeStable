@@ -7,6 +7,7 @@ applies-to:
   - ".claude/skills/eval-cs-skill/"
   - "experiments/"
   - "plugins/codestable/skills/cs-feedback/scripts/feedback_to_fixture.py"
+  - ".claude/skills/eval-cs-skill/scripts/promote_feedback_fixture.py"
 enforcement: test
 stage: [author, eval, optimize, release]
 lint: "python3 -m pytest tests/test_cs_skill_eval.py tests/test_cs_skill_convergence.py tests/test_cs_skill_release.py tests/test_cs_skill_bootstrap.py tests/test_cs_skill_selfref.py"
@@ -31,12 +32,13 @@ CodeStable 原有 `tests/test_skill_*` 只验证 skill **写得对不对**（路
 5. **release 两步走**：`knowledge-extractor` 产草稿 → `adapt_extracted_skill.py` 翻译成 CS 合规结构（禁止 extractor 直写 plugins/），再 `regression.py` + `bump_version.py`。
 6. **自治默认轻量 cron**（`enqueue_experiment.py`），BAIME `loop-backlog` 为可选宿主。
 7. **自指**：`experiments/eval-cs-skill-001/` 用同一 runner/scorer 评 `eval-cs-skill` 自身。
+8. **反馈交接边界**：shipped `cs-feedback` 只把 local-private `triage.json` 转成同目录 candidate；正式 fixture 由 repo-local promotion 工具读取 experiment config，校验 profile/input/privacy/scorer/harness/judge 后 fail-closed 落盘。两单元只通过 JSON artifact 连接，运行时互不 import。
 
 ## Consequences
 
 - skill 效果可跨 model/harness 量化，改进有硬 verdict 而非直觉。
 - 新 skill 接入只需加 `experiments/` 数据（自举）；加 harness 只需加一个 adapter。
-- 生产失败经 `cs-feedback/feedback_to_fixture.py` 转 regression fixture，闭环回评测。
+- 生产失败先经 `cs-feedback/feedback_to_fixture.py` 形成未入库 candidate；只有 readiness、隐私与目标 experiment gates 全过，repo-local promotion 才写 regression fixture。
 - eval-cs-skill 自身可被同一闭环评测优化（自指）。
 - 真实多模型运行需 API/CLI 鉴权并产生成本，受 `--dry-run` + `budget_usd` 护栏约束。
 - **评测效度是头等风险**（首轮真实 campaign 教训）：必须复现 skill 的设计运行环境（`inject_context` 补 onboard 上下文）、用语义 oracle（`recall_judge`）判散文 answer、fixture 内嵌被操作的 subject matter；否则测到的是「skill 在残缺环境下的反应」而非真实能力。核查须分模型看 + 手工读原始输出 + 认 k=1 variance。细则见 `references/eval/protocol.md` 效度三铁律。

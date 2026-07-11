@@ -1,0 +1,102 @@
+feature: "2026-07-10-cs-feedback-evidence-pipeline"
+status: passed
+baseline_ref: "30fecaae5e747dbad1f0e599d592d7c04cc7f0c4"
+stage: complete
+design: ".codestable/features/2026-07-10-cs-feedback-evidence-pipeline/cs-feedback-evidence-pipeline-design.md"
+checklist: ".codestable/features/2026-07-10-cs-feedback-evidence-pipeline/cs-feedback-evidence-pipeline-checklist.yaml"
+review: ".codestable/features/2026-07-10-cs-feedback-evidence-pipeline/cs-feedback-evidence-pipeline-review.md"
+qa: ".codestable/features/2026-07-10-cs-feedback-evidence-pipeline/cs-feedback-evidence-pipeline-qa.md"
+acceptance: ".codestable/features/2026-07-10-cs-feedback-evidence-pipeline/cs-feedback-evidence-pipeline-acceptance.md"
+ledger:
+  - step: 1
+    status: done
+    evidence: "TDD exception: 拆分前 9 feedback tests passed；拆分后兼容行为分文件持续通过，collector 收薄为 186 行"
+    commit_scope: "feedback models/privacy/transcripts/incidents/repo-context/triage modules and test split"
+  - step: 2
+    status: done
+    evidence: "RED 18 failed/20 passed；GREEN 覆盖 metadata-only current、snapshot/cutoff、pairing、user-turn incidents、provider isomorphism、repo context"
+    commit_scope: "collector orchestration and transcript/incident/context modules"
+  - step: 3
+    status: done
+    evidence: "quality ref 与隐私 RED 后 GREEN；triage 独立、readiness 重算、allowlist 8+7 字段、未确认 reporter 零网络调用"
+    commit_scope: "feedback_triage.py, feedback_privacy.py, reporter and privacy tests"
+  - step: 4
+    status: done
+    evidence: "candidate/promotion fail-closed tests 通过；JSON-only 正向 promotion；旧 experiment 直写非零无目录"
+    commit_scope: "feedback_to_fixture.py, repo-local promotion tool and promotion tests"
+  - step: 5
+    status: done
+    evidence: "TDD exception: static contracts + 91 targeted tests；runtime sync ok；template/runtime cmp；公开文档均 <=300 行"
+    commit_scope: "cs-feedback docs, onboard references/runtime copies, ADR-003, public docs and rt-c17"
+  - step: 6
+    status: done
+    evidence: "implementation gate fresh passed：91 targeted、261 full、65 eval tests；runtime sync/diff check passed；仅既有非核心 package baseline；独立 review 由紧随其后的 review stage 回填"
+    commit_scope: "tests, gate artifacts, implementation report and review inputs"
+  - step: "review-fix-1"
+    status: done
+    evidence: "修复 7 个 round-1 important：triage mismatch 保留数据并阻断选择、multiline JSON/单段路径隐私、assessment readiness、safe fixture id/containment/regression class、malformed triage；62 feedback、98 targeted、268 full、65 eval tests passed"
+    commit_scope: "feedback privacy/triage/incidents/converter/reporter, promotion tool and focused regression tests"
+  - step: "review-fix-2"
+    status: done
+    evidence: "RED 5 failed/8 passed；修复 nested/超长 JSON、incident fingerprint 与显式 pending 采纳、ImportFrom 守护、quoted-key promotion secret；66 feedback、102 targeted、272 full、65 eval tests passed"
+    commit_scope: "feedback privacy/triage/collector/reporter protocol, promotion guard and focused regression tests"
+  - step: "qa-fix-1"
+    status: done
+    evidence: "QA 真实复现 6-7 字符 password/authorization 穿透；RED 2 failed，GREEN 2 passed；shared public/reporter secret 阈值对齐为 6；68 feedback、104 targeted、274 full、65 eval tests passed"
+    commit_scope: "feedback_privacy shared matcher and public/reporter short-secret regression tests"
+  - step: "review-fix-4"
+    status: done
+    evidence: "Round-4 复现 Authorization Basic 完全穿透与 Bearer 部分残留；RED 2 failed，GREEN 2 passed；新增 shared auth-scheme pattern 与双侧 Basic/Bearer/Proxy/sanitized 回归；70 feedback、106 targeted、276 full、65 eval tests passed"
+    commit_scope: "feedback_privacy auth-scheme redaction, reporter shared scan and focused tests"
+  - step: "review-fix-5"
+    status: done
+    evidence: "Round-5 credential ecosystem RED 7 failed/9 passed，GREEN 16 passed；修复 ENV ordering、任意 Authorization scheme、curl userinfo 与 promotion guard；77 feedback、113 targeted、283 full、65 eval tests passed"
+    commit_scope: "feedback_privacy credential ordering/matchers, reporter shared scanner, promotion guard and focused regression tests"
+  - step: "review-fix-6"
+    status: done
+    evidence: "Round-6 RED 6 failed/16 passed，GREEN 22 passed；修复特殊字符/quoted secret 三层穿透、confirmed title 旁路与空 incident converter；85 feedback、121 targeted、291 full、65 eval tests passed"
+    commit_scope: "feedback privacy/promotion value matcher, reporter title scan, canonical converter identity validation and regression tests"
+  - step: "review-fix-7"
+    status: done
+    evidence: "Round-7 RED 9 failed/21 passed，GREEN 30 passed；修复 angle/backtick/full-width/unbalanced/escaped value，并显式 exempt sanitized placeholder；95 feedback、131 targeted、301 full、65 eval tests passed"
+    commit_scope: "feedback privacy/promotion value parser and three-layer adversarial regression matrix"
+  - step: "review-fix-8"
+    status: done
+    evidence: "Round-8 RED 16 failed/26 passed，补充 shell RED 3 failed/31 passed；修复 segment parser、promotion key/schema、correlation bridge、atomic persistence、source/ref validation、repo root；110 feedback、148 targeted、318 full、65 eval tests passed"
+    commit_scope: "feedback privacy/reporter/promotion, incident merge, collector persistence, triage quality, repo context and focused regressions"
+  - step: "review-fix-9"
+    status: done
+    evidence: "Round-9 privacy RED 6 failed/35 passed、integrity/schema RED 2 failed/3 passed、persistence/ignore RED 4 failed/1 passed；修复 multiline parser/fence、evidence binding、strict promotion schema、generation rollback 与 private gitignore；166 targeted、336 full、65 eval tests passed"
+    commit_scope: "feedback privacy/converter/collector, reporter/promotion, onboard gitignore/runtime copy and focused regressions"
+  - step: "review-fix-10"
+    status: done
+    evidence: "Round-10 RED 2 failed；修复 metadata 来源污染与无 anchor public projection，GREEN 2 passed；131 feedback、167 targeted、337 full、65 eval tests passed"
+    commit_scope: "feedback repo-context/public eligibility and focused regression tests"
+  - step: "review-fix-11"
+    status: done
+    evidence: "Round-11 含空格路径 RED 2 failed，GREEN 2 passed；60 privacy/reporting、169 targeted、339 full、65 eval tests passed；runtime/scope/evidence/diff 通过，package 仅既有 baseline"
+    commit_scope: "shared public path matcher and evidence/reporting regression tests"
+  - step: "review-fix-12"
+    status: done
+    evidence: "Round-12 路径定界符 RED 2 failed，GREEN 2 passed；60 privacy/reporting、169 targeted、339 full、65 eval tests passed；runtime/scope/evidence/diff 通过，package 仅既有 baseline"
+    commit_scope: "shared path file-boundary matcher and quoted/punctuated path regression matrix"
+  - step: "review-fix-13"
+    status: done
+    evidence: "Round-13 CJK 连写/扩展名 RED 2 failed，GREEN 2 passed；60 privacy/reporting、169 targeted、339 full、65 eval tests passed；runtime/scope/evidence/diff 通过，package 仅既有 baseline"
+    commit_scope: "shared CJK path boundary, Unicode extension matcher and bilingual regression matrix"
+  - step: "review-fix-14"
+    status: done
+    evidence: "Round-14 泄漏/保真 RED 4 failed，GREEN 4 passed；62 privacy/reporting、171 targeted、341 full、65 eval tests passed；runtime/diff 通过，package 仅既有 baseline"
+    commit_scope: "bounded absolute-path span scanner and bidirectional privacy/fidelity regression matrix"
+  - step: "review-fix-15"
+    status: done
+    evidence: "Round-15 词位/相对引用 RED 4 failed；首次 GREEN 暴露 relative slash 重匹配，第二次 GREEN 4 passed；62 privacy/reporting、171 targeted、341 full、65 eval tests passed；package 仅既有 baseline"
+    commit_scope: "single-step path continuation, extension predicate, relative-path start boundary and word-position matrix"
+  - step: "review-fix-16"
+    status: done
+    evidence: "Round-16 中文粘连 RED 2 failed，GREEN 4 focused passed；62 privacy/reporting、171 targeted、341 full、65 eval tests passed；runtime/diff 通过，package 仅既有 baseline"
+    commit_scope: "CJK path-glue boundary, single/multi-hop fidelity matrix and pure-path privacy controls"
+  - step: "acceptance-1"
+    status: done
+    evidence: "Round-17 Fable review passed；Round-2 QA 16 scenarios passed；21 checks passed；acceptance DoD 171 targeted、341 full、65 eval，scope/evidence/runtime/diff passed"
+    commit_scope: "acceptance report, checklist closure, owner-approved requirement backfill and VISION index"

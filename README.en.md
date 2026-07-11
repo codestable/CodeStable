@@ -189,7 +189,7 @@ CodeStable models real coding work as a set of **entities** and **flows**.
 | Refactor | `cs-refactor` | Behavior-preserving refactor workflow |
 | Review | `cs-code-review` | Cross-cutting read-only implementation review gate |
 | Audit | `cs-audit` | Scan for bugs, security, performance, maintainability, and architecture drift |
-| Feedback | `cs-feedback` | Capture CodeStable skill usage problems, collect local history, and prepare a GitHub issue |
+| Feedback | `cs-feedback` | Explicitly capture current-session incidents/triage; upload only after preview confirmation |
 | Knowledge | `cs-keep` / `cs-note` | Capture durable knowledge or short startup-critical notes |
 | External docs | `cs-docs` | Developer guides, user guides, and API references |
 | Docs hygiene | `cs-docs-neat` | Sync `.codestable/`, README/docs, agent entries, and memory |
@@ -233,7 +233,7 @@ How to read it:
 - `cs-feat`, `cs-issue`, and `cs-refactor` resume from repository facts. `cs-issue` and `cs-refactor` stop at review, blocking, or user-confirmation checkpoints; `cs-feat` stops only at the design gate, then runs impl, review, QA, and accept long-range via a visible goal driver.
 - `cs-epic` prepares planning and goal packages, then dispatches a visible goal driver; v1 still writes `.codestable/roadmap/`.
 - `cs-code-review` is the cross-cutting gate; `cs-docs-neat` handles hygiene; `cs-docs` writes outward docs.
-- `cs-feedback` captures failures and detours while using CodeStable skills, collects local Codex/Claude history, and prepares an issue.
+- `cs-feedback` explicitly captures a local-private current-session evidence package; public issue upload remains separately confirmed.
 - Old stage skills are long-term compatibility entries for historical users.
 
 See [WORKFLOW.en.md](./WORKFLOW.en.md) for the compact diagram.
@@ -242,91 +242,19 @@ See [WORKFLOW.en.md](./WORKFLOW.en.md) for the compact diagram.
 
 ## Runtime structure
 
-After `/cs-onboard`, a `.codestable/` directory appears at your project root as the aggregate root for requirements, roadmap, goals, features, issues, refactors, audits, compound, gates, and reference. Python tool scripts run from the installed `cs-onboard` skill package instead of being copied into each repo.
+After `/cs-onboard`, project artifacts aggregate under `.codestable/`. Python tool scripts run from the installed `cs-onboard` skill package instead of being copied into each repo.
 
 ```text
-your-project/
-├── .codestable/
-│   ├── attention.md                       # required preflight for CodeStable skills
-│   ├── requirements/                      # requirements + domain model
-│   │   ├── VISION.md                      # capability index
-│   │   ├── {slug}.md                      # one capability per flat file
-│   │   ├── CONTEXT.md                     # domain glossary
-│   │   ├── CONTEXT-MAP.md                 # multi-context topology, when needed
-│   │   ├── adrs/                          # architecture decisions
-│   │   │   └── NNN-{slug}.md              # Nygard four sections + status machine
-│   │   └── {ctx}/                         # bounded-context subdir, when needed
-│   │       ├── CONTEXT.md
-│   │       ├── adrs/
-│   │       └── {capability}.md
-│   │
-│   ├── roadmap/                           # roadmaps ("how we plan to walk next")
-│   │   └── {slug}/
-│   │       ├── {slug}-roadmap.md          # main doc: background / breakdown / sequencing
-│   │       ├── {slug}-items.yaml          # machine-readable sub-feature list
-│   │       ├── {slug}-roadmap-review.md   # planning review before human approval
-│   │       └── drafts/                    # optional drafts / research
-│   │
-│   ├── goals/                             # goal-driven workflow aggregate root
-│   │   └── {slug}/
-│   │       ├── {slug}-start-report.md
-│   │       ├── {slug}-state.yaml
-│   │       ├── {slug}-iteration-*.md
-│   │       └── {slug}-functional-acceptance.md
-│   │
-│   ├── features/                          # feature flow aggregate root
-│   │   └── YYYY-MM-DD-{slug}/             # one directory per feature
-│   │       ├── {slug}-brainstorm.md       # optional cs-brainstorm output
-│   │       ├── {slug}-design.md           # design
-│   │       ├── {slug}-checklist.yaml      # implementation checklist
-│   │       ├── {slug}-design-review.md    # pre-human design review
-│   │       ├── {slug}-review.md           # post-implementation code review
-│   │       ├── {slug}-qa.md               # QA gate after code review
-│   │       └── {slug}-acceptance.md       # acceptance report
-│   │
-│   ├── issues/                            # issue flow aggregate root
-│   │   └── YYYY-MM-DD-{slug}/
-│   │       ├── {slug}-report.md
-│   │       ├── {slug}-analysis.md         # only when root cause is non-obvious
-│   │       └── {slug}-fix-note.md
-│   │
-│   ├── refactors/                         # refactor flow aggregate root
-│   │   └── YYYY-MM-DD-{slug}/
-│   │       ├── {slug}-scan.md
-│   │       ├── {slug}-refactor-design.md
-│   │       ├── {slug}-checklist.yaml
-│   │       └── {slug}-apply-notes.md
-│   │
-│   ├── audits/                            # audit findings and scan outputs
-│   ├── brainstorms/                       # standalone brainstorm outputs
-│   ├── compound/                          # unified knowledge sink
-│   │   └── YYYY-MM-DD-{slug}.md
-│   │       # plain markdown, no frontmatter, grep to search
-│   │
-│   ├── gates/                             # workflow gate config released by onboard
-│   └── reference/                         # shared references released by onboard
-│       ├── shared-conventions.md          # cross-skill conventions / paths / metadata
-│       ├── system-overview.md             # system overview + scenario routing
-│       └── ...
-│
-└── AGENTS.md                              # project root, not under .codestable/
+.codestable/
+├── attention.md
+├── requirements/  roadmap/  goals/
+├── features/  issues/  refactors/
+├── audits/  brainstorms/  feedback/  compound/
+├── gates/
+└── reference/
 ```
 
-**Key points:**
-
-- All artifacts aggregate under `.codestable/`, so "how did we handle that feature / bug last time" is three seconds away.
-- `requirements/` is the **long-lived archive** (capability vision + domain glossary CONTEXT.md + decisions adrs/); `roadmap/` is the **planning layer** (what's next), deliberately separated.
-- `features/` `issues/` `refactors/` use `YYYY-MM-DD-{slug}/` to bundle all related specs in one directory, no crossing.
-- `compound/` is the **single** knowledge sink directory: plain markdown, no frontmatter, searched via `grep -r`.
-- `.codestable/reference/` is copied in by `cs-onboard` from `plugins/codestable/skills/cs-onboard/references/`; to change shared conventions, edit those skill-package templates so new projects pick them up at onboard time.
-
-### Hard constraint
-
-> A skill is an independent install unit. At runtime, **each skill can only see files inside its own package**. References like `B-skill/references/xxx.md` written in skill A's SKILL.md are **simply unreachable** at runtime.
->
-> Cross-skill shared references must go through the "working project" layer: `cs-onboard` copies them from the skill package to the project's `.codestable/reference/`, and other skills read them via the project-relative path.
-
-To change shared conventions, edit the templates under `plugins/codestable/skills/cs-onboard/references/`; new projects pick them up at onboard time. See [WORKFLOW.en.md](./WORKFLOW.en.md) for the full directory model and cross-skill reference constraints.
+`requirements/` is the long-lived archive, `roadmap/` is planning, dated work-item directories bundle one workflow, and `compound/` is the single knowledge sink. A skill is an independent install unit: cross-skill references must be released by `cs-onboard` into project-local `.codestable/reference/`, never read from a sibling skill package. See [WORKFLOW.en.md](./WORKFLOW.en.md) for the directory contract.
 
 ---
 

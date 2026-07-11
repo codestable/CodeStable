@@ -1,0 +1,16 @@
+{
+  "id": "rt-c17",
+  "answerType": "routing-decision",
+  "task": {
+    "kind": "routing",
+    "state": {
+      ".codestable/attention.md": "present",
+      "installed_skills": ["cs-feedback", "cs-feat"]
+    },
+    "utterance": "刚才 cs-feat 跳过了独立 review gate。请收集这次 CodeStable 使用反馈，不要修业务代码。"
+  },
+  "expect": {
+    "result_type": "RoutedTo",
+    "target": "cs-feedback"
+  }
+}

@@ -1,453 +1,142 @@
 #!/usr/bin/env python3
-"""Collect local Codex/Claude history snippets for CodeStable feedback."""
+"""Collect local Codex/Claude history for a CodeStable feedback evidence package."""
 
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
-import re
-import time
-from dataclasses import asdict, dataclass
+import os
+import sys
+import tempfile
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
+sys.dont_write_bytecode = True
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
 
-CS_PATTERN = re.compile(r"(?:\b(?:cs-[a-z0-9-]+|codestable)\b|\.codestable\b|/goal\b)", re.IGNORECASE)
-FAILURE_PATTERN = re.compile(
-    r"(failed|failure|error|exception|traceback|timeout|timed out|permission|denied|not found|"
-    r"no such file|tool call|apply_patch|file read|read failed|mcp|paseo|gh issue|git clone|early EOF)",
-    re.IGNORECASE,
+from feedback_incidents import (  # noqa: E402,F401
+    build_incident_payload,
+    collect_file,
+    failure_type_for,
+    feedback_tokens,
+    incident_kind_for,
+    is_relevant_event,
+    match_types_for,
+    public_incident,
+    public_summary_for,
+    records_through_trigger,
+    score_text,
+    skill_reference_from,
+    timestamp_bucket,
+    tool_name_from,
 )
-USER_CORRECTION_PATTERN = re.compile(
-    r"(不对|不是|应该|你没有|你刚才|绕|错|确认后|没有用|没用|wrong|should have|"
-    r"you didn't|not what|instead)",
-    re.IGNORECASE,
+from feedback_models import (  # noqa: E402,F401
+    Event,
+    PUBLIC_EVENT_FIELDS,
+    PUBLIC_INCIDENT_FIELDS,
+    V1_FAILURE_MAP,
 )
-GOAL_PATTERN = re.compile(r"/goal|CS_FEATURE_GOAL_|CS_ROADMAP_GOAL_|goal driver|handoff", re.IGNORECASE)
-INSTALL_PATTERN = re.compile(r"(plugin|marketplace|install|update|cache|version|codex|claude)", re.IGNORECASE)
-PATH_PATTERN = re.compile(r"(?:~[/\\][^\s`'\"<>]+|/(?:[^\s`'\"<>/]+/)+[^\s`'\"<>]+|[A-Za-z]:\\[^\s`'\"<>]+)")
-URL_PATTERN = re.compile(r"(?:https?|ssh|git)://[^\s`'\"<>]+")
-EMAIL_PATTERN = re.compile(r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}")
-REMOTE_PATTERN = re.compile(r"(?:[\w.+-]+@[\w.-]+:[^\s`'\"<>]+)")
-SECRET_PATTERN = re.compile(
-    r"(?i)(api[_-]?key|token|secret|password|authorization|bearer)\s*[:=]\s*['\"]?([A-Za-z0-9._~+/=-]{8,})"
+from feedback_repo_context import session_label  # noqa: E402
+from feedback_transcripts import (  # noqa: E402,F401
+    discover_files,
+    normalize_records,
+    provider_from_path,
+    read_transcript_snapshot,
+    session_id_from,
 )
-FEEDBACK_TOKEN_STOPWORDS = {
-    "agent",
-    "call",
-    "current",
-    "error",
-    "failed",
-    "failure",
-    "file",
-    "read",
-    "rule",
-    "session",
-    "should",
-    "tool",
-    "unclear",
-}
+from feedback_triage import (  # noqa: E402
+    accept_pending_incident,
+    build_triage,
+    merge_existing_triage,
+)
 
 
-@dataclass
-class Event:
-    provider: str
-    session: str
-    path: str
-    timestamp: str
-    kind: str
-    score: int
-    reasons: list[str]
-    match_types: list[str]
-    public_summary: dict[str, str]
-    text: str
-    context: list[str]
+def _load_existing_triage(path: Path) -> dict[str, Any] | None:
+    if not path.exists():
+        return None
+    if not path.is_file():
+        raise ValueError(f"existing triage is not a file: {path}")
+    try:
+        loaded = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"cannot read existing triage: {exc}") from exc
+    if not isinstance(loaded, dict):
+        raise ValueError("existing triage must be a JSON object")
+    if loaded.get("schema_version") != 2 or loaded.get("privacy") != "local-private":
+        raise ValueError("existing triage must be schema v2 local-private")
+    for key in ("target", "assessment", "reproduction", "privacy_review"):
+        if not isinstance(loaded.get(key), dict):
+            raise ValueError(f"existing triage {key} must be a JSON object")
+    return loaded
 
 
-@dataclass(frozen=True)
-class Candidate:
-    path: str
-    provider: str
-    session: str
-    cwd: str
-    mtime: float
-    score: int
-
-
-def redact(text: str, limit: int = 1200) -> str:
-    text = SECRET_PATTERN.sub(lambda match: f"{match.group(1)}=<redacted>", text)
-    text = re.sub(r"sk-[A-Za-z0-9]{20,}", "sk-<redacted>", text)
-    text = re.sub(r"gh[pousr]_[A-Za-z0-9_]{20,}", "gh_<redacted>", text)
-    text = text.replace("\x00", "")
-    if len(text) > limit:
-        return text[:limit] + "...<truncated>"
-    return text
-
-
-def public_redact(text: str, limit: int = 300) -> str:
-    text = redact(text, limit=limit * 2)
-    text = REMOTE_PATTERN.sub("<repo-remote>", text)
-    text = URL_PATTERN.sub("<url>", text)
-    text = PATH_PATTERN.sub("<local-path>", text)
-    text = EMAIL_PATTERN.sub("<email>", text)
-    text = re.sub(r"```.*?```", "<code-block>", text, flags=re.DOTALL)
-    text = re.sub(r"\s+", " ", text).strip()
-    if len(text) > limit:
-        return text[:limit] + "...<truncated>"
-    return text
-
-
-def flatten(value: Any) -> str:
-    if value is None:
-        return ""
-    if isinstance(value, str):
-        return value
-    if isinstance(value, list):
-        return "\n".join(flatten(item) for item in value)
-    if isinstance(value, dict):
-        parts: list[str] = []
-        for key in ("message", "text", "output", "content", "arguments", "name", "type", "role"):
-            if key in value:
-                parts.append(flatten(value[key]))
-        if parts:
-            return "\n".join(part for part in parts if part)
-        return json.dumps(value, ensure_ascii=False, sort_keys=True)
-    return str(value)
-
-
-def event_text(record: dict[str, Any]) -> str:
-    payload = record.get("payload", record)
-    return flatten(payload)
-
-
-def event_kind(record: dict[str, Any]) -> str:
-    payload = record.get("payload")
-    if isinstance(payload, dict):
-        for key in ("type", "name", "role"):
-            if payload.get(key):
-                return str(payload[key])
-    return str(record.get("type", "unknown"))
-
-
-def score_text(text: str, feedback: str) -> tuple[int, list[str]]:
-    score = 0
-    reasons: list[str] = []
-    if CS_PATTERN.search(text):
-        score += 2
-        reasons.append("codestable")
-    if FAILURE_PATTERN.search(text):
-        score += 3
-        reasons.append("failure")
-    if USER_CORRECTION_PATTERN.search(text):
-        score += 3
-        reasons.append("user-correction")
-    for token in feedback_tokens(feedback):
-        if token.lower() in text.lower():
-            score += 1
-            if "feedback-token" not in reasons:
-                reasons.append("feedback-token")
-    return score, reasons
-
-
-def feedback_tokens(feedback: str) -> list[str]:
-    tokens: list[str] = []
-    for token in re.findall(r"[A-Za-z0-9_-]{4,}", feedback):
-        normalized = token.lower()
-        if normalized in FEEDBACK_TOKEN_STOPWORDS:
-            continue
-        if normalized.startswith("cs-") or "-" in normalized or len(normalized) >= 6:
-            tokens.append(token)
-    return tokens
-
-
-def match_types_for(text: str) -> list[str]:
-    match_types: list[str] = []
-    if FAILURE_PATTERN.search(text):
-        match_types.append("tool-failure")
-    if GOAL_PATTERN.search(text):
-        match_types.append("goal-driver")
-    if USER_CORRECTION_PATTERN.search(text):
-        match_types.append("user-correction")
-    if CS_PATTERN.search(text):
-        match_types.append("skill-reference")
-    if INSTALL_PATTERN.search(text):
-        match_types.append("install-distribution")
-    return match_types
-
-
-def is_relevant_event(match_types: list[str], reasons: list[str]) -> bool:
-    if not match_types:
-        return False
-    if any(match_type in match_types for match_type in ("skill-reference", "user-correction", "goal-driver", "install-distribution")):
-        return True
-    return "tool-failure" in match_types and "feedback-token" in reasons
-
-
-def failure_type_for(match_types: list[str], text: str) -> str:
-    if "goal-driver" in match_types:
-        return "goal-driver"
-    if "tool-failure" in match_types:
-        return "tool-failure"
-    if "install-distribution" in match_types:
-        return "install-distribution"
-    if "user-correction" in match_types:
-        if re.search(r"(规则|没讲清|unclear|should have|应该|没有用|没用)", text, re.IGNORECASE):
-            return "unclear-rule"
-        return "agent-detour"
-    return "unknown"
-
-
-def skill_reference_from(text: str) -> str:
-    match = re.search(r"\b(cs-[a-z0-9-]+)(?:/(references/[^\s`'\"<>]+\.md|scripts/[^\s`'\"<>]+\.py))?", text, re.IGNORECASE)
-    if not match:
-        return "unknown"
-    skill = match.group(1)
-    rel = match.group(2)
-    return f"{skill}/{rel}" if rel else skill
-
-
-def tool_name_from(record: dict[str, Any], text: str) -> str:
-    payload = record.get("payload")
-    if isinstance(payload, dict):
-        name = payload.get("name") or payload.get("tool_name") or payload.get("tool")
-        if name:
-            return public_redact(str(name), limit=80)
-    for candidate in ("apply_patch", "read_file", "git", "gh", "paseo", "mcp"):
-        if candidate in text.lower():
-            return candidate
-    return "unknown"
-
-
-def session_label(session: str) -> str:
-    digest = hashlib.sha256(session.encode("utf-8")).hexdigest()[:10]
-    return f"session-{digest}"
-
-
-def timestamp_bucket(timestamp: str) -> str:
-    if not timestamp:
-        return "unknown"
-    day = timestamp[:10] if len(timestamp) >= 10 else timestamp
-    hour_match = re.search(r"T(\d{2})", timestamp)
-    if not hour_match:
-        return day
-    hour = int(hour_match.group(1))
-    if hour < 6:
-        part = "night"
-    elif hour < 12:
-        part = "morning"
-    elif hour < 18:
-        part = "afternoon"
-    else:
-        part = "evening"
-    return f"{day} {part}"
-
-
-def public_summary_for(record: dict[str, Any], provider: str, session: str, timestamp: str, text: str, match_types: list[str]) -> dict[str, str]:
-    return {
-        "provider": provider,
-        "session_label": session_label(session),
-        "timestamp_bucket": timestamp_bucket(timestamp),
-        "failure_type": failure_type_for(match_types, text),
-        "match_type": ",".join(match_types),
-        "tool_name": tool_name_from(record, text),
-        "skill_or_reference": skill_reference_from(text),
-        "sanitized_excerpt": public_redact(text),
-    }
-
-
-def normalize_json_records(value: Any) -> list[dict[str, Any]]:
-    if isinstance(value, list):
-        return [item if isinstance(item, dict) else {"payload": item} for item in value]
-    if not isinstance(value, dict):
-        return [{"payload": value}]
-
-    collection_keys = ("messages", "events", "entries", "items", "transcript")
-    records: list[dict[str, Any]] = []
-    meta = {key: item for key, item in value.items() if key not in collection_keys}
-    if meta:
-        records.append(meta)
-    for key in collection_keys:
-        items = value.get(key)
-        if not isinstance(items, list):
-            continue
-        for item in items:
-            records.append(item if isinstance(item, dict) else {"payload": item})
-    return records or [value]
-
-
-def read_records(path: Path) -> list[dict[str, Any]]:
-    if path.suffix == ".json":
-        try:
-            value = json.loads(path.read_text(encoding="utf-8", errors="ignore"))
-        except json.JSONDecodeError:
-            return []
-        return normalize_json_records(value)
-
-    records: list[dict[str, Any]] = []
-    with path.open(encoding="utf-8", errors="ignore") as handle:
-        for line in handle:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                value = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            if isinstance(value, dict):
-                records.append(value)
-    return records
-
-
-def session_id_from(path: Path, records: list[dict[str, Any]]) -> str:
-    for record in records:
-        payload = record.get("payload")
-        if isinstance(payload, dict):
-            session_id = payload.get("session_id") or payload.get("sessionId") or payload.get("id")
-            if session_id:
-                return str(session_id)
-        session_id = record.get("session_id") or record.get("sessionId") or record.get("sessionid") or record.get("id")
-        if session_id:
-            return str(session_id)
-    return path.stem
-
-
-def cwd_from(records: list[dict[str, Any]]) -> str:
-    for record in records:
-        payload = record.get("payload")
-        if isinstance(payload, dict) and payload.get("cwd"):
-            return str(payload["cwd"])
-        if record.get("cwd"):
-            return str(record["cwd"])
-    return ""
-
-
-def provider_from_path(path: Path) -> str:
-    text = str(path)
-    if ".codex" in text:
-        return "codex"
-    if ".claude" in text:
-        return "claude"
-    return "unknown"
-
-
-def collect_file(path: Path, feedback: str, max_events: int, context_window: int) -> list[Event]:
-    records = read_records(path)
-    if not records:
-        return []
-    provider = provider_from_path(path)
-    session = session_id_from(path, records)
-    texts = [redact(event_text(record), limit=800) for record in records]
-    events: list[Event] = []
-    for index, record in enumerate(records):
-        text = texts[index]
-        score, reasons = score_text(text, feedback)
-        match_types = match_types_for(text)
-        if not is_relevant_event(match_types, reasons):
-            continue
-        start = max(0, index - context_window)
-        end = min(len(texts), index + context_window + 1)
-        timestamp = str(record.get("timestamp") or record.get("created_at") or "")
-        summary = public_summary_for(record, provider, session, timestamp, text, match_types)
-        events.append(
-            Event(
-                provider=provider,
-                session=session,
-                path=str(path),
-                timestamp=timestamp,
-                kind=event_kind(record),
-                score=score,
-                reasons=reasons,
-                match_types=match_types,
-                public_summary=summary,
-                text=text,
-                context=[texts[pos] for pos in range(start, end)],
+def _write_text_files_atomically(files: list[tuple[Path, str]]) -> None:
+    staged: list[tuple[Path, Path]] = []
+    backups: dict[Path, Path | None] = {}
+    replaced: list[Path] = []
+    try:
+        for target, text in files:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            handle = tempfile.NamedTemporaryFile(
+                mode="w",
+                encoding="utf-8",
+                dir=target.parent,
+                prefix=f".{target.name}.",
+                suffix=".tmp",
+                delete=False,
             )
-        )
-    events.sort(key=lambda event: event.score, reverse=True)
-    return events[:max_events]
-
-
-def candidate_for(path: Path, cwd: str | None) -> Candidate:
-    records = read_records(path)
-    session = session_id_from(path, records)
-    transcript_cwd = cwd_from(records)
-    score = 0
-    if cwd and transcript_cwd == cwd:
-        score += 5
-    elif cwd and transcript_cwd and (cwd.startswith(transcript_cwd) or transcript_cwd.startswith(cwd)):
-        score += 2
-    score += int(path.stat().st_mtime // 60)
-    return Candidate(
-        path=str(path),
-        provider=provider_from_path(path),
-        session=session,
-        cwd=transcript_cwd,
-        mtime=path.stat().st_mtime,
-        score=score,
-    )
-
-
-def resolve_current_session(files: list[Path], cwd: str | None) -> tuple[list[Path], list[Candidate]]:
-    candidates = [candidate_for(path, cwd) for path in files if path.suffix in {".jsonl", ".json"}]
-    candidates.sort(key=lambda candidate: candidate.score, reverse=True)
-    if not candidates:
-        return [], []
-    if cwd:
-        exact = [candidate for candidate in candidates if candidate.cwd == cwd]
-        if len(exact) == 1:
-            return [Path(exact[0].path)], []
-        if len(exact) > 1:
-            return [], exact[:5]
-        containing = [
-            candidate
-            for candidate in candidates
-            if candidate.cwd and (cwd.startswith(candidate.cwd) or candidate.cwd.startswith(cwd))
-        ]
-        if len(containing) == 1:
-            return [Path(containing[0].path)], []
-        if len(containing) > 1:
-            return [], containing[:5]
-    return [], candidates[:5]
-
-
-def discover_files(
-    home: Path,
-    since_days: int,
-    session_filter: str | None,
-    cwd: str | None,
-) -> tuple[list[Path], list[Candidate]]:
-    roots = [
-        home / ".codex/sessions",
-        home / ".claude/projects",
-        home / ".claude/sessions",
-    ]
-    if session_filter and session_filter != "current":
-        candidate = Path(session_filter).expanduser()
-        if candidate.is_file():
-            return [candidate], []
-    cutoff = time.time() - since_days * 86400
-    files: list[Path] = []
-    for root in roots:
-        if not root.exists():
-            continue
-        for path in root.rglob("*"):
-            if not path.is_file() or path.suffix not in {".jsonl", ".json"}:
+            temporary = Path(handle.name)
+            staged.append((temporary, target))
+            with handle:
+                handle.write(text)
+                handle.flush()
+                os.fsync(handle.fileno())
+        for _temporary, target in staged:
+            if not target.exists():
+                backups[target] = None
                 continue
-            if path.stat().st_mtime < cutoff:
-                continue
-            if session_filter and session_filter != "current":
-                if session_filter in path.name or session_filter in str(path):
-                    files.append(path)
-                    continue
-                records = read_records(path)
-                if session_filter not in session_id_from(path, records):
-                    continue
-            files.append(path)
-    files = sorted(files)
-    if session_filter == "current":
-        return resolve_current_session(files, cwd)
-    return files, []
+            handle = tempfile.NamedTemporaryFile(
+                mode="wb",
+                dir=target.parent,
+                prefix=f".{target.name}.rollback.",
+                suffix=".tmp",
+                delete=False,
+            )
+            backup = Path(handle.name)
+            backups[target] = backup
+            with handle:
+                handle.write(target.read_bytes())
+                handle.flush()
+                os.fsync(handle.fileno())
+        try:
+            for temporary, target in staged:
+                temporary.replace(target)
+                replaced.append(target)
+        except OSError as exc:
+            rollback_errors: list[str] = []
+            for target in reversed(replaced):
+                backup = backups[target]
+                try:
+                    if backup is None:
+                        target.unlink(missing_ok=True)
+                    else:
+                        os.replace(backup, target)
+                except OSError as rollback_exc:
+                    rollback_errors.append(f"{target}: {rollback_exc}")
+            if rollback_errors:
+                raise OSError(
+                    "feedback output rollback failed: " + "; ".join(rollback_errors)
+                ) from exc
+            raise
+    finally:
+        for temporary, _target in staged:
+            temporary.unlink(missing_ok=True)
+        for backup in backups.values():
+            if backup is not None:
+                backup.unlink(missing_ok=True)
 
 
 def main_with_args_for_test(argv: list[str] | None = None) -> int:
@@ -456,59 +145,156 @@ def main_with_args_for_test(argv: list[str] | None = None) -> int:
     parser.add_argument("--since-days", type=int, default=3)
     parser.add_argument("--session", default=None, help="Session id substring or transcript path")
     parser.add_argument("--output", required=True)
+    parser.add_argument("--triage-output", default=None, help="Write local-private triage JSON")
     parser.add_argument("--public-output", default=None, help="Write public allowlist context JSON")
     parser.add_argument("--history-root", default=None, help="Override home directory for tests")
     parser.add_argument("--cwd", default=None, help="Current working directory, used by --session current")
     parser.add_argument("--max-events-per-file", type=int, default=5)
     parser.add_argument("--context-window", type=int, default=2)
+    parser.add_argument(
+        "--accept-incident",
+        default=None,
+        help="Explicitly accept the current pending primary incident",
+    )
     args = parser.parse_args(argv)
+
+    output = Path(args.output).expanduser()
+    triage_output = (
+        Path(args.triage_output).expanduser()
+        if args.triage_output
+        else output.with_name("triage.json")
+    )
+    public_output = (
+        Path(args.public_output).expanduser()
+        if args.public_output
+        else output.with_name("public-issue-context.json")
+    )
+    try:
+        resolved_outputs = [path.resolve() for path in (output, triage_output, public_output)]
+    except OSError as exc:
+        print(f"feedback output blocked: {exc}", file=sys.stderr)
+        return 2
+    if len(set(resolved_outputs)) != len(resolved_outputs):
+        print("feedback output blocked: output paths must be distinct", file=sys.stderr)
+        return 2
+    try:
+        existing_triage = _load_existing_triage(triage_output)
+    except ValueError as exc:
+        print(f"feedback output blocked: {exc}", file=sys.stderr)
+        return 2
 
     home = Path(args.history_root).expanduser() if args.history_root else Path.home()
     cwd = str(Path(args.cwd).expanduser()) if args.cwd else None
     files, ambiguity = discover_files(home, args.since_days, args.session, cwd)
+
+    records_by_path: dict[Path, list[dict[str, Any]]] = {}
+    captures_by_path: dict[Path, dict[str, Any]] = {}
+    for path in files:
+        records_by_path[path], captures_by_path[path] = read_transcript_snapshot(path)
+
     events: list[Event] = []
     for path in files:
-        events.extend(collect_file(path, args.feedback, args.max_events_per_file, args.context_window))
+        events.extend(
+            collect_file(
+                path,
+                args.feedback,
+                args.max_events_per_file,
+                args.context_window,
+                records_through_trigger(path, records_by_path[path]),
+            )
+        )
     events.sort(key=lambda event: (event.score, event.timestamp), reverse=True)
+    incidents, primary_incident = build_incident_payload(
+        files,
+        args.feedback,
+        cwd,
+        records_by_path,
+        captures_by_path,
+    )
+
+    generated_triage = build_triage(incidents, primary_incident)
+    try:
+        triage = (
+            accept_pending_incident(
+                generated_triage, existing_triage, args.accept_incident
+            )
+            if args.accept_incident
+            else merge_existing_triage(generated_triage, existing_triage)
+        )
+    except ValueError as exc:
+        print(f"incident acceptance blocked: {exc}", file=sys.stderr)
+        return 2
+    quality = triage.get("quality")
+    public_projection_ready = (
+        primary_incident is not None
+        and triage.get("incident_id") == primary_incident.get("id")
+        and isinstance(quality, dict)
+        and quality.get("triage_ready") is True
+    )
+    public_incidents: list[dict[str, str]] = []
+    if public_projection_ready:
+        for incident in incidents:
+            incident_triage = (
+                triage
+                if incident.get("id") == triage.get("incident_id")
+                else build_triage([incident], incident)
+            )
+            public_incidents.append(public_incident(incident, incident_triage))
 
     public_issue_context = {
         "privacy": "public-preview",
         "source": "derived-from-local-private-evidence",
-        "allowed_fields": [
-            "provider",
-            "session_label",
-            "timestamp_bucket",
-            "failure_type",
-            "match_type",
-            "tool_name",
-            "skill_or_reference",
-            "sanitized_excerpt",
-            "expected_behavior",
-            "actual_behavior",
-            "proposed_fix",
-        ],
-        "events": [event.public_summary for event in events[:8]],
+        "allowed_fields": list(
+            dict.fromkeys(PUBLIC_EVENT_FIELDS + PUBLIC_INCIDENT_FIELDS)
+        ),
+        "events": (
+            [event.public_summary for event in events[:8]]
+            if public_projection_ready
+            else []
+        ),
+        "incidents": public_incidents,
     }
     payload = {
+        "schema_version": 2,
         "feedback": args.feedback,
         "privacy": "local-private",
         "public_upload_allowed": False,
         "redaction": "best-effort",
         "since_days": args.since_days,
+        "since_days_ignored": args.session == "current",
         "session_filter": args.session,
         "history_root": str(home),
         "cwd": cwd,
         "searched_files": [str(path) for path in files],
         "ambiguity": {"candidates": [asdict(candidate) for candidate in ambiguity]},
+        "captures": [
+            {
+                "provider": provider_from_path(path),
+                "session_label": session_label(
+                    session_id_from(path, records_by_path[path])
+                ),
+                **captures_by_path[path],
+            }
+            for path in files
+        ],
         "matched_events": [asdict(event) for event in events],
+        "incidents": incidents,
         "public_issue_context": public_issue_context,
     }
-    output = Path(args.output)
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    public_output = Path(args.public_output).expanduser() if args.public_output else output.with_name("public-issue-context.json")
-    public_output.parent.mkdir(parents=True, exist_ok=True)
-    public_output.write_text(json.dumps(public_issue_context, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    try:
+        _write_text_files_atomically(
+            [
+                (triage_output, json.dumps(triage, ensure_ascii=False, indent=2) + "\n"),
+                (output, json.dumps(payload, ensure_ascii=False, indent=2) + "\n"),
+                (
+                    public_output,
+                    json.dumps(public_issue_context, ensure_ascii=False, indent=2) + "\n",
+                ),
+            ]
+        )
+    except OSError as exc:
+        print(f"feedback output blocked: {exc}", file=sys.stderr)
+        return 2
     return 0
 
 

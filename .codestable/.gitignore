@@ -1,2 +1,6 @@
 **/__pycache__/
 **/*.pyc
+feedback/*/*-report.md
+feedback/*/evidence.json
+feedback/*/triage.json
+feedback/*/regression-candidate.json

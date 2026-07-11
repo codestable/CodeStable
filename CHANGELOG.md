@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.3
+
+- Added the `cs-feedback` evidence pipeline for collecting local Codex and Claude session context, triaging incidents, and producing privacy-safe public issue previews.
+- Added candidate-only fixture conversion in the shipped plugin and fail-closed regression fixture promotion in the repository evaluation tooling.
+- Hardened current-session discovery, trigger cutoffs, provider-aware tool pairing, public redaction, and upload confirmation gates.
+
 ## 1.0.2
 
 - Hardened runtime upgrades: versionless or mismatched manifests now require synchronization, while `/cs-onboard --mode refresh-runtime` refreshes package-owned assets without overwriting dirty managed paths.

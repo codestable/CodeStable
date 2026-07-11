@@ -18,7 +18,7 @@
 | 重构流程 | `cs-refactor` | 行为等价重构入口：标准模式或 fastforward mode |
 | 横切审查 | `cs-code-review` | 实现完成后的只读代码审查 gate |
 | 审计 | `cs-audit` | 主动扫描 bug、安全、性能、可维护性和架构偏离 |
-| 反馈 | `cs-feedback` | 收集 CodeStable skill 使用问题，自动采集本机历史并准备 GitHub issue |
+| 反馈 | `cs-feedback` | 显式采集当前会话为 local-private incident/triage；确认 preview 后才可上报 |
 | 知识沉淀 | `cs-keep` | 把坑点、技巧、决策、调研沉淀到 `.codestable/compound/` |
 | 知识沉淀 | `cs-note` | 把一两行启动必读项目注意事项追加到 `.codestable/attention.md` |
 | 对外文档 | `cs-docs` | 写或更新开发者指南、用户指南、API 参考 |

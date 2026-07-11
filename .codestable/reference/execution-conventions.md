@@ -21,6 +21,11 @@
 `cs-note` 是唯一例外：`.codestable/` 存在但 `attention.md` 缺失时，它可以创建最小分节骨架
 后写入。
 
+## CodeStable 自身反馈
+
+遇到 CodeStable 规则不清、阶段跑偏或工具失败时，可以提示用户显式调用 `cs-feedback`。
+提示本身不得读取历史、后台采集、自动上传、自动修改目标 skill，也不得替用户确认 public preview。
+
 ## Skill 间同轮转交
 
 公开 skill 选择另一个主入口后，按已安装 skill 名称加载目标协议，并在当前 run 继续。skill 是独立安装单元；不得靠读取 sibling skill 文件模拟转交。

@@ -6,12 +6,31 @@ from __future__ import annotations
 import argparse
 import os
 import json
+import re
 import shlex
 import shutil
 import socket
 import subprocess
+import sys
 from urllib.parse import urlparse
 from pathlib import Path
+
+sys.dont_write_bytecode = True
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from feedback_privacy import (  # noqa: E402
+    CREDENTIAL_REDACTIONS,
+    EMAIL_PATTERN,
+    ENV_PATTERN,
+    ENV_NAME_PATTERN,
+    PATH_PATTERN,
+    REMOTE_PATTERN,
+    URL_PATTERN,
+    contains_secret_assignment,
+    contains_inline_json,
+)
 
 
 NETWORK_ERROR_PATTERN = (
@@ -25,6 +44,29 @@ NETWORK_ERROR_PATTERN = (
     "proxyconnect",
     "early eof",
 )
+
+
+def public_body_private_reasons(text: str) -> list[str]:
+    checks = {
+        "absolute-path": PATH_PATTERN,
+        "remote": REMOTE_PATTERN,
+        "url": URL_PATTERN,
+        "email": EMAIL_PATTERN,
+        "environment": ENV_PATTERN,
+        "environment-name": ENV_NAME_PATTERN,
+    }
+    reasons = [name for name, pattern in checks.items() if pattern.search(text)]
+    if contains_secret_assignment(text) or any(
+        pattern.search(text) for pattern, _replacement in CREDENTIAL_REDACTIONS
+    ):
+        reasons.append("secret")
+    if contains_inline_json(text):
+        reasons.append("raw-json")
+    if "```" in text:
+        reasons.append("code-block")
+    if re.search(r"(?:sk-[A-Za-z0-9]{20,}|gh[pousr]_[A-Za-z0-9_]{20,})", text):
+        reasons.append("secret-token")
+    return reasons
 
 
 def run(command: list[str], env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
@@ -97,13 +139,18 @@ def main_with_args_for_test(argv: list[str] | None = None) -> int:
     parser.add_argument("--title", required=True)
     parser.add_argument("--body-file", required=True)
     parser.add_argument("--json-output", default=None)
+    parser.add_argument(
+        "--confirm-public-preview",
+        action="store_true",
+        help="Confirm the reviewed public preview may be sent to GitHub",
+    )
     args = parser.parse_args(argv)
 
     body_file = Path(args.body_file).expanduser()
     if not body_file.is_file():
         raise SystemExit(f"body file not found: {body_file}")
-    if body_file.name == "evidence.json":
-        raise SystemExit("refusing to upload local-private evidence.json; use github-issue.md public preview")
+    if body_file.name in {"evidence.json", "triage.json", "regression-candidate.json"}:
+        raise SystemExit(f"refusing to upload local-private {body_file.name}; use github-issue.md public preview")
     if body_file.suffix == ".json":
         try:
             payload = json.loads(body_file.read_text(encoding="utf-8"))
@@ -111,6 +158,19 @@ def main_with_args_for_test(argv: list[str] | None = None) -> int:
             payload = {}
         if isinstance(payload, dict) and payload.get("privacy") == "local-private":
             raise SystemExit("refusing to upload local-private evidence; generate a public preview first")
+    if args.confirm_public_preview:
+        if body_file.name != "github-issue.md":
+            raise SystemExit("confirmed upload requires the reviewed github-issue.md public preview")
+        reasons = public_body_private_reasons(body_file.read_text(encoding="utf-8"))
+        if reasons:
+            raise SystemExit(
+                "public preview contains private content: " + ", ".join(reasons)
+            )
+        title_reasons = public_body_private_reasons(args.title)
+        if title_reasons:
+            raise SystemExit(
+                "issue title contains private content: " + ", ".join(title_reasons)
+            )
 
     gh = shutil.which("gh")
     command = [
@@ -126,7 +186,14 @@ def main_with_args_for_test(argv: list[str] | None = None) -> int:
     ]
     result_payload: dict[str, object]
 
-    if not gh:
+    if gh and not args.confirm_public_preview:
+        result_payload = {
+            "status": "manual",
+            "reason": "public preview confirmation required",
+            "command": shell_join(command),
+            "body_file": str(body_file),
+        }
+    elif not gh:
         result_payload = {
             "status": "manual",
             "reason": "gh not found",

@@ -172,7 +172,7 @@ def test_goal_routing_fixtures_use_current_state_schema() -> None:
 
 def test_cs_router_fixtures_cover_modes_conflicts_and_recovery() -> None:
     fixtures = _routing_fixture_states("cs-routing-001")
-    assert set(fixtures) == {f"rt-c{i:02d}" for i in range(1, 17)}
+    assert set(fixtures) == {f"rt-c{i:02d}" for i in range(1, 18)}
 
     assert fixtures["rt-c01"]["expect"]["result_type"] == "RoutedTo"
     assert fixtures["rt-c01"]["expect"]["target"] == "cs-issue"
@@ -196,6 +196,10 @@ def test_cs_router_fixtures_cover_modes_conflicts_and_recovery() -> None:
     assert fixtures["rt-c15"]["expect"]["result_type"] == "HumanCheckpoint"
     assert fixtures["rt-c16"]["expect"]["result_type"] == "Completed"
     assert "issue workflow" in fixtures["rt-c16"]["expect"]["target_any"]
+    assert fixtures["rt-c17"]["expect"] == {
+        "result_type": "RoutedTo",
+        "target": "cs-feedback",
+    }
 
     # result type 的禁止分支由精确 outcome 断言完成，不能误用只检查 target 的字段。
     for fixture_id in ("rt-c02", "rt-c03", "rt-c04", "rt-c13", "rt-c15"):

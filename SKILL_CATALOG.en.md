@@ -18,7 +18,7 @@ Main entries accept optional stage / mode flags (for example `/cs-feat --stage q
 | Refactor flow | `cs-refactor` | Behavior-preserving refactor entry with standard and fastforward modes |
 | Cross-cutting review | `cs-code-review` | Read-only implementation review gate |
 | Audit | `cs-audit` | Scan for bugs, security, performance, maintainability, and architecture drift |
-| Feedback | `cs-feedback` | Capture CodeStable skill usage problems, collect local history, and prepare a GitHub issue |
+| Feedback | `cs-feedback` | Explicitly capture current-session incidents/triage; upload only after preview confirmation |
 | Knowledge | `cs-keep` | Capture lessons, tricks, decisions, and research in `.codestable/compound/` |
 | Knowledge | `cs-note` | Append short startup-critical notes to `.codestable/attention.md` |
 | External docs | `cs-docs` | Write or update developer guides, user guides, and API references |

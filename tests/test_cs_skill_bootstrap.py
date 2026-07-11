@@ -98,17 +98,24 @@ def test_buildprompt_dispatch():
     assert "SKILL BODY" in review  # 被测 skill 快照注入
 
 
-# ---- cs-feedback → regression fixture ----
+# ---- cs-feedback → local candidate ----
 
-def test_feedback_to_fixture_skeleton(tmp_path):
+def test_feedback_to_fixture_candidate_only(tmp_path):
     exp = tmp_path / "experiments/cs-code-review-007"
     exp.mkdir(parents=True)
     rc = f2f.main(["--experiment", str(exp), "--failure", "agent 漏报了 SQL 注入", "--kind", "review"])
-    assert rc == 0
-    regs = list((exp / "fixtures/regression").glob("*.json"))
-    assert regs, "应生成 regression fixture"
-    data = json.loads(regs[0].read_text(encoding="utf-8"))
+    assert rc != 0
+    assert not (exp / "fixtures/regression").exists()
+
+    evidence = tmp_path / "feedback/public-issue-context.json"
+    evidence.parent.mkdir()
+    evidence.write_text(
+        json.dumps({"privacy": "public-preview", "events": [{"sanitized_excerpt": "agent 漏报 SQL 注入"}]}),
+        encoding="utf-8",
+    )
+    assert f2f.main(["--evidence", str(evidence)]) == 0
+    data = json.loads((evidence.parent / "regression-candidate.json").read_text(encoding="utf-8"))
     assert data["_source"] == "cs-feedback"
-    assert data["_status"] == "skeleton"
-    # 骨架 schema 合规（除 diff 需人工补全外）
+    assert data["_status"] == "candidate"
+    assert data["quality"]["regression_ready"] is False
     assert fx_mod.validate_fixture_dict(data) == []

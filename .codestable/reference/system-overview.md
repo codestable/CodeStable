@@ -31,7 +31,7 @@ CodeStable 把常见开发活动各配一套流程，产物放进统一的 `.cod
 - `cs-req` — 起草或刷新 `.codestable/requirements/` 下的需求文档。
 - `cs-domain` — 维护 CONTEXT.md 术语、ADR 决策和单/多 context 拓扑。
 - `cs-audit` — 主动扫描 bug、安全、性能、可维护性和架构偏离。
-- `cs-feedback` — 收集 CodeStable skill 使用问题，自动采集本机 Codex/Claude 历史并准备 GitHub issue。
+- `cs-feedback` — 显式调用后把当前会话整理为 local-private incident/triage；公开预览经用户确认后才可上报。
 - `cs-docs` — 写给外部读者的开发者指南、用户指南或 API 参考。
 - `cs-docs-neat` — 阶段/里程碑收尾时整理 `.codestable/`、README/docs、`CLAUDE.md` / `AGENTS.md` 和 agent 记忆。
 
