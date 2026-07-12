@@ -2,7 +2,7 @@
 
 ## 背景
 
-Onboard 模式负责把 CodeStable 的本地工作区放进项目：创建 `.cs/`、基础实体目录、启动事实和 project spec 主文档骨架。
+Onboard 模式负责把 CodeStable 的本地工作区放进项目：创建 `.cs/`、基础实体目录和 project spec 主文档骨架。
 
 它只做初始化和补齐。已有内容默认保留，不迁移旧文档，不替用户整理需求，不创建 issue。
 
@@ -10,7 +10,7 @@ Onboard 模式负责把 CodeStable 的本地工作区放进项目：创建 `.cs/
 
 onboard 可以观察项目，但不能编项目。能从代码、README、配置、测试和 git 历史推断的，只能作为候选事实或下一步建议；业务目标、路线图、明确不做什么、用户故事和长期取舍，除非已有文档证据或用户确认，否则不要写进 `.cs/`。
 
-默认不覆盖已有文件。只有用户明确要求重置 `facts.md` 或 `.cs/spec/index.md` 时，才使用 `--force`，并在执行前再次确认。
+默认不覆盖已有文件。只有用户明确要求重置 `.cs/spec/index.md` 时，才使用 `--force`，并在执行前再次确认。
 
 ## 行动指南
 
@@ -20,13 +20,13 @@ onboard 可以观察项目，但不能编项目。能从代码、README、配置
 python <cs-skill>/scripts/init_codestable.py --project .
 ```
 
-初始化后确认 `.cs/facts.md` 和 `.cs/spec/index.md` 存在，并确认基础实体目录已创建或保留。
+初始化后确认 `.cs/spec/index.md` 存在，并确认基础实体目录已创建或保留。Onboard 不创建或修改 `AGENTS.md` / `CLAUDE.md`；后续确实出现启动必需规则时再由 Note 模式写入。
 
 如果项目已有旧文档，只说明之后可以通过讨论、规格维护、知识记录、流程学习或关闭模式逐步沉淀，不在 onboard 里强迁移。
 
 ## 产物契约
 
-脚本会创建 `.cs/facts.md`、`.cs/spec/index.md` 和这些目录：
+脚本会创建 `.cs/spec/index.md` 和这些目录：
 
 - `.cs/talks/`
 - `.cs/spec/`

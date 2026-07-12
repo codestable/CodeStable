@@ -147,7 +147,7 @@ The repository distributes one `cs` Skill. Users no longer choose among a catalo
 | Behavior breaks expectations | Create a bug issue and use a feedback loop to diagnose, fix, and verify |
 | Clear issue | Design, implement, and verify as needed; close and commit only when the user asks for wrap-up |
 | Unknown system area | Develop candidate articles inside an exploratory issue, then graduate confirmed knowledge into the project spec |
-| Reusable knowledge | Write notes, facts, or tools; learn unknown workflows under human guidance |
+| Reusable knowledge | Write notes, agent instructions, or tools; learn unknown workflows under human guidance |
 
 Action rules and principles for code design, debugging, documentation, and skill design live under `cs/references/` and load only when the current situation needs them.
 
@@ -177,12 +177,11 @@ Epic close ──graduated conclusions──> Project Spec
 
 ## Runtime structure
 
-After `/cs` onboards the project, a `.cs/` directory appears at the project root — the aggregate root for local artifacts and the workspace the unified skill reads and writes.
+After `/cs` onboards the project, a `.cs/` directory appears at the project root — the aggregate root for specs, work items, and knowledge artifacts.
 
 ```
 your-project/
 ├── .cs/
-│   ├── facts.md              # Startup facts
 │   ├── talks/                # Discussion synthesis (written only after confirmation)
 │   │   └── YYYY/MM/DD/{短语}.md
 │   ├── spec/                 # Project spec: mainline truth
@@ -201,27 +200,28 @@ your-project/
 │   │
 │   └── tools/                # Shared scripts captured after a workflow is proven
 │
-└── (work items stay under .cs/ by default so humans and AI can both read and edit them)
+└── (other project files)
 ```
 
 **Key points:**
 
-- All local artifacts aggregate under `.cs/`, so "how did we handle that change last time" is three seconds away
+- Specs, work items, and knowledge artifacts aggregate under `.cs/`, so "how did we handle that change last time" is three seconds away
 - `spec/` is the project spec, organizing mainline requirements, architecture considerations, shared language, and reading paths for a developer entering the project
 - `epics/` are large-change lines; each epic spec carries additions, changes, and reversals until the epic closes and graduates back into the project spec
 - `issues/` can carry exploratory work; candidate articles, user corrections, and evidence stay in the issue workspace for discussion, then merge into project spec according to spec rules after human-confirmed close
 - Talks and notes default to `YYYY/MM/DD/{短语}.md` date shards, epics use `YYYY/MM/DD/{短语}/` workspaces, ordinary issues use `YYYY/MM/DD/{status}-{短语}.md`, and exploratory issues use `YYYY/MM/DD/{status}-{短语}/` workspaces; search recursively under each area
-- `notes/` is the knowledge notes area — plain markdown, no frontmatter, full-text searchable. `cs` decides whether daily "remember this" work belongs in notes or facts
-- Human-guided unknown workflows become `notes/`, add a `facts.md` reference, and only produce `tools/` when automation is stable
+- `notes/` is the knowledge notes area — plain markdown, no frontmatter, full-text searchable. `cs` decides whether daily "remember this" work belongs in notes or project agent instructions
+- Human-guided unknown workflows become `notes/`; add a one-line reference to `AGENTS.md` or `CLAUDE.md` only when the workflow is a stable prerequisite for related work, and produce `tools/` only when automation is stable
+- The agent framework injects root instruction files automatically, so `cs` neither reads them proactively nor models them under `.cs/`; prefer an existing `AGENTS.md` for cross-agent rules and `CLAUDE.md` for Claude-only rules
 - Keep Markdown appropriately concise without a universal line limit; preserve the complete core structure, background, principles, and contracts in the main narrative, and progressively disclose only details that are scenario-specific or obstruct the reading flow
 
 ### Hard constraint
 
 > CodeStable has one installed `cs` unit. Its core structure and shared boundaries live in `SKILL.md`; scenario-specific action rules and principles live in that same skill's `references/`, with templates and scripts in the same package.
 >
-> `SKILL.md` must say when to read each reference. It must not hide core contracts or load every scenario at once. Project-specific stable knowledge still belongs in `.cs/spec/`, `.cs/notes/`, and `.cs/facts.md`.
+> `SKILL.md` must say when to read each reference. It must not hide core contracts or load every scenario at once. Stable project truth belongs in `.cs/spec/`, reusable knowledge in `.cs/notes/`, and short startup rules directly in the project's `AGENTS.md` or `CLAUDE.md`.
 
-Before `cs` switches internal action modes, it should reuse the current context first: if `facts.md`, project spec, epic spec, or the target issue has already been read and shows no sign of change, do not mechanically reread it. Read again only when context is missing, likely stale, needed for exact citation/write-back, or a new local slice is required. Before writing, always confirm the current version of the target issue, `.cs` file, or code file.
+Before `cs` switches internal action modes, it should reuse framework-injected project constraints and the current context first: if the project spec, epic spec, or target issue is already understood and shows no sign of change, do not mechanically reread it. Read again only when context is missing, likely stale, needed for exact citation/write-back, or a new local slice is required. Before writing, always confirm the current version of the target issue, `.cs` file, agent instruction file, or code file.
 
 To change system rules, update `cs/SKILL.md`, the relevant reference, and its templates together; project-specific stable needs and operating knowledge belong in the matching `.cs/` entities.
 

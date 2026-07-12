@@ -14,7 +14,7 @@ CodeStable 的复利不在事项本身，而在关闭时的回写。issue 记录
 
 **只沉淀仍然有效的东西。** 不要把 issue 或 epic 全文搬进 spec。历史叙事、实现流水账、一次性中间判断留在原事项里。
 
-**回写到正确层级。** 独立 issue → project spec；epic issue → epic spec；epic 关闭 → project spec。notes、facts、tools 按复用价值分流。
+**回写到正确层级。** 独立 issue → project spec；epic issue → epic spec；epic 关闭 → project spec。notes、Agent 指令、tools 按复用价值分流。
 
 **spec 写当前为什么这样。** 合并 spec 时写需求、架构考量、统一语言、边界和取舍；不要写“某天从 A 改成 B”的流水。
 
@@ -33,7 +33,7 @@ CodeStable 的复利不在事项本身，而在关闭时的回写。issue 记录
 - issue：用户给路径就读该文件或目录；没给路径就递归搜索 `.cs/issues/`。
 - epic：用户给 `.cs/epics/YYYY/MM/DD/{短语}/`；读取唯一权威入口 `spec.md`、它明确引用的相邻材料和相关 issue。
 
-开始前复用当前上下文；目标 issue/epic、准备写回的 spec/notes/facts/tools、以及要提交的代码文件，写入或暂存前必须确认当前版本。
+开始前复用当前上下文；目标 issue/epic、准备写回的 spec/notes/Agent 指令/tools、以及要提交的代码文件，写入或暂存前必须确认当前版本。
 
 ### 关闭 issue
 
@@ -45,7 +45,7 @@ CodeStable 的复利不在事项本身，而在关闭时的回写。issue 记录
 - `type: explore`：读取工作区 `index.md` 和候选文章，先确认用户认可 `ready-for-spec` 的文章；再按 Spec 结构合并到 `.cs/spec/` 的合适层级，更新对应 `index.md` 引用。错误讨论、代码证据、证据流水、已排除理解和仍未知问题留在 issue 工作区。
 - `epic` 指向目录：把完成结果、验证事实、当前推进变化和毕业候选写回该 epic 的 `spec.md`。
 
-再把坑点、操作经验、调试路径写入 notes；极少数启动必读事实写入 facts；稳定工具说明写入 tools。
+再把坑点、操作经验、调试路径写入 notes；极少数启动必读规则写入已有 `AGENTS.md` 或 `CLAUDE.md`；稳定工具说明写入 tools。
 
 ### 关闭 epic
 
@@ -59,7 +59,7 @@ CodeStable 的复利不在事项本身，而在关闭时的回写。issue 记录
 
 ### 提交关闭变更
 
-如果项目在 git 仓库里，关闭结论和长期实体回写完成后，把本次关闭相关变更提交在同一个 commit 里：业务代码、目标 issue/epic、project/epic spec、notes/facts/tools 回写都一起提交。
+如果项目在 git 仓库里，关闭结论和长期实体回写完成后，把本次关闭相关变更提交在同一个 commit 里：业务代码、目标 issue/epic、project/epic spec、notes/Agent 指令/tools 回写都一起提交。
 
 提交前看 `git status --short`，只暂存相关文件。已有无关脏改不要碰；相关和无关变更混在同一文件时，停下来说明风险。不要 amend、rebase、reset；不要 push，除非用户明确要求。
 

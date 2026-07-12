@@ -19,22 +19,14 @@ DIRS = [
 
 def init_codestable(project: Path, force: bool) -> int:
     project = project.resolve()
-    facts_template = (TEMPLATES / "facts.md").read_text(encoding="utf-8")
     project_spec_template = (TEMPLATES / "project-spec-index.md").read_text(encoding="utf-8")
 
     for rel in DIRS:
         (project / rel).mkdir(parents=True, exist_ok=True)
 
-    facts = project / ".cs" / "facts.md"
     project_spec_index = project / ".cs" / "spec" / "index.md"
     created: list[str] = []
     kept: list[str] = []
-
-    if facts.exists() and not force:
-        kept.append(str(facts))
-    else:
-        facts.write_text(facts_template, encoding="utf-8")
-        created.append(str(facts))
 
     if project_spec_index.exists() and not force:
         kept.append(str(project_spec_index))
@@ -57,7 +49,7 @@ def init_codestable(project: Path, force: bool) -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Initialize a CodeStable .cs workspace.")
     parser.add_argument("--project", default=".", help="Project root to initialize.")
-    parser.add_argument("--force", action="store_true", help="Overwrite existing template files.")
+    parser.add_argument("--force", action="store_true", help="Overwrite the existing project spec index.")
     args = parser.parse_args()
 
     return init_codestable(Path(args.project), args.force)

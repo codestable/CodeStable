@@ -49,7 +49,7 @@ epic: ""
 
 - project spec / epic spec：[路径；为什么放在那里]
 - notes：
-- facts：
+- AGENTS.md / CLAUDE.md：
 - tools：
 
 ## 关闭结论

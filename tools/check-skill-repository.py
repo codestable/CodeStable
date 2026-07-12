@@ -82,7 +82,6 @@ def required_skill_files(root: Path) -> list[Path]:
             "epic-spec.md",
             "explore-article.md",
             "explore-index.md",
-            "facts.md",
             "feature-issue.md",
             "notes.md",
             "project-spec-index.md",
@@ -110,6 +109,10 @@ def check_skill_layout(root: Path, findings: list[Finding]) -> None:
             findings.append(Finding(rel(path, root), "required skill file is missing"))
         elif is_git_ignored(root, path):
             findings.append(Finding(rel(path, root), "required skill file is git-ignored"))
+
+    obsolete_facts_template = root / "skills/cs/templates/entities/facts.md"
+    if obsolete_facts_template.exists():
+        findings.append(Finding(rel(obsolete_facts_template, root), "obsolete facts entity must not exist"))
 
     for obsolete in ["plugins", ".agents/plugins", ".claude-plugin"]:
         if (root / obsolete).exists():

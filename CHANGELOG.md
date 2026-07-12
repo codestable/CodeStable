@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0
+
+- Removed `.cs/facts.md` from the CodeStable entity model, initialization script, templates, and documentation.
+- Moved short startup-critical rules to an existing project `AGENTS.md` or `CLAUDE.md`; reusable background and procedures remain in `.cs/notes/`.
+- Relied on agent frameworks to inject `AGENTS.md` / `CLAUDE.md`; CodeStable modes no longer model or proactively read them.
+- Added a safe legacy rule: migrate old facts by value and never delete an existing `.cs/facts.md` without explicit confirmation.
+
 ## 0.3.0
 
 - Replaced Codex and Claude plugin packaging with the standard `skills/cs/` repository layout.
