@@ -11,8 +11,7 @@ from typing import Any
 
 
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$")
-CODESTABLE_SKILL_RE = re.compile(r"^cs(?:-.+)?$")
-DESCRIPTION = "CodeStable LITE AI coding workflow skills."
+DESCRIPTION = "CodeStable LITE software lifecycle skill."
 
 
 @dataclass(frozen=True)
@@ -126,13 +125,12 @@ def check_skill_layout(root: Path, findings: list[Finding]) -> None:
         return
 
     skill_dirs = [path for path in sorted(skills_dir.iterdir()) if path.is_dir()]
-    if not skill_dirs:
-        findings.append(Finding("plugins/codestable-lite/skills", "no skills found"))
-    for path in skill_dirs:
-        if not CODESTABLE_SKILL_RE.match(path.name):
-            findings.append(Finding(rel(path, root), "non cs* skill found in codestable-lite plugin"))
-        if not (path / "SKILL.md").is_file():
-            findings.append(Finding(rel(path, root), "skill is missing SKILL.md"))
+    skill_names = [path.name for path in skill_dirs]
+    if skill_names != ["cs"]:
+        findings.append(Finding("plugins/codestable-lite/skills", f"must contain exactly the cs skill, found {skill_names!r}"))
+    cs_skill = skills_dir / "cs" / "SKILL.md"
+    if not cs_skill.is_file():
+        findings.append(Finding(rel(cs_skill, root), "skill is missing SKILL.md"))
 
     for path in sorted(root.iterdir()):
         if path.name in {"plugins", "asset", "tools", "tests"}:
@@ -148,7 +146,47 @@ def check_install_assets(root: Path, findings: list[Finding]) -> None:
         root / "plugins/codestable-lite/.codex-plugin/plugin.json",
         root / "plugins/codestable-lite/.claude-plugin/plugin.json",
         root / "plugins/codestable-lite/skills/cs/SKILL.md",
+        root / "plugins/codestable-lite/skills/cs/agents/openai.yaml",
+        root / "plugins/codestable-lite/skills/cs/scripts/init_codestable.py",
     ]
+    skill_root = root / "plugins/codestable-lite/skills/cs"
+    assets.extend(
+        skill_root / "references" / filename
+        for filename in [
+            "close.md",
+            "code-design.md",
+            "complain.md",
+            "debug.md",
+            "design.md",
+            "do.md",
+            "docs.md",
+            "explore.md",
+            "great-skills.md",
+            "maketools.md",
+            "note.md",
+            "onboard.md",
+            "spec.md",
+            "talk.md",
+        ]
+    )
+    assets.extend(
+        skill_root / "templates/entities" / filename
+        for filename in [
+            "bug-issue.md",
+            "chore-issue.md",
+            "epic-spec.md",
+            "explore-article.md",
+            "explore-index.md",
+            "facts.md",
+            "feature-issue.md",
+            "notes.md",
+            "project-spec-index.md",
+            "refactor-issue.md",
+            "spec-section-index.md",
+            "talk.md",
+            "tool.md",
+        ]
+    )
     for path in assets:
         if not path.exists():
             findings.append(Finding(rel(path, root), "install asset is missing"))

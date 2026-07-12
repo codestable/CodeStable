@@ -1,4 +1,0 @@
-interface:
-  display_name: "CS Do"
-  short_description: "按 issue 设计执行并验证代码变更"
-  default_prompt: "Use $cs-do to implement and verify a designed issue."

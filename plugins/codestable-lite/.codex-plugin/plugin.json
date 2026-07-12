@@ -1,6 +1,6 @@
 {
   "name": "codestable-lite",
-  "version": "0.1.1",
-  "description": "CodeStable LITE AI coding workflow skills.",
+  "version": "0.2.0",
+  "description": "CodeStable LITE software lifecycle skill.",
   "skills": "./skills/"
 }

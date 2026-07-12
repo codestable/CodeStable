@@ -1,4 +1,0 @@
-interface:
-  display_name: "cs-how-great-skills"
-  short_description: "What makes a CodeStable LITE skill good"
-  default_prompt: "Use cs-how-great-skills as the yardstick when writing or judging a skill: first identify the skill type, then choose a structure that keeps principles, action guidance, and artifact contracts in the right places."

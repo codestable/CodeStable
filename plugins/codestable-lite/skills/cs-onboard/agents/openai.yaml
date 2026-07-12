@@ -1,4 +1,0 @@
-interface:
-  display_name: "CS Onboard"
-  short_description: "Initialize CodeStable workspace structure"
-  default_prompt: "Use $cs-onboard to initialize CodeStable files for this project."

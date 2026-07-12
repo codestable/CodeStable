@@ -1,4 +1,0 @@
-interface:
-  display_name: "CS Complain"
-  short_description: "处理行为投诉到反馈回路、定位、修复和回写"
-  default_prompt: "Use $cs-complain to turn a behavior complaint into an open bug issue, build a feedback loop, diagnose, fix, verify, and write results back."

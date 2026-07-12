@@ -1,4 +1,0 @@
-interface:
-  display_name: "CS Debug"
-  short_description: "debug 和根因定位原则"
-  default_prompt: "Use $cs-how-debug as debugging guidance: reproduce, gather evidence, trace the causal chain, test hypotheses, and fix the root cause."

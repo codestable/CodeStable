@@ -1,4 +1,4 @@
 interface:
-  display_name: "CS"
-  short_description: "CodeStable LITE 技能导览"
-  default_prompt: "Use $cs to decide which CodeStable skill to use next. It is a lightweight guide and does not create artifacts."
+  display_name: "CodeStable"
+  short_description: "用 Project Spec、Epic Spec 与 Issue 驱动软件持续演化"
+  default_prompt: "Use $cs to organize this project change with CodeStable and continue to the authorized outcome."

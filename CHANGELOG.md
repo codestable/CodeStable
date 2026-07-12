@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0
+
+- Collapsed the CodeStable LITE plugin into one user-facing `cs` skill with action and principle references loaded on demand.
+- Made project spec, epic spec, and issue the core model explained directly in `SKILL.md`, including truth precedence and close-time knowledge promotion.
+- Simplified each epic to one authoritative `spec.md`; status, current progress, issue links, blockers, close conditions, and graduation candidates now live together.
+- Centralized templates and initialization scripts inside the unified skill, and removed the old `cs-*` installation units.
+- Replaced the 150-line document threshold with a judgment-based concision and progressive-disclosure rule.
+
 ## 0.1.1
 
 - Refined project and epic spec workflows around developer-facing usage narratives instead of code-layer structure.

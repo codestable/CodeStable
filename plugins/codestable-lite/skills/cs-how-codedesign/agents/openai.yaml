@@ -1,4 +1,0 @@
-interface:
-  display_name: "CS Code Design"
-  short_description: "架构和模块设计原则"
-  default_prompt: "Use $cs-how-codedesign as design guidance when deciding module ownership, interface depth, real seams, test surfaces, and boundary handling."

@@ -12,7 +12,7 @@ Tired of OpenSpec's flimsiness, Oh-My-OpenAgent's over-engineering, and Superpow
 
 <p>
   <img src="https://img.shields.io/badge/status-beta-F59E0B?style=flat-square" alt="Status"/>
-  <img src="https://img.shields.io/badge/skills-16-6366F1?style=flat-square" alt="Skills"/>
+  <img src="https://img.shields.io/badge/skills-1-6366F1?style=flat-square" alt="Skills"/>
   <img src="https://img.shields.io/badge/license-MIT-10B981?style=flat-square" alt="License"/>
 </p>
 
@@ -67,21 +67,21 @@ You can also use the skills CLI:
 npx skills@latest add liuzhengdongfortest/CodeStable
 ```
 
-One command to start working:
+Use the single entry to onboard a project:
 
 ```bash
-/cs-onboard
+/cs onboard CodeStable in this project
 ```
 
-For daily use, when you don't know which skill fits, call the root entry:
+Use that same entry for requirements, specs, bugs, issue implementation, closing, and knowledge capture:
 
 ```bash
 /cs
 ```
 
-`cs` reads your intent and tells you which `cs-xxx` to run.
+`cs` determines whether the current knowledge belongs to the project spec, an epic spec, or an issue, loads the relevant internal rules, and executes the work currently authorized.
 
-The CodeStable LITE plugin only packages `cs` / `cs-*` skills under `plugins/codestable-lite/skills/`; root-level standalone skill directories are not part of the distribution. The released version lives in `VERSION`, with release notes in `CHANGELOG.md`.
+The CodeStable LITE plugin packages one skill at `plugins/codestable-lite/skills/cs/`; action rules, design principles, templates, and scripts load progressively inside it. The released version lives in `VERSION`, with release notes in `CHANGELOG.md`.
 
 ## Upgrade
 
@@ -168,7 +168,7 @@ Shared language belongs in the nearest `index.md` where it applies, not in a sep
 
 ### epic spec — a large-change line
 
-Large changes live under `.cs/epics/YYYY/MM/DD/{短语}/`. An epic directory contains `index.md`, `spec.md`, and `plan.md`: orientation, current requirements and architecture considerations, and the scope ready for this planning round. If implementation discovers additions, changes, or reversals, update the same epic spec instead of writing a `changes.md` log.
+Large changes live in `.cs/epics/YYYY/MM/DD/{短语}/spec.md`. That file is the epic's single authoritative entry and carries status, current requirements, architecture considerations, ready scope, issue links, blockers, close conditions, and graduation candidates. If implementation discovers additions, changes, or reversals, update the same epic spec instead of splitting truth across `index.md`, `plan.md`, or a `changes.md` log.
 
 Issues under an epic close back into the epic spec first. Only when a human confirms the whole epic is done does AI merge the graduated conclusions back into the project spec.
 
@@ -182,65 +182,34 @@ The close rule is simple: independent issue → project spec; exploratory issue 
 
 ## Skill catalog
 
-<table>
-<tr><th>Group</th><th>Skill</th><th>Purpose</th></tr>
-<tr><td><b>Root entry</b></td><td><code>cs</code></td><td>Unified entry — introduces the system and routes open-ended intents to the right cs-* skill. Call it when you don't know which one fits</td></tr>
-<tr><td><b>Onboard</b></td><td><code>cs-onboard</code></td><td>Bring CodeStable into a repo: create or complete the <code>.cs/</code> workspace and base entity directories</td></tr>
-<tr><td><b>Discussion entry</b></td><td><code>cs-talk</code></td><td>When ideas are fuzzy or context is missing, inspect repo context and clarify through discussion; write into <code>talks/</code> only after the user confirms closure</td></tr>
-<tr><td><b>Spec entry</b></td><td><code>cs-spec</code></td><td>Maintain project or epic specs: requirements, architecture considerations, shared language, scope ready for this round, and open questions</td></tr>
-<tr><td><b>Complaint entry</b></td><td><code>cs-complain</code></td><td>When behavior breaks expectations, create/update a bug issue, build a feedback loop, diagnose, fix, verify, and write back</td></tr>
-<tr><td><b>Plan entry</b></td><td><code>cs-plan</code></td><td>Read <code>talks/</code> or the scope ready in an epic spec, discuss a planning draft first, then create an independent issue, new epic, or epic issue after confirmation</td></tr>
-<tr><td><b>Design entry</b></td><td><code>cs-design</code></td><td>Write a tutorial-style implementation design for one issue: functional split, request/data flow, design focus points, boundaries, change route, validation, and detailed test strategy when needed</td></tr>
-<tr><td><b>Execution entry</b></td><td><code>cs-do</code></td><td>Implement from the issue design, verify, and write back the execution record</td></tr>
-<tr><td><b>Close entry</b></td><td><code>cs-close</code></td><td>Close an issue or epic, sinking conclusions to project/epic specs by ownership, and commit related code plus .cs writebacks</td></tr>
-<tr><td><b>System understanding</b></td><td><code>cs-spec-explore</code></td><td>Turn project-spec gaps into exploratory issue workspaces, write discussable candidate articles, then merge on confirmed close</td></tr>
-<tr><td rowspan="2"><b>Support files</b></td><td><code>cs-note</code></td><td>Sink pitfalls, tricks, research, and command traps into <code>notes/</code>, or one-line startup facts into <code>facts.md</code></td></tr>
-<tr><td><code>cs-maketools</code></td><td>Let a human guide AI through an unknown workflow, then sink notes, a facts reference, and optional tools</td></tr>
-<tr><td rowspan="4"><b>Principles</b></td><td><code>cs-how-codedesign</code></td><td>Design module interfaces and capability ownership by making modules deep and placing seams where change is real</td></tr>
-<tr><td><code>cs-how-debug</code></td><td>Reproduce, gather evidence, explain the full cause chain from trigger to symptom, then make the smallest fix</td></tr>
-<tr><td><code>cs-how-docs</code></td><td>Organize project spec, epic spec, exploratory issues, notes, README, and doc sets as readable knowledge spaces instead of flat content</td></tr>
-<tr><td><code>cs-how-great-skills</code></td><td>When writing or reviewing skills, check whether context, principles, and usage boundaries are clear</td></tr>
-</table>
+The plugin has one `cs` skill. Users no longer choose among a catalog of skill names; `cs` first identifies the knowledge layer, then loads the relevant internal mode:
+
+| Intent | What `cs` does internally |
+|---|---|
+| First-time setup | Create or complete the `.cs/` skeleton without silently migrating old requirements |
+| Fuzzy idea or planning | Inspect context, clarify the real problem, then create an independent issue, exploratory issue, or epic only after confirmation |
+| Spec change | Maintain the project spec or the epic's single `spec.md` |
+| Behavior breaks expectations | Create a bug issue and use a feedback loop to diagnose, fix, and verify |
+| Clear issue | Design, implement, and verify as needed; close and commit only when the user asks for wrap-up |
+| Unknown system area | Develop candidate articles inside an exploratory issue, then graduate confirmed knowledge into the project spec |
+| Reusable knowledge | Write notes, facts, or tools; learn unknown workflows under human guidance |
+
+Action rules and principles for code design, debugging, documentation, and skill design live under `cs/references/` and load only when the current situation needs them.
 
 ---
 
-## Workflow at a glance
+## How the structure evolves
 
 CodeStable isn't a single linear pipeline — it's a **project spec + epic spec + issues** loop:
 
-```
-═══════════════════════════════════════════════════════════════
- Root entry · routing                          (callable any time)
-   cs ──▶ Introduce the system / route open-ended intent to a sub-skill
-═══════════════════════════════════════════════════════════════
-                          │
-        ┌─────────────────┼─────────────────┐
-   (not onboarded)     (idea fuzzy)        (spec needs update)       (onboarded)
-   cs-onboard          cs-talk ─────┐      cs-spec ─────┐           cs-plan ─▶ cs-design ─▶ cs-do ─▶ cs-close
-   skeleton            context + talks│      project/epic│           confirm draft, create items → design → execute/verify → sink by owner
-                                    └───────────────┴────────────▶ independent issue / epic / epic issue
-                       cs-complain ─▶ diagnose and fix behavior drift through a bug issue
-═══════════════════════════════════════════════════════════════
- spec · current truth and change lines       (.cs/spec/ and .cs/epics/)
-───────────────────────────────────────────────────────────────
-   project spec ─▶ what the project is / where it goes / capability map / architecture map / shared language / reading path
-   epic spec    ─▶ what the big change changes / why this design / scope ready this round / open questions
-   cs-spec      ─▶ maintain project or epic spec; write considerations, not change logs
-   cs-plan      ─▶ from talks or epic spec: discuss a planning draft, then create independent issue / new epic / this round's epic issues after confirmation
-═══════════════════════════════════════════════════════════════
- issues · closeable execution slices         (.cs/issues/)
-───────────────────────────────────────────────────────────────
-   cs-complain ─▶ when behavior breaks expectations, feedback loop → diagnosis → fix/verify → bug issue writeback
-   cs-design ──▶ design one issue's implementation (functional split / request-data flow / design focus points / boundaries / change route / validation; detailed test strategy when needed)
-   cs-do     ──▶ implement, verify, and write back the execution record
-   cs-close  ──▶ independent issue → project spec; epic issue → epic spec; epic close → project spec
-   cs-spec-explore ─▶ exploratory issue workspace: candidate articles → human-confirmed close → project spec
-═══════════════════════════════════════════════════════════════
-            ▼ any time something is worth recording ▼
- Support files · knowledge sink (compounding engineering)
-   cs-note ──▶ .cs/notes/ or .cs/facts.md
-   cs-maketools ─▶ human-guided unknown workflow → notes + facts reference + optional tools
-═══════════════════════════════════════════════════════════════
+```text
+Project Spec ──small, clear change──> Issue ──close writeback──> Project Spec
+     │
+     └──large, unstable change──> Epic Spec ──in batches──> Issues
+                                      ↑                    │
+                                      └──evidence and learning
+
+Epic close ──graduated conclusions──> Project Spec
 ```
 
 **How to read this diagram:**
@@ -253,15 +222,15 @@ CodeStable isn't a single linear pipeline — it's a **project spec + epic spec 
 
 ## Runtime structure
 
-After `/cs-onboard`, a `.cs/` directory appears at your project root — the aggregate root for all local artifacts and the only workspace each skill reads/writes at runtime.
+After `/cs` onboards the project, a `.cs/` directory appears at the project root — the aggregate root for local artifacts and the workspace the unified skill reads and writes.
 
 ```
 your-project/
 ├── .cs/
 │   ├── facts.md              # Startup facts
-│   ├── talks/                # Discussion synthesis (cs-talk, lazy)
+│   ├── talks/                # Discussion synthesis (written only after confirmation)
 │   │   └── YYYY/MM/DD/{短语}.md
-│   ├── spec/                 # Project spec: mainline truth (cs-spec)
+│   ├── spec/                 # Project spec: mainline truth
 │   │       ├── index.md
 │   │       └── ...           # Recursive reading path; each layer may have its own index.md
 │   │
@@ -270,14 +239,12 @@ your-project/
 │   │   └── YYYY/MM/DD/{status}-{短语}/     # exploratory issue workspaces
 │   ├── epics/                # Large-change lines
 │   │   └── YYYY/MM/DD/{短语}/
-│   │       ├── index.md      # Epic orientation, state, and issue list
-│   │       ├── spec.md       # Epic requirements, architecture considerations, shared language
-│   │       └── plan.md       # Scope ready this round and issue list
+│   │       └── spec.md       # Single authority: spec, progress, issues, blockers, close conditions
 │   │
-│   ├── notes/                # Knowledge notes, plain markdown, full-text search (cs-note)
+│   ├── notes/                # Knowledge notes, plain markdown, full-text search
 │   │   └── YYYY/MM/DD/{短语}.md
 │   │
-│   └── tools/                # Cross-workflow shared scripts (added by cs-maketools as needed)
+│   └── tools/                # Shared scripts captured after a workflow is proven
 │
 └── (work items stay under .cs/ by default so humans and AI can both read and edit them)
 ```
@@ -289,19 +256,19 @@ your-project/
 - `epics/` are large-change lines; each epic spec carries additions, changes, and reversals until the epic closes and graduates back into the project spec
 - `issues/` can carry exploratory work; candidate articles, user corrections, and evidence stay in the issue workspace for discussion, then merge into project spec according to spec rules after human-confirmed close
 - Talks and notes default to `YYYY/MM/DD/{短语}.md` date shards, epics use `YYYY/MM/DD/{短语}/` workspaces, ordinary issues use `YYYY/MM/DD/{status}-{短语}.md`, and exploratory issues use `YYYY/MM/DD/{status}-{短语}/` workspaces; search recursively under each area
-- `notes/` is the knowledge notes area — plain markdown, no frontmatter, full-text searchable. Daily "remember this" work goes through `cs-note`
-- `cs-maketools` turns human-guided unknown workflows into `notes/`, adds a `facts.md` reference, and only writes `tools/` when automation is stable
-- When one Markdown file exceeds 150 lines, split by progressive disclosure into same-directory resources instead of hard-compressing the entry file
+- `notes/` is the knowledge notes area — plain markdown, no frontmatter, full-text searchable. `cs` decides whether daily "remember this" work belongs in notes or facts
+- Human-guided unknown workflows become `notes/`, add a `facts.md` reference, and only produce `tools/` when automation is stable
+- Keep Markdown appropriately concise without a universal line limit; preserve the complete core structure, background, principles, and contracts in the main narrative, and progressively disclose only details that are scenario-specific or obstruct the reading flow
 
 ### Hard constraint
 
-> A skill is an independent install unit. At runtime, **each skill can only see files inside its own package**. References like `B-skill/reference/xxx.md` written in skill A's SKILL.md are **simply unreachable** at runtime.
+> CodeStable has one installed `cs` unit. Its core structure and shared boundaries live in `SKILL.md`; scenario-specific action rules and principles live in that same skill's `references/`, with templates and scripts in the same package.
 >
-> Do not solve cross-skill system rules by making skills reference each other's files. `cs` is only a guide; action skills must describe their own artifact contracts and boundaries. Sink project-specific stable knowledge into `.cs/spec/`, `.cs/notes/`, and `.cs/facts.md`.
+> `SKILL.md` must say when to read each reference. It must not hide core contracts or load every scenario at once. Project-specific stable knowledge still belongs in `.cs/spec/`, `.cs/notes/`, and `.cs/facts.md`.
 
-Each cs action skill should reuse the current context first: if `facts.md`, project spec, epic spec, or the target issue has already been read and shows no sign of change, do not mechanically reread it. Read again only when context is missing, likely stale, needed for exact citation/write-back, or a new local slice is required. Before writing, always confirm the current version of the target issue, `.cs` file, or code file.
+Before `cs` switches internal action modes, it should reuse the current context first: if `facts.md`, project spec, epic spec, or the target issue has already been read and shows no sign of change, do not mechanically reread it. Read again only when context is missing, likely stale, needed for exact citation/write-back, or a new local slice is required. Before writing, always confirm the current version of the target issue, `.cs` file, or code file.
 
-To change system rules, update the relevant skills' own instructions and templates; project-specific stable needs and operating knowledge belong in the matching `.cs/` entities.
+To change system rules, update `cs/SKILL.md`, the relevant reference, and its templates together; project-specific stable needs and operating knowledge belong in the matching `.cs/` entities.
 
 ---
 

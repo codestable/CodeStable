@@ -1,4 +1,0 @@
-interface:
-  display_name: "CS Spec"
-  short_description: "维护 project spec 和 epic 活规格"
-  default_prompt: "Use $cs-spec to update project specs or epic living specs with developer-facing requirements, architecture considerations, shared language, and the epic plan view for the current batch of work."

@@ -1,4 +1,0 @@
-interface:
-  display_name: "cs-note"
-  short_description: "把可复用知识写入 notes 或 facts"
-  default_prompt: "Use $cs-note to decide whether reusable project knowledge belongs in .cs/notes/YYYY/MM/DD/{短语}.md or as a short startup fact in .cs/facts.md."

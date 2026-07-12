@@ -1,4 +1,0 @@
-interface:
-  display_name: "CS Talk"
-  short_description: "澄清想法并做初步规划"
-  default_prompt: "Use $cs-talk as the product/PL entry: investigate repo context, clarify the real need, walk the decision tree one question at a time with a recommendation, surface relevant second-order impacts and tradeoffs, propose an initial outlet such as an independent issue or epic, and create artifacts only after the user confirms."

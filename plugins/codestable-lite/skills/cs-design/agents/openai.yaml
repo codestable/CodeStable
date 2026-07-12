@@ -1,4 +1,0 @@
-interface:
-  display_name: "CS Design"
-  short_description: "为单个 issue 生成实现设计"
-  default_prompt: "Use $cs-design to design the implementation for a specific issue, including functional split, request/data flow, design focus points, boundaries, change route, and validation or detailed test strategy when needed."
