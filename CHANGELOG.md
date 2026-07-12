@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0
+
+- Replaced Codex and Claude plugin packaging with the standard `skills/cs/` repository layout.
+- Made `npx skills add liuzhengdongfortest/CodeStable` the single installation path.
+- Removed marketplace manifests and plugin-specific validation.
+- Replaced the plugin package checker with a single-Skill repository checker and local Skills CLI discovery test.
+
 ## 0.2.0
 
 - Collapsed the CodeStable LITE plugin into one user-facing `cs` skill with action and principle references loaded on demand.

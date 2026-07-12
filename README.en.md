@@ -22,49 +22,22 @@ Tired of OpenSpec's flimsiness, Oh-My-OpenAgent's over-engineering, and Superpow
 
 ## Install
 
-Codex plugin marketplace:
+Install with the Skills CLI:
 
 ```bash
-codex plugin marketplace add liuzhengdongfortest/CodeStable
-codex plugin add codestable-lite@codestable-lite
+npx skills add liuzhengdongfortest/CodeStable
 ```
 
-If `codestable-lite` has not merged into the default branch yet, Codex can install from that branch directly:
+Installation is project-local by default. Add `-g` to make it available across projects:
 
 ```bash
-codex plugin marketplace add liuzhengdongfortest/CodeStable --ref codestable-lite
-codex plugin add codestable-lite@codestable-lite
+npx skills add liuzhengdongfortest/CodeStable -g
 ```
 
-For local development, Codex can also add a local marketplace path:
+For local development, verify discovery from the repository root:
 
 ```bash
-codex plugin marketplace add D:\playground\CodeStable
-codex plugin add codestable-lite@codestable-lite
-```
-
-Claude plugin marketplace:
-
-```text
-/plugin marketplace add liuzhengdongfortest/CodeStable
-/plugin install codestable-lite@codestable-lite
-```
-
-Note: Claude remote marketplaces read `.claude-plugin/marketplace.json` from the GitHub repository's default branch. If `codestable-lite` still lives only on a non-default branch, test it from a local checkout first:
-
-```bash
-git clone -b codestable-lite git@github.com:liuzhengdongfortest/CodeStable.git CodeStable-LITE
-```
-
-```text
-/plugin marketplace add ./CodeStable-LITE
-/plugin install codestable-lite@codestable-lite
-```
-
-You can also use the skills CLI:
-
-```bash
-npx skills@latest add liuzhengdongfortest/CodeStable
+npx skills add . --list
 ```
 
 Use the single entry to onboard a project:
@@ -81,32 +54,14 @@ Use that same entry for requirements, specs, bugs, issue implementation, closing
 
 `cs` determines whether the current knowledge belongs to the project spec, an epic spec, or an issue, loads the relevant internal rules, and executes the work currently authorized.
 
-The CodeStable LITE plugin packages one skill at `plugins/codestable-lite/skills/cs/`; action rules, design principles, templates, and scripts load progressively inside it. The released version lives in `VERSION`, with release notes in `CHANGELOG.md`.
+The repository distributes one Skill at `skills/cs/`; action rules, design principles, templates, and scripts load progressively inside it. The released version lives in `VERSION`, with release notes in `CHANGELOG.md`.
 
 ## Upgrade
 
-After a new release, check `CHANGELOG.md` for the version change, then refresh through the entry you installed from.
-
-Before publishing to Claude users, `.claude-plugin/marketplace.json`, `plugins/codestable-lite/`, and `VERSION` must be on the repository's default branch, or the LITE package should move to a separate repository whose default branch is LITE.
-
-Codex plugin marketplace:
+After a new release, check `CHANGELOG.md`, then update the installed `cs` Skill:
 
 ```bash
-codex plugin marketplace upgrade codestable-lite
-codex plugin add codestable-lite@codestable-lite
-```
-
-Claude plugin marketplace:
-
-```text
-/plugin marketplace update
-/plugin update codestable-lite@codestable-lite
-```
-
-skills CLI:
-
-```bash
-npx skills@latest update
+npx skills update cs
 ```
 
 ---
@@ -182,7 +137,7 @@ The close rule is simple: independent issue → project spec; exploratory issue 
 
 ## Skill catalog
 
-The plugin has one `cs` skill. Users no longer choose among a catalog of skill names; `cs` first identifies the knowledge layer, then loads the relevant internal mode:
+The repository distributes one `cs` Skill. Users no longer choose among a catalog of skill names; `cs` first identifies the knowledge layer, then loads the relevant internal mode:
 
 | Intent | What `cs` does internally |
 |---|---|

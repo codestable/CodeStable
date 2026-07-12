@@ -1,6 +1,0 @@
-{
-  "name": "codestable-lite",
-  "version": "0.2.0",
-  "description": "CodeStable LITE software lifecycle skill.",
-  "skills": "./skills/"
-}
