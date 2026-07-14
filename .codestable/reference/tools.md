@@ -117,7 +117,7 @@ python3 <cs-onboard skill 目录>/tools/codestable-doctor.py --root . --json
 JSON 关键字段：
 
 - `status`：`idle` / `planning-safe` / `dirty` / `implementation-active` / `attention-needed` / `blocked`
-- `tooling.runtime`：repo-local runtime 与 skill-global tool 静态体检；`version-mismatch` 时运行 runtime sync
+- `tooling.runtime`：repo-local runtime 与 skill-global tool 静态体检；`version-mismatch` 时运行 runtime sync，`version-unavailable` 时先重装或更新 `cs-onboard`
 - `tooling.runtime.capabilities`：`base` / `workflow-next` / `goal-gates` 的 `repo_paths`、`skill_tool_paths` 和缺失列表
 - `checkout`：当前分支、默认分支
 - `dirty_buckets`：按 `code` / `tests` / `docs` / `migrations` / `data` / `logs` / `codestable` / `unknown` 分组的 dirty paths

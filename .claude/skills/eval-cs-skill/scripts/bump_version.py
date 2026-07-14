@@ -2,6 +2,7 @@
 """同步版本到打包检查要求的所有位置 + 追加 CHANGELOG。
 
 真相源对齐 tools/check-plugin-package.py：VERSION 与
+- plugins/codestable/skills/cs-onboard/VERSION
 - plugins/codestable/.codex-plugin/plugin.json [version]
 - plugins/codestable/.claude-plugin/plugin.json [version]
 - .claude-plugin/marketplace.json [plugins,0,version]
@@ -30,6 +31,7 @@ SEMVER = re.compile(r"^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$")
 # (相对路径, JSON 键路径 | None=纯文本 VERSION)
 TARGETS = [
     ("VERSION", None),
+    ("plugins/codestable/skills/cs-onboard/VERSION", None),
     ("plugins/codestable/.codex-plugin/plugin.json", ["version"]),
     ("plugins/codestable/.claude-plugin/plugin.json", ["version"]),
     (".claude-plugin/marketplace.json", ["plugins", 0, "version"]),

@@ -1,0 +1,23 @@
+schema_version: 1
+goal: "fix-skills-update-and-standalone-version"
+status: active
+objective: "修复 GitHub Issues #45 和 #47，使多 skill 更新保留 CodeStable sibling skills，standalone 安装可写入真实 runtime 版本，并提交独立 PR。"
+start_point: "main 已包含 PR #48，当前位于独立分支 fix/issues-45-47-install-runtime；#45 与 #47 尚未实现回归修复。"
+acceptance:
+  - "完整 CodeStable multi-skill install/update 回归测试证明更新不会删除未移除或重命名的 sibling cs skills。"
+  - "standalone cs-onboard 安装能稳定发现真实 CodeStable 版本，runtime manifest 不再写 unknown。"
+  - "release bump、plugin package checker、runtime sync 对版本元数据保持一致，并有自动化回归。"
+  - "相关测试、全量 tests、git diff --check、Markdown 行数与 runtime sync 检查全部通过。"
+  - "独立 code review 与 Task agent 功能验收通过，分支推送并创建关联 #45/#47 的 PR。"
+non_goals:
+  - "修改上游 skills CLI 的外部实现或发布它的新版本。"
+  - "运行付费多模型 routing campaign 或合并本次 PR。"
+budget:
+  kind: none
+  limit: null
+current_iteration: 1
+next_action: "启动独立 code review，处理全部 blocking/important 后执行终端功能验收。"
+blocker_signature: null
+blocker_count: 0
+owner_stop: null
+updated_at: "2026-07-14"

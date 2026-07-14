@@ -5,7 +5,6 @@ import argparse
 import json
 import re
 import subprocess
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -88,6 +87,7 @@ def check_manifest_versions(root: Path, version: str | None, findings: list[Find
         ("plugins/codestable/.codex-plugin/plugin.json", ["version"]),
         ("plugins/codestable/.claude-plugin/plugin.json", ["version"]),
         (".claude-plugin/marketplace.json", ["plugins", 0, "version"]),
+        (".agents/plugins/marketplace.json", ["plugins", 0, "version"]),
     ]
     for filename, keys in manifests:
         data, error = read_json(root / filename)
@@ -97,6 +97,17 @@ def check_manifest_versions(root: Path, version: str | None, findings: list[Find
         value = nested(data, keys)
         if value != version:
             findings.append(Finding(filename, f"{'.'.join(map(str, keys))} must equal VERSION"))
+
+
+def check_standalone_version(root: Path, version: str | None, findings: list[Finding]) -> None:
+    filename = "plugins/codestable/skills/cs-onboard/VERSION"
+    path = root / filename
+    if not path.is_file():
+        findings.append(Finding(filename, "standalone VERSION is missing"))
+        return
+    standalone_version = path.read_text(encoding="utf-8").strip()
+    if standalone_version != version:
+        findings.append(Finding(filename, "standalone VERSION must equal VERSION"))
 
 
 def check_catalog_contracts(root: Path, findings: list[Finding]) -> None:
@@ -227,11 +238,13 @@ def check_readme_commands(root: Path, findings: list[Finding]) -> None:
         "codex plugin marketplace upgrade codestable",
         "/plugin marketplace update",
         "/plugin update codestable@codestable",
-        "npx skills@latest add codestable/CodeStable",
-        "npx skills@latest update",
     ]
     forbidden = ["codex plugin install codestable"]
-    forbidden_lines = ["/plugin update codestable"]
+    required_lines = [
+        "npx skills@latest add codestable/CodeStable/plugins/codestable",
+        "npx skills@latest add codestable/CodeStable/plugins/codestable --skill '*' -g",
+    ]
+    forbidden_lines = ["/plugin update codestable", "npx skills@latest update"]
     for filename in ["README.md", "README.en.md"]:
         path = root / filename
         if not path.exists():
@@ -245,9 +258,13 @@ def check_readme_commands(root: Path, findings: list[Finding]) -> None:
             if command in text:
                 findings.append(Finding(filename, f"obsolete documented command: {command}"))
         lines = {line.strip() for line in text.splitlines()}
+        for command in required_lines:
+            if command not in lines:
+                findings.append(Finding(filename, f"missing documented command: {command}"))
         for command in forbidden_lines:
             if command in lines:
-                findings.append(Finding(filename, f"obsolete documented command: {command}"))
+                prefix = "unsafe" if command == "npx skills@latest update" else "obsolete"
+                findings.append(Finding(filename, f"{prefix} documented command: {command}"))
 
 
 def check_repo(root: Path) -> list[Finding]:
@@ -256,6 +273,7 @@ def check_repo(root: Path) -> list[Finding]:
     version = check_version(root, findings)
     check_changelog(root, version, findings)
     check_manifest_versions(root, version, findings)
+    check_standalone_version(root, version, findings)
     check_catalog_contracts(root, findings)
     check_skill_layout(root, findings)
     check_reference_directory_spellings(root, findings)

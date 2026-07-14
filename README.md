@@ -41,13 +41,13 @@ Claude plugin marketplace：
 `skills` CLI：
 
 ```bash
-npx skills@latest add codestable/CodeStable
+npx skills@latest add codestable/CodeStable/plugins/codestable
 ```
 
 如果你的 `skills` CLI 没有通过 marketplace catalog 发现插件实体，可用深扫兜底：
 
 ```bash
-npx skills@latest add codestable/CodeStable --full-depth
+npx skills@latest add codestable/CodeStable/plugins/codestable --full-depth
 ```
 
 CodeStable 插件只打包 `plugins/codestable/skills/` 下的 `cs` / `cs-*` skills；仓库根目录不再保留独立 skill 目录。
@@ -77,10 +77,10 @@ Claude 更新后需要重启 Claude Code 才会应用新版插件。
 `skills` CLI：
 
 ```bash
-npx skills@latest update
+npx skills@latest add codestable/CodeStable/plugins/codestable --skill '*' -g
 ```
 
-如果旧安装器没有记录来源，重新执行上面的 `npx skills@latest add codestable/CodeStable` 安装命令即可。升级时应更新完整 CodeStable 插件，不要只替换根 `cs` skill；runtime 刷新还需要同版本的 `cs-onboard` 及其工具。全局插件升级后，建议在每个已接入项目中显式执行 `/cs-onboard --mode refresh-runtime`，立即刷新并核验 repo-local runtime。即使不手动执行，下一次 CodeStable preflight 也会比较 `.codestable/runtime-manifest.json` 与当前插件版本，在 manifest 缺失、版本不匹配或 runtime capability 缺失且受管路径干净时自动刷新；它不会在后台扫描所有仓库。遇到 `managed-paths-dirty`、未接入或骨架不完整时会停下提示，不会强制覆盖。
+当前 `skills` CLI 的裸 `update` 对 plugin manifest 与通用目录使用不同的发现逻辑，可能把仍存在的 sibling skills 误判为已删除；因此升级使用上面的完整 package 重装命令。它会从 `plugins/codestable` 同步全部 `cs*` skills；如果原来是项目级安装，去掉 `-g` 并在项目中执行。不要只替换根 `cs` skill，runtime 刷新还需要同版本的 `cs-onboard` 及其工具。全局插件升级后，建议在每个已接入项目中显式执行 `/cs-onboard --mode refresh-runtime`，立即刷新并核验 repo-local runtime。即使不手动执行，下一次 CodeStable preflight 也会比较 `.codestable/runtime-manifest.json` 与当前插件版本，在 manifest 缺失、版本不匹配或 runtime capability 缺失且受管路径干净时自动刷新；它不会在后台扫描所有仓库。遇到 `managed-paths-dirty`、未接入或骨架不完整时会停下提示，不会强制覆盖。
 
 只需要一键，开始工作：
 

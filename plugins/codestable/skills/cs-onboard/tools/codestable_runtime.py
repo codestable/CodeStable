@@ -147,7 +147,10 @@ def runtime_health(root: Path, source_skill_dir: Path | None = None, plugin_vers
     elif missing_all:
         status = "runtime-incomplete"
         hint = "Run runtime sync or `cs-onboard --mode refresh-runtime` to refresh repo-local assets; missing skill tools require reinstalling/updating CodeStable."
-    elif expected_version and installed_version != expected_version:
+    elif expected_version is None:
+        status = "version-unavailable"
+        hint = "Reinstall or update cs-onboard; the installed skill package is missing CodeStable version metadata."
+    elif installed_version != expected_version:
         status = "version-mismatch"
         hint = "Run runtime sync to refresh .codestable runtime assets for the installed CodeStable plugin."
     else:
@@ -185,7 +188,7 @@ def write_manifest(root: Path, plugin_version: str) -> None:
 def sync_runtime(root: Path, source_skill_dir: Path, plugin_version: str | None = None, force: bool = False) -> dict[str, Any]:
     root = root.resolve()
     source_skill_dir = source_skill_dir.resolve()
-    version = plugin_version or discover_plugin_version(source_skill_dir) or "unknown"
+    version = plugin_version or discover_plugin_version(source_skill_dir)
     if not (root / ".codestable/attention.md").is_file():
         return {
             "ok": False,
@@ -199,6 +202,12 @@ def sync_runtime(root: Path, source_skill_dir: Path, plugin_version: str | None 
             "status": "managed-paths-dirty",
             "dirty_paths": dirty,
             "hint": "Commit, stash, or explicitly allow overwriting managed runtime assets before sync.",
+        }
+    if version is None:
+        return {
+            "ok": False,
+            "status": "version-unavailable",
+            "hint": "Reinstall or update cs-onboard; the installed skill package is missing CodeStable version metadata.",
         }
 
     copies = [

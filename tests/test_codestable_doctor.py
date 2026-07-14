@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -227,6 +228,37 @@ def test_runtime_sync_refreshes_managed_assets_manifest_and_preserves_legacy_ass
     assert manifest["plugin_version"] == "1.1.0"
     assert manifest["tool_runtime"] == "skill-global"
     assert ".codestable/tools" not in manifest["managed_paths"]
+
+
+def test_standalone_runtime_sync_discovers_packaged_version(tmp_path: Path) -> None:
+    repo = init_repo(tmp_path)
+    standalone = tmp_path / "standalone/cs-onboard"
+    shutil.copytree(ROOT / "plugins/codestable/skills/cs-onboard", standalone)
+
+    result = runtime_tool.sync_runtime(repo, standalone)
+
+    assert result["ok"] is True
+    assert result["plugin_version"] == CURRENT_PLUGIN_VERSION
+    manifest = json.loads((repo / ".codestable/runtime-manifest.json").read_text(encoding="utf-8"))
+    assert manifest["plugin_version"] == CURRENT_PLUGIN_VERSION
+    assert manifest["runtime_version"] == CURRENT_PLUGIN_VERSION
+
+
+def test_runtime_sync_without_version_fails_closed(tmp_path: Path) -> None:
+    repo = init_repo(tmp_path)
+    source = tmp_path / "standalone/cs-onboard"
+    shutil.copytree(ROOT / "plugins/codestable/skills/cs-onboard", source)
+    version_file = source / "VERSION"
+    if version_file.exists():
+        version_file.unlink()
+    before = (repo / ".codestable/runtime-manifest.json").read_text(encoding="utf-8")
+
+    for force in (False, True):
+        result = runtime_tool.sync_runtime(repo, source, force=force)
+
+        assert result["ok"] is False
+        assert result["status"] == "version-unavailable"
+        assert (repo / ".codestable/runtime-manifest.json").read_text(encoding="utf-8") == before
 
 
 def test_runtime_sync_refuses_dirty_managed_paths_without_force(tmp_path: Path) -> None:

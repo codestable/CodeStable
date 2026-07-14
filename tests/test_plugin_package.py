@@ -36,6 +36,8 @@ def make_repo(tmp_path: Path) -> Path:
     repo.mkdir()
     init_git(repo)
     (repo / "VERSION").write_text("0.1.0\n", encoding="utf-8")
+    (repo / "plugins/codestable/skills/cs-onboard").mkdir(parents=True)
+    (repo / "plugins/codestable/skills/cs-onboard/VERSION").write_text("0.1.0\n", encoding="utf-8")
     (repo / "CHANGELOG.md").write_text("# Changelog\n\n## 0.1.0\n\n- Initial plugin package.\n", encoding="utf-8")
     (repo / ".gitignore").write_text(
         "/.claude/\n"
@@ -78,7 +80,7 @@ def make_repo(tmp_path: Path) -> Path:
         repo / "plugins/codestable/.claude-plugin/plugin.json",
         {"name": "codestable", "version": "0.1.0", "author": {"name": "CodeStable"}},
     )
-    for skill in ["cs", "cs-feat"]:
+    for skill in ["cs", "cs-feat", "cs-onboard"]:
         skill_dir = repo / "plugins/codestable/skills" / skill
         skill_dir.mkdir(parents=True, exist_ok=True)
         (skill_dir / "SKILL.md").write_text(f"---\nname: {skill}\n---\n", encoding="utf-8")
@@ -91,8 +93,8 @@ def make_repo(tmp_path: Path) -> Path:
                     "codex plugin marketplace upgrade codestable",
                     "/plugin marketplace update",
                     "/plugin update codestable@codestable",
-                    "npx skills@latest add codestable/CodeStable",
-                    "npx skills@latest update",
+                    "npx skills@latest add codestable/CodeStable/plugins/codestable",
+                    "npx skills@latest add codestable/CodeStable/plugins/codestable --skill '*' -g",
                     "",
                 ]
             ),
@@ -199,6 +201,38 @@ def test_manifest_version_mismatch_fails(tmp_path: Path) -> None:
     findings = checker.check_repo(repo)
 
     assert any("version must equal VERSION" in message for message in messages(findings))
+
+
+def test_standalone_skill_version_missing_fails(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path)
+    (repo / "plugins/codestable/skills/cs-onboard/VERSION").unlink()
+
+    findings = checker.check_repo(repo)
+
+    assert any("standalone VERSION is missing" in message for message in messages(findings))
+
+
+def test_standalone_skill_version_mismatch_fails(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path)
+    (repo / "plugins/codestable/skills/cs-onboard/VERSION").write_text("0.2.0\n", encoding="utf-8")
+
+    findings = checker.check_repo(repo)
+
+    assert any("standalone VERSION must equal VERSION" in message for message in messages(findings))
+
+
+def test_codex_marketplace_version_mismatch_fails(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path)
+    marketplace = json.loads((repo / ".agents/plugins/marketplace.json").read_text(encoding="utf-8"))
+    marketplace["plugins"][0]["version"] = "0.2.0"
+    write_json(repo / ".agents/plugins/marketplace.json", marketplace)
+
+    findings = checker.check_repo(repo)
+
+    assert any(
+        finding.path == ".agents/plugins/marketplace.json" and "version must equal VERSION" in finding.message
+        for finding in findings
+    )
 
 
 def test_root_cs_skill_residue_fails(tmp_path: Path) -> None:
@@ -311,3 +345,14 @@ def test_readme_rejects_unqualified_claude_update_command(tmp_path: Path) -> Non
 
     assert "obsolete documented command: /plugin update codestable" in finding_messages
     assert any("missing documented command: /plugin update codestable@codestable" in message for message in finding_messages)
+
+
+def test_readme_rejects_unsafe_bare_skills_update(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path)
+    for filename in ("README.md", "README.en.md"):
+        path = repo / filename
+        path.write_text(path.read_text(encoding="utf-8") + "npx skills@latest update\n", encoding="utf-8")
+
+    findings = checker.check_repo(repo)
+
+    assert any("unsafe documented command: npx skills@latest update" in message for message in messages(findings))
