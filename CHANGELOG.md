@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Added Vision Spec as a fourth core information responsibility under `.cs/vision/`, with user-journey-led recursive maps, candidate and mutually exclusive directions, lightweight realization state, and explicit extraction into development slices.
+- Added an adaptive Vision action mode: AI helps individual developers organize their product world without forcing every idea into an Epic or Issue.
+- Made Issues optional when ongoing management adds value; direct, clear changes and simple bug fixes can now be implemented and verified without creating work-item ceremony.
+- Updated Talk, Spec, Complain, Do, Close, quality guidance, templates, initialization, skill metadata, and bilingual documentation to keep Vision, current truth, bounded change, and direct action responsibilities consistent.
+
 ## 0.6.0
 
 - Adopted the nine ISO/IEC 25010:2023 product-quality characteristics as CodeStable's shared quality vocabulary without turning them into a compliance checklist.

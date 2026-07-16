@@ -21,6 +21,7 @@ epic: ""
 ## 归属
 
 - 独立 issue / 隶属 epic：
+- 来源 Vision（按需）：`.cs/vision/...`
 - 相关 spec：`.cs/spec/...` 或 `.cs/epics/YYYY/MM/DD/{短语}/spec.md`
 
 ## 背景与证据
@@ -33,7 +34,7 @@ epic: ""
 
 - [特性 / 子特性]：
   - 目标：[在什么条件下达到什么可观察或可评估的结果]
-  - 来源：[project spec / epic spec / 用户决定 / 本次风险扫描]
+  - 来源：[确认后的 vision 方向 / project spec / epic spec / 用户决定 / 本次风险扫描]
   - 预期证据：[准备用什么判断是否达到]
 
 ## 操作方案

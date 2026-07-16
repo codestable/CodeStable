@@ -46,13 +46,13 @@ Use the single entry to onboard a project:
 /cs onboard CodeStable in this project
 ```
 
-Use that same entry for requirements, specs, bugs, issue implementation, closing, and knowledge capture:
+Use that same entry for vision shaping, requirements, specs, direct changes, managed issues, closing, and knowledge capture:
 
 ```bash
 /cs
 ```
 
-`cs` determines whether the current knowledge belongs to the project spec, an epic spec, or an issue, loads the relevant internal rules, and executes the work currently authorized.
+`cs` first determines whether the user is asking, imagining, discussing, or authorizing action, then uses a vision spec, project spec, epic spec, or issue only when it adds value. CodeStable changes the agent's judgment; it does not force the user through a fixed workflow.
 
 The repository distributes one Skill at `skills/cs/`; action rules, design principles, templates, and scripts load progressively inside it. The released version lives in `VERSION`, with release notes in `CHANGELOG.md`.
 
@@ -92,8 +92,8 @@ CodeStable goes the **other way**:
 
 <table>
 <tr><th></th><th>Agent-orchestration camp</th><th>CodeStable</th></tr>
-<tr><td><b>Core entity</b></td><td>Agent / Role / Team</td><td>Project spec · epic spec · issues</td></tr>
-<tr><td><b>Main question</b></td><td>How do agents divide work, hand off, coordinate?</td><td>How does the software's current truth, change lines, and closeable work get organized, advanced, and sunk?</td></tr>
+<tr><td><b>Core entity</b></td><td>Agent / Role / Team</td><td>Vision spec · project spec · epic spec · issues</td></tr>
+<tr><td><b>Main question</b></td><td>How do agents divide work, hand off, coordinate?</td><td>How do the software's target world, current truth, change lines, and closeable work get organized and evolved?</td></tr>
 <tr><td><b>Where state lives</b></td><td>Agent sessions / message buses / queues</td><td>The <code>.cs/</code> file tree (readable by both humans and AI)</td></tr>
 <tr><td><b>Pain it solves</b></td><td>One agent isn't enough; need coordination to scale</td><td>Software complexity overflows context; tacit knowledge gets lost; requirements drift</td></tr>
 <tr><td><b>Role of humans</b></td><td>The less the better — full automation is the ideal</td><td>Human-in-the-loop — the programmer owns the whole; AI is an efficient executor</td></tr>
@@ -111,46 +111,55 @@ I built CodeStable because I believe **the chaos of software engineering isn't r
 
 ---
 
-## Design: project spec + epic spec + issues
+## Design: vision spec + project spec + epic spec + issues when useful
 
-Early CodeStable split development into 6 entities and 3 pipelines. After further compression, the core is three things: the project mainline truth, large-change lines, and closeable execution slices.
+CodeStable separates four responsibilities: the target application world, current project truth, bounded evolving changes, and closeable work that is worth managing over time. They are not stages every request must pass through.
+
+### vision spec — the target application world
+
+The vision spec lives in `.cs/vision/`. It lets an individual developer externalize the product in their head: how users eventually get results, which capability areas make up the application, which imaginative ideas and mutually exclusive directions remain open, and which areas are planned, under construction, or real.
+
+Vision is a recursively expandable product map. Each `index.md` leads with user journeys and uses the capability landscape as a secondary view. The agent does more than transcribe: it helps place, divide, connect, and challenge ideas. Vision is not a roadmap or task board; detailed delivery state remains in epics and issues.
 
 ### project spec — the mainline truth
 
-The project spec lives in `.cs/spec/`. It is written for a developer entering the project for the first time: what the project is, where it is going, how requirements expand, how architecture expands, and where shared language lives. It is a tree, not a two-level directory; each `index.md` gives orientation first, then points to child documents.
+The project spec lives in `.cs/spec/`. It tells a new developer what the project currently is, which capabilities and boundaries already hold, how the architecture expands, and where shared language lives. The target future belongs in Vision; Project Spec keeps stable current truth.
 
 Shared language belongs in the nearest `index.md` where it applies, not in a separate domain hierarchy. A spec does not record change logs; it explains why the current design, boundaries, and trade-offs stand.
 
 ### epic spec — a large-change line
 
-Large changes live in `.cs/epics/YYYY/MM/DD/{短语}/spec.md`. That file is the epic's single authoritative entry and carries status, current requirements, architecture considerations, ready scope, issue links, blockers, close conditions, and graduation candidates. If implementation discovers additions, changes, or reversals, update the same epic spec instead of splitting truth across `index.md`, `plan.md`, or a `changes.md` log.
+Large changes live in `.cs/epics/YYYY/MM/DD/{短语}/spec.md`. An epic may extract a slice from Vision or begin from a current problem. Its `spec.md` is the single authority for status, current requirements, architecture considerations, direct slices and issue links, blockers, close conditions, and graduation candidates.
 
 Issues under an epic close back into the epic spec first. Only when a human confirms the whole epic is done does AI merge the graduated conclusions back into the project spec.
 
-### issues — closeable execution slices
+### issues — closeable work when ongoing management helps
 
-Small bugs, small features, and local chores do not need an epic; they can become independent issues directly. Large needs enter an epic, then get split from the epic spec in batches. An issue carries one verifiable change, not the whole requirement world.
+Use an issue when a change has scope trade-offs, needs multiple rounds or sessions, needs handoff and history, or the user explicitly wants tracking. A small, clear, one-session bug, feature, or chore can be changed and verified directly. Even an epic creates issues only when the continuing record pays for itself.
 
-The close rule is simple: independent issue → project spec; exploratory issue → human-confirmed How-it-works knowledge merged progressively into project spec while change-specific impact analysis stays in the target issue; epic issue → epic spec; user-confirmed epic close → project spec.
+The close rule is simple: independent issue → Project Spec; exploratory issue → confirmed stable understanding in Project Spec; epic issue → Epic Spec; user-confirmed epic close → Project Spec plus realization state and links in the source Vision.
 
 ## How quality follows a change
 
 CodeStable uses the nine product-quality characteristics from [ISO/IEC 25010:2023](https://www.iso.org/standard/78176.html) as a shared vocabulary: functional suitability, performance efficiency, compatibility, interaction capability, reliability, security, maintainability, flexibility, and safety. This is an engineering decision model, not a claim of ISO compliance or certification.
 
 ```text
+Target quality directions in Vision
+                    ↓ extract and confirm
 Stable quality constraints in Project / Epic Spec
                     ↓ inherit
 Risk discovery in Talk / Explore / Complain
                     ↓ select
-Concrete quality objectives in an Issue
+Issue objectives / necessary boundaries for a direct change
                     ↓ realize
 Design decisions → Do evidence → Close check and write-back
 ```
 
 - The nine characteristics are a risk lens, not a nine-row “met / not applicable” checklist.
-- An issue selects only objectives that change its design or acceptance, and records the characteristic, concrete result, source, and expected evidence.
+- Vision may preserve target quality directions, but a development slice confirms them again. An issue selects only objectives that change its design or acceptance.
 - Relevant spec constraints are inherited automatically. The agent identifies ordinary engineering risks; users decide thresholds, material cost, compatibility policy, and conflicts between objectives.
 - Selection creates a commitment: Design responds to every objective, Do produces evidence, and Close passes only when that evidence is sufficient.
+- A direct change does not create a formal quality checklist, but it still obeys relevant specs, explicit user requirements, security, data protection, accessibility, and necessary verification.
 - Testability remains a maintainability subcharacteristic. Observability remains an engineering means that supports reliability, analysability, and evidence instead of becoming a competing quality model.
 
 ## How implementation stays economical
@@ -165,10 +174,10 @@ CodeStable tightens “write less code” into a **minimum sufficient change**: 
 
 ## How UI specs use visuals
 
-When spatial relationships, information hierarchy, or multi-state interaction affect the meaning of a UI requirement, CodeStable requires a versionable visual specification. Projects without relevant UI, and simple copy or styling changes, do not keep empty visual sections.
+When spatial relationships, information hierarchy, or multi-state interaction affect the meaning of a UI requirement, CodeStable keeps a versionable visual specification in Vision or the relevant spec. Projects without relevant UI, and simple copy or styling changes, do not keep empty visual sections.
 
 - ASCII wireframes express layout, regions, hierarchy, and major controls; Mermaid expresses navigation flows or state transitions.
-- Project Spec shows only the stable current interface. Epic Spec distinguishes current from target. An Issue shows only its local change. Design maps that visual contract to components, state, and data flow.
+- Vision Spec shows the target application experience and candidate directions across epics. Project Spec shows the stable current interface; Epic Spec shows the bounded target change; an Issue stays local; Design maps the contract to implementation.
 - Adjacent annotations identify the role and entry point, interaction and key states, stable constraints, and merely illustrative details. A diagram/text conflict must be resolved before implementation.
 - Screenshots, high-fidelity designs, and prototypes may serve as visual evidence, but not as the only specification. A wireframe clarifies an interaction objective; it does not replace runnable behavior or accessibility evidence.
 
@@ -176,15 +185,16 @@ When spatial relationships, information hierarchy, or multi-state interaction af
 
 ## Skill catalog
 
-The repository distributes one `cs` Skill. Users no longer choose among a catalog of skill names; `cs` first identifies the knowledge layer, then loads the relevant internal mode:
+The repository distributes one `cs` Skill. Users no longer choose among a catalog of skill names; `cs` first identifies what the user wants now, then loads the relevant internal mode:
 
 | Intent | What `cs` does internally |
 |---|---|
 | First-time setup | Create or complete the `.cs/` skeleton without silently migrating old requirements |
-| Fuzzy idea or planning | Inspect context, clarify the real problem, then create an independent issue, exploratory issue, or epic only after confirmation |
+| Imagining the whole application | Help the user shape a navigable product map under `.cs/vision/` without forcing immediate delivery |
+| Fuzzy local idea or planning | Inspect context, clarify the real problem, then directly change, update Vision, create an issue / epic, or continue exploring |
 | Spec change | Maintain the project spec or the epic's single `spec.md` |
-| Behavior breaks expectations | Create a bug issue and use a feedback loop to diagnose, fix, and verify |
-| Clear issue | Design, implement, and verify as needed; close and commit only when the user asks for wrap-up |
+| Behavior breaks expectations | Diagnose, fix, and verify through a feedback loop; direct for simple bugs, managed by issue when tracking helps |
+| Clear change | Implement when authorized; write back to an issue when one exists, and do not invent one otherwise |
 | How the system works is unclear | Trace trigger to result with lightweight Explore; promote to a full exploratory issue when complex or reusable |
 | Reusable knowledge | Write notes, agent instructions, or tools; learn unknown workflows under human guidance |
 
@@ -194,22 +204,23 @@ Action rules and principles for code design, debugging, documentation, and skill
 
 ## How the structure evolves
 
-CodeStable isn't a single linear pipeline — it's a **project spec + epic spec + issues** loop:
+CodeStable is not a linear pipeline. Four information responsibilities collaborate only when useful:
 
 ```text
-Project Spec ──small, clear change──> Issue ──close writeback──> Project Spec
-     │
-     └──large, unstable change──> Epic Spec ──in batches──> Issues
-                                      ↑                    │
-                                      └──evidence and learning
+Vision Spec ──extract target slice──> Epic Spec ──issues as useful──> Issues
+     │                                │                              │
+     │                                └──close and graduate──────────┤
+     │                                                               ↓
+     └──target world                              Project Spec (current reality)
 
-Epic close ──graduated conclusions──> Project Spec
+Small clear change ──implement and verify directly──> Project Spec (only if current truth changes)
 ```
 
 **How to read this diagram:**
 
-- **Project spec is the mainline, epic spec is a change line** — large-change churn stays in the epic until it graduates
-- **Issues can be independent or epic-owned**: small bugs/features go direct; large needs split from epic specs in batches
+- **Vision is the target world; Project Spec is current reality** — their difference is an intentional product gap, not a precedence conflict
+- **Epic Spec is a bounded change line** — it may extract from Vision, graduates into Project Spec, and updates Vision's realization links at close
+- **Issues are optional ongoing records** — use them when tracking helps; implement and verify small clear changes directly
 - **Support files are the flywheel**: any work item that surfaces something worth keeping triggers a sink; the next round of work reads it back — the physical implementation of CodeStable's "compounding"
 
 ---
@@ -223,6 +234,9 @@ your-project/
 ├── .cs/
 │   ├── talks/                # Discussion synthesis (written only after confirmation)
 │   │   └── YYYY/MM/DD/{短语}.md
+│   ├── vision/               # Vision spec: target application world
+│   │       ├── index.md
+│   │       └── ...           # Recursive product map led by user journeys
 │   ├── spec/                 # Project spec: mainline truth
 │   │       ├── index.md
 │   │       └── ...           # Recursive reading path; each layer may have its own index.md
@@ -232,7 +246,7 @@ your-project/
 │   │   └── YYYY/MM/DD/{status}-{短语}/     # full Explore: index + trigger-to-result path articles
 │   ├── epics/                # Large-change lines
 │   │   └── YYYY/MM/DD/{短语}/
-│   │       └── spec.md       # Single authority: spec, progress, issues, blockers, close conditions
+│   │       └── spec.md       # Single authority: spec, direct slices, issues, blockers, close conditions
 │   │
 │   ├── notes/                # Knowledge notes, plain markdown, full-text search
 │   │   └── YYYY/MM/DD/{短语}.md
@@ -245,9 +259,11 @@ your-project/
 **Key points:**
 
 - Specs, work items, and knowledge artifacts aggregate under `.cs/`, so "how did we handle that change last time" is three seconds away
+- `vision/` holds the target application world, candidates, and mutually exclusive directions; AI helps organize the map and writes only after user confirmation
 - `spec/` is the project spec, organizing mainline requirements, architecture considerations, shared language, and reading paths for a developer entering the project
-- `epics/` are large-change lines; each epic spec carries additions, changes, and reversals until the epic closes and graduates back into the project spec
-- Before changing code, trace how a trigger produces its result; keep a compact `How it works` section and optional impact scope in the target issue, and promote to full Explore only when the model crosses unclear boundaries or deserves reuse
+- `epics/` are large-change lines; at close they graduate into Project Spec and check realization state and links in their source Vision
+- Small clear changes can be implemented and verified without an issue; use issues when complexity, risk, multiple sessions, or history make them valuable
+- Before changing code, trace how a trigger produces its result; keep the lightweight model in current context or the target issue, and promote to full Explore only when it crosses unclear boundaries or deserves reuse
 - A full Explore `index.md` carries the one-sentence model, boundary, and reading path; path articles progressively reveal the main flow, responsibilities, data, state, relevant branches, and evidence
 - On close, stable How-it-works knowledge graduates progressively into project spec; change-specific impact stays in the target issue, while evidence and excluded interpretations remain in the Explore issue
 - Talks and notes default to `YYYY/MM/DD/{短语}.md` date shards, epics use `YYYY/MM/DD/{短语}/` workspaces, ordinary issues use `YYYY/MM/DD/{status}-{短语}.md`, and exploratory issues use `YYYY/MM/DD/{status}-{短语}/` workspaces; search recursively under each area
@@ -260,9 +276,9 @@ your-project/
 
 > CodeStable has one installed `cs` unit. Its core structure and shared boundaries live in `SKILL.md`; scenario-specific action rules and principles live in that same skill's `references/`, with templates and scripts in the same package.
 >
-> `SKILL.md` must say when to read each reference. It must not hide core contracts or load every scenario at once. Stable project truth belongs in `.cs/spec/`, reusable knowledge in `.cs/notes/`, and short startup rules directly in the project's `AGENTS.md` or `CLAUDE.md`.
+> `SKILL.md` must say when to read each reference. It must not hide core contracts or load every scenario at once. The target application world belongs in `.cs/vision/`, stable project truth in `.cs/spec/`, reusable knowledge in `.cs/notes/`, and short startup rules directly in `AGENTS.md` or `CLAUDE.md`.
 
-Before `cs` switches internal action modes, it should reuse framework-injected project constraints and the current context first: if the project spec, epic spec, or target issue is already understood and shows no sign of change, do not mechanically reread it. Read again only when context is missing, likely stale, needed for exact citation/write-back, or a new local slice is required. Before writing, always confirm the current version of the target issue, `.cs` file, agent instruction file, or code file.
+Before switching internal modes, `cs` first decides whether the user is asking, imagining, discussing, or authorizing action. It reuses a known vision, project spec, epic spec, or issue when current, and confirms the target file's latest version before writing.
 
 To change system rules, update `cs/SKILL.md`, the relevant reference, and its templates together; project-specific stable needs and operating knowledge belong in the matching `.cs/` entities.
 
@@ -287,8 +303,8 @@ CodeStable is modeled for real-world development scenarios, aiming to handle com
 
 CodeStable adapts to model capability. If a future model nails a module reliably, that module gets removed.
 
-- [ ] Polish the local work-item flow
-- [ ] Polish the handoff from spec clarification to planning
+- [ ] Keep refining Vision shaping and extraction into development slices
+- [ ] Keep refining adaptive choice between direct change, Issue, and Epic
 - [ ] …
 
 Issues welcome — share your real-world dev pain and refactoring experience.

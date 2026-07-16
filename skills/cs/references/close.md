@@ -1,6 +1,6 @@
 # Close：关闭与沉淀
 
-关闭 issue 或 epic，把这次工作里毕业的东西沉淀到正确层级。
+关闭 issue 或 epic，把这次工作里毕业的东西沉淀到正确层级；Epic 关闭时同时检查来源 Vision 的实现状态与链接。
 
 ## 背景
 
@@ -14,7 +14,9 @@ CodeStable 的复利不在事项本身，而在关闭时的回写。issue 记录
 
 **只沉淀仍然有效的东西。** 不要把 issue 或 epic 全文搬进 spec。历史叙事、实现流水账、一次性中间判断留在原事项里。
 
-**回写到正确层级。** 独立 issue → project spec；epic issue → epic spec；epic 关闭 → project spec。notes、Agent 指令、tools 按复用价值分流。
+**回写到正确层级。** 独立 issue → project spec；epic issue → epic spec；epic 关闭 → project spec，并检查来源 Vision。notes、Agent 指令、tools 按复用价值分流。普通 issue 不更新 Vision。
+
+**只按事实更新 Vision 状态。** Epic 关闭时可以把相关区域标为部分实现 / 已实现，并更新 Epic、Project Spec 链接。若关闭结论意味着目标内容或候选关系需要改变，先向用户说明差异；没有确认就保留原愿景，并记录仍存在的偏差。
 
 **spec 写当前为什么这样。** 合并 spec 时写需求、架构考量、统一语言、长期质量约束、边界和取舍；不要写“某天从 A 改成 B”的流水。
 
@@ -63,11 +65,18 @@ CodeStable 的复利不在事项本身，而在关闭时的回写。issue 记录
 只在用户明确要求关闭 epic 时执行。先确认：
 
 - `spec.md` 的关闭条件已满足。
-- 相关 issue 都已关闭，或未关闭 issue 已明确废弃/移出。
+- 直接推进的切片已有足够验证；相关 issue 都已关闭，或未关闭 issue 已明确废弃/移出。
 - Epic 中仍然有效的质量约束已经由相关 issue 证据支撑，或明确保留为后续约束。
 - `spec.md` 中“合并回 project spec 的候选”已经足够稳定。
 
 然后把 epic spec 中毕业的需求、架构考量、统一语言、长期质量约束、边界和取舍合并回 `.cs/spec/` 的合适层级。合并后更新 epic `spec.md` 状态为 closed，并记录合并位置。
+
+如果 epic 链接了来源 Vision，再读取对应 Vision 分支：
+
+- 按实际毕业范围更新“部分实现 / 已实现”等轻量状态。
+- 链接关闭后的 Epic 和已合并的 Project Spec 位置。
+- 不复制 issue 清单、验证流水或实现细节。
+- 目标内容需要改写时，只有用户确认后才修改；否则在 Epic 关闭回写中记录差异。
 
 ### 提交关闭变更
 
@@ -94,13 +103,14 @@ CodeStable 的复利不在事项本身，而在关闭时的回写。issue 记录
 
 - 更新 epic `spec.md` 的当前状态为 `closed`。
 - 在 epic `spec.md` 记录已合并到 project spec 的位置。
+- 在 epic `spec.md` 记录已检查 / 更新的 Vision 位置，或说明该 Epic 没有来源 Vision。
 - 不删除 epic 目录；它保留变更线历史。
 
 遗留事项应该成为新 issue，或留在 epic `spec.md` 的当前推进与剩余阻碍中，不要藏在关闭结论里；只有用户明确要求时才创建新 issue。
 
 ## 收尾汇报
 
-先讲关闭结论：为什么可以关、哪些证据支撑了已选质量目标、沉淀到了 project spec 还是 epic spec、是否已提交。涉及 spec 时，要说明更新了哪个入口/子层，以及这样放的组织理由。最后给路径和 commit 作为证据。
+先讲关闭结论：为什么可以关、哪些证据支撑了已选质量目标、沉淀到了 project spec 还是 epic spec、Epic 关闭时如何同步或保留了 Vision、是否已提交。最后给路径和 commit 作为证据。
 
 ## 应用场景
 

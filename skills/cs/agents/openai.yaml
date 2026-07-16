@@ -1,4 +1,4 @@
 interface:
   display_name: "CodeStable"
-  short_description: "用 Project Spec、Epic Spec 与 Issue 驱动软件持续演化"
-  default_prompt: "Use $cs to organize this project change with CodeStable and continue to the authorized outcome."
+  short_description: "用 Vision、Project Spec、Epic 与按需 Issue 管理软件演化"
+  default_prompt: "Use $cs as an adaptive software-development framework: infer the user's current intent, apply only the CodeStable structure that adds value, and continue to the authorized outcome."
