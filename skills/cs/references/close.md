@@ -1,119 +1,99 @@
 # Close：关闭与沉淀
 
-关闭 issue 或 epic，把这次工作里毕业的东西沉淀到正确层级；Epic 关闭时同时检查来源 Vision 的实现状态与链接。
+关闭 issue 或 epic，把仍成立的结论**毕业**到正确层级；Epic 关闭时检查来源 Vision 的实现状态与链接。
+
+**关闭 ≠ 完成。** 完成指实现与验证已达成目标；关闭须用户授权收尾（“关闭 / 收尾 / 做完并沉淀”等）。Git 契约见下与 `SKILL.md`。
+
+**关闭 ≠ 整理进 `done/`。** 关闭只做 `o`→`x` 与毕业回写；把已完成项挪到 `issues/done/` 或 `epics/done/` 仅在用户主动要求整理时进行（见 `SKILL.md`「完成 · 关闭 · done」）。
 
 ## 背景
 
-CodeStable 的复利不在事项本身，而在关闭时的回写。issue 记录一次执行历史；epic spec 记录一条大需求活规格边界的当前理解；project spec 记录项目主线真相。
-
-独立 issue 关闭后，可以把稳定结论直接回写 project spec。探索型 issue 关闭时，把用户确认过的 How it works 理解按 spec 规范合并进 project spec；与某次改动绑定的影响分析仍留在目标 issue。epic issue 关闭后，先回写 epic spec。只有当用户确认整个 epic 完成，AI 才把 epic spec 中毕业的结论合并回 project spec。
+复利在关闭时的回写：issue 留执行历史；epic spec 留活规格边界内的当前理解；project spec 留主线真相。回写层级见 `SKILL.md` 毕业规则与下文。
 
 ## 原则
 
-**先确认可以关闭。** issue 的目标必须达成，范围不能暗中扩大，每个已选质量目标都要有相称证据，验证结果要能支撑关闭。epic 必须由人确认关闭，不能由 AI 因为 issue 看起来都完成就自行关闭。
+**先确认可以关闭。** 目标达成、范围未暗扩、已选质量目标均有相称证据。Epic 必须由人确认关闭，不能因 issue 看起来都完成就自行关闭。
 
-**只沉淀仍然有效的东西。** 不要把 issue 或 epic 全文搬进 spec。历史叙事、实现流水账、一次性中间判断留在原事项里。
+**只沉淀仍然有效的东西。** 不把事项全文搬进 spec；流水与中间判断留原事项。
 
-**回写到正确层级。** 独立 issue → project spec；epic issue → epic spec；epic 关闭 → project spec，并检查来源 Vision。notes、Agent 指令、tools 按复用价值分流。普通 issue 不更新 Vision。
+**回写到正确层级。** 独立 issue → project spec；epic issue → epic spec；epic 关闭 → project spec 并检查 Vision。普通 issue 不更新 Vision。notes / Agent 指令 / tools 按复用价值分流。
 
-**只按事实更新 Vision 状态。** Epic 关闭时可以把相关区域标为部分实现 / 已实现，并更新 Epic、Project Spec 链接。若关闭结论意味着目标内容或候选关系需要改变，先向用户说明差异；没有确认就保留原愿景，并记录仍存在的偏差。
+**只按事实更新 Vision 状态。** 实现程度与链接可更新；目标内容或候选关系要变时须用户确认，否则记录偏差。
 
-**spec 写当前为什么这样。** 合并 spec 时写需求、架构考量、统一语言、长期质量约束、边界和取舍；不要写“某天从 A 改成 B”的流水。
+**spec 写当前为什么这样。** 不写“某天从 A 改到 B”的流水。
 
-**只按承诺检查质量。** Close 不重新展开九特征清单，也不要求未选项解释“不适用”。如果执行证据暴露了会阻碍关闭的关键遗漏，先回到 Design 补质量目标和设计响应，再由 Do 完成实现与验证；不能在关闭结论中临时降级或补作文档。
+**只按承诺检查质量。** 不重开九项清单。关键遗漏 → 回 Design 补目标与响应，再 Do；不能在关闭结论里临时降级。见 [quality](quality.md)。
 
-**有界简化必须仍然有界。** Issue 记录了简单方案的已知上限时，检查升级触发是否清楚、是否尚未发生、是否没有削弱目标和已选质量承诺。上限是稳定产品边界就回写 spec，属于可复用维护坑点就写 notes；不要为尚未触发的未来优化自动创建 issue。触发已经发生且会阻碍目标时，回到 Design / Do，不能以“后续再做”关闭。
+**有界简化必须仍有界。** 检查上限、触发未发生、未削弱目标与承诺。稳定产品边界 → spec；维护坑点 → notes；触发已发生且阻碍目标 → 回 Design/Do，不能以“后续再做”关闭。见 [economy](economy.md)。
 
-**UI 关系按真相层级毕业。** UI issue 关闭时，按 `ui-spec.md` 检查目标线框图、关键状态和实际行为是否一致。独立 issue 的稳定界面关系回写 Project Spec，epic issue 先回写 Epic Spec；只迁移仍成立的结构和交互约束，不把实现组件树、过期方案或一次性截图升级成主线真相。
+**UI 按真相层级毕业。** 见 [ui-spec](ui-spec.md)。
 
-**核心理解不引用代码。** 回写 spec 时只合并人能读懂的稳定结论。代码路径、命令结果和调查证据留在 issue、notes 或证据索引里，不要让 project spec 的正文变成代码导览。
+**核心理解不引用代码。** 代码路径与命令留 issue/notes/证据索引。见 [docs](docs.md)。
 
-**先守组织，再写内容。** 回写 project spec 时先从 `.cs/spec/index.md` 找阅读路径。缺少合适位置时，先补入口或子层索引，再写内容，不要散落平级文件。
+**先守组织再写内容。** 从 `.cs/spec/index.md` 找路径；缺位置先补入口，不散落平级文件。
 
-**探索文章按渐进式披露毕业。** Explore 工作区里的路径文章不是原样搬家。关闭时保留“一句话模型 → 主路径 → 关键分支与边界 → 证据”的认知顺序，再按 Spec 的使用叙事、统一语言和树状入口调整；只把稳定 How it works 理解放到合适目录，并更新对应 `index.md` 的阅读路径。
+**探索文章按渐进式披露毕业。** 不是原样搬家；稳定现状机制说明按 Spec 结构安置。
 
 ## 行动指南
 
 ### 读取关闭上下文
 
-必须先判断关闭对象：
+- issue：用户给路径则读该文件/目录；否则在 `.cs/issues/` 按 `NNN-o-…` / 名称搜索
+- epic：读权威 `spec.md`、明确引用的相邻材料与相关 issue
 
-- issue：用户给路径就读该文件或目录；没给路径就递归搜索 `.cs/issues/`。
-- epic：用户给 `.cs/epics/YYYY/MM/DD/{短语}/`；读取唯一权威入口 `spec.md`、它明确引用的相邻材料和相关 issue。
-
-开始前复用当前上下文；目标 issue/epic、准备写回的 spec/notes/Agent 指令/tools、以及要提交的代码文件，写入或暂存前必须确认当前版本。
+写入或暂存前确认目标事项、将回写的 spec/notes/Agent 指令/tools、以及要提交代码的当前版本。
 
 ### 关闭 issue
 
-先看 issue 类型：
+路径规则：把文件名或目录名中的 **`-o-` 改为 `-x-`**，保留 `NNN`、可选的 `ff`、名称不变。例如 `012-o-fix-login.md` → `012-x-fix-login.md`；`015-o-ff-toolbar.md` → `015-x-ff-toolbar.md`；Explore 目录 `003-o-auth-flow/` → `003-x-auth-flow/`。
 
-- 普通 issue：检查目标、范围、质量目标、执行记录和验证；每个已选质量目标都要能指向对应证据。若执行记录包含有界简化，同时检查已知上限、升级触发和升级方向。缺少执行记录、目标证据或验证时，切换到 Design / Do。
-- Explore issue：不要求业务代码执行记录。检查能否讲清触发、关键过程和可观察结果，相关责任、数据、状态和分支是否有证据，未知是否显式标出；存在具体变化时，还要确认影响已分成必须修改、需要验证和仍待调查。未达到“足够行动”就继续 Explore，不要切到 Do。
+- **普通 issue**：检查目标、范围、质量目标、执行记录与验证；有界简化则检查上限/触发/方向。缺记录或证据 → 回 Design/Do。
+- **ff issue**：检查四节是否齐全（做了什么 / 改了哪些 / 验证 / 对 `.cs/` 的影响）。真相失效须已同步 spec 或明确标漂移；不要求完整质量清单与实现设计。同会话快改已直接落 `x-ff` 的，无需再关一次。
+- **Explore issue**：不要求业务代码执行记录。须能讲清触发—过程—结果，相关责任/数据/状态有证据，未知显式标出；有具体变化时影响已分层。未达“足够行动” → 继续探索，不进 Do。
 
-按 issue 的 `epic` frontmatter 或“归属”判断回写层级：
+按 `epic` frontmatter / 归属回写：
 
-- `epic` 为空：把稳定需求、架构考量、统一语言、长期质量约束或边界合并回 project spec。
-- `type: explore`：读取工作区 `index.md` 和路径文章，确认现状模型已经足够行动且用户认可候选毕业内容；再把稳定 How it works 理解按渐进式披露与 Spec 结构合并到 `.cs/spec/`，更新对应 `index.md` 阅读路径。与具体变化绑定的影响分析写回或保留在 `related_issue` 指向的目标 issue；代码证据、调查过程、已排除理解和仍未知问题留在 Explore issue。
-- `epic` 指向目录：把完成结果、验证事实、仍然有效的质量约束、当前推进变化和毕业候选写回该 epic 的 `spec.md`。
+- `type: ff`：默认不强制大段毕业；按「对 `.cs/` 的影响」执行或确认；坑点可进 notes
+- `epic` 空且非 ff：稳定结论 → project spec
+- `type: explore`：用户认可后，稳定现状机制说明 → `.cs/spec/` 并更新 `index.md`；影响分析留 `related_issue`；证据与已排除理解留 Explore issue；在 Explore `## 关闭回写` 记录迁入位置
+- `epic` 有目录：结果、验证、仍有效约束、推进变化与毕业候选 → 该 epic `spec.md`
 
-再把坑点、操作经验、调试路径写入 notes；极少数启动必读规则写入已有 `AGENTS.md` 或 `CLAUDE.md`；稳定工具说明写入 tools。
-
-涉及 UI 时，检查图示是否明确标记当前 / 目标 / 示意、图与文字是否一致、相关关键状态是否有验证。回写上层 spec 后，目标图在该层成为“当前”；截图或高保真原型只在确有复用价值时作为证据链接保留。
+坑点 → notes；启动短规则 → `AGENTS.md` / `CLAUDE.md`；稳定工具 → tools。
 
 ### 关闭 epic
 
-只在用户明确要求关闭 epic 时执行。先确认：
+仅用户明确要求时。确认：关闭条件满足；epic 内直接推进已有足够验证；相关 issue 已关或明确废弃/移出；质量约束有证据或保留为后续约束；毕业候选足够稳定。
 
-- `spec.md` 的关闭条件已满足。
-- 直接推进的切片已有足够验证；相关 issue 都已关闭，或未关闭 issue 已明确废弃/移出。
-- Epic 中仍然有效的质量约束已经由相关 issue 证据支撑，或明确保留为后续约束。
-- `spec.md` 中“合并回 project spec 的候选”已经足够稳定。
-
-然后把 epic spec 中毕业的需求、架构考量、统一语言、长期质量约束、边界和取舍合并回 `.cs/spec/` 的合适层级。合并后更新 epic `spec.md` 状态为 closed，并记录合并位置。
-
-如果 epic 链接了来源 Vision，再读取对应 Vision 分支：
-
-- 按实际毕业范围更新“部分实现 / 已实现”等轻量状态。
-- 链接关闭后的 Epic 和已合并的 Project Spec 位置。
-- 不复制 issue 清单、验证流水或实现细节。
-- 目标内容需要改写时，只有用户确认后才修改；否则在 Epic 关闭回写中记录差异。
+合并进 `.cs/spec/` 合适层级后，epic `spec.md` 标 `closed` 并记录合并位置；目录名 `-o-` → `-x-`（序号与名称不变）。有来源 Vision 则按事实更新实现程度与链接；改目标内容须确认。
 
 ### 提交关闭变更
 
-如果项目在 git 仓库里，关闭结论和长期实体回写完成后，把本次关闭相关变更提交在同一个 commit 里：业务代码、目标 issue/epic、project/epic spec、notes/Agent 指令/tools 回写都一起提交。
+若在 git 仓库：关闭结论与长期实体回写完成后，**相关变更同一 commit**（业务代码、目标 issue/epic、project/epic spec、notes/Agent 指令/tools）。
 
-提交前看 `git status --short`，只暂存相关文件。已有无关脏改不要碰；相关和无关变更混在同一文件时，停下来说明风险。不要 amend、rebase、reset；不要 push，除非用户明确要求。
+提交前 `git status --short`，只暂存相关文件。无关脏改不碰；同文件混有无关变更则停下说明。不 amend / rebase / reset；不 push，除非用户明确要求。
 
 ## 产物契约
 
-关闭 issue 时：
+关闭 issue：
 
-- 更新 `## 关闭结论`：关闭判断、验证摘要（包含已选质量目标的证据）、回写位置、遗留事项。
-- frontmatter 的 `status` 改为 `closed`。
-- 普通 issue 文件名改成 `.cs/issues/YYYY/MM/DD/closed-{短语}.md`；探索型 issue 目录名改成 `.cs/issues/YYYY/MM/DD/closed-{短语}/`。
+- 更新 `## 关闭结论`（常规 issue）：判断、验证摘要（含质量证据）、回写位置、遗留事项；ff 以「对 `.cs/` 的影响」为准，可无长关闭结论
+- `status: closed`；路径 `-o-` → `-x-`（序号与名称不变）
 
-关闭探索型 issue 时还要：
+关闭 Explore issue：另更新 spec 阅读路径与 Explore `## 关闭回写`。
 
-- 把确认过的 How it works 理解合并或迁移到 `.cs/spec/`，必要时改写标题和层级，让读者可以从总览逐步进入主路径、关键分支和边界。
-- 更新目标层级的 `index.md`，说明为什么读、从哪条路径开始、什么时候需要继续深入。
-- 把变化特定的“必须修改 / 需要验证 / 仍待调查”留在目标 issue，不升级成项目长期真相。
-- 在 Explore `index.md` 的 `## 关闭回写` 记录迁入的 spec 内容、更新的 spec index、留在目标 issue 和 Explore issue 的材料。
+关闭 epic：
 
-关闭 epic 时：
+- `spec.md` 状态 `closed`；记录合并到 project spec 的位置与已检查/更新的 Vision
+- 目录 `{NNN}-o-{名称}/` → `{NNN}-x-{名称}/`；不删除目录
 
-- 更新 epic `spec.md` 的当前状态为 `closed`。
-- 在 epic `spec.md` 记录已合并到 project spec 的位置。
-- 在 epic `spec.md` 记录已检查 / 更新的 Vision 位置，或说明该 Epic 没有来源 Vision。
-- 不删除 epic 目录；它保留变更线历史。
-
-遗留事项应该成为新 issue，或留在 epic `spec.md` 的当前推进与剩余阻碍中，不要藏在关闭结论里；只有用户明确要求时才创建新 issue。
+遗留事项应成新 issue 或留在 epic 当前推进/阻碍中，不藏在关闭结论里；仅用户明确要求时建新 issue。
 
 ## 收尾汇报
 
-先讲关闭结论：为什么可以关、哪些证据支撑了已选质量目标、沉淀到了 project spec 还是 epic spec、Epic 关闭时如何同步或保留了 Vision、是否已提交。最后给路径和 commit 作为证据。
+先讲为何可关、质量证据、沉淀到哪一层、Epic 时如何同步或保留 Vision、是否已 commit。路径与 commit 作证据。
 
 ## 应用场景
 
-实现和验证完成后关闭 issue；探索型 issue 经用户确认后合并 project spec；bug 修完后沉淀稳定预期；feature 完成后回写边界和取舍；用户确认大 epic 完成后，把 epic spec 合并回 project spec。
+实现验证完成后关闭 issue；Explore 经确认合并 project spec；bug/feature 关闭沉淀；用户确认后关 epic。
 
-不适用：代码没完成切换到 Do；设计缺口切换到 Design；规格仍在变化切换到 Spec；默认不推送、不部署，除非用户明确要求。
+不适用：代码未完成 → Do；设计缺口 → Design；规格仍变 → Spec；默认不推送不部署。

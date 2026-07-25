@@ -1,6 +1,6 @@
 # Spec：维护当前真相与活规格
 
-把当前现实或有边界的变化写进正确层级：项目主线进入 `.cs/spec/`，大需求活规格边界进入 `.cs/epics/YYYY/MM/DD/{短语}/spec.md`。目标应用全景由 Vision 模式维护，不写进 Project Spec。
+把当前现实或有边界的变化写进正确层级：项目主线进入 `.cs/spec/`，大需求活规格边界进入 `.cs/epics/{NNN}-o-{名称}/spec.md`。目标应用全景由 Vision 模式维护，不写进 Project Spec。
 
 ## 背景
 
@@ -32,16 +32,16 @@ Spec 模式的职责不是记流水账，而是维护“当前为什么这样”
 
 **Epic 是活规格边界。** 只有跨模块、会多轮变化、会分批 issue、或规格会在一个可圈住范围内反复演进时，才创建 epic。它不是任务桶，也不是 project spec 的缩小版；它负责让变化留在一个人类能 review、AI 能持续对齐的范围里。
 
-**Epic spec 同时承载当前推进。** 不必等整个 epic 全局完美。某一批目标、范围、依赖和验证足够清楚，就在同一个 `spec.md` 的“当前推进”中标出可推进范围、直接推进的切片、按需 issue、暂停或废弃项和剩余阻碍。推进视图不是独立真相，也不替 issue 写实现设计。
+**Epic spec 同时承载当前推进。** 不必等整个 epic 全局完美。某一批目标、范围、依赖和验证足够清楚，就在同一个 `spec.md` 的“当前推进”中标出可推进范围、**epic 内直接推进**的切片、按需 issue、暂停或废弃项和剩余阻碍。推进视图不是独立真相，也不替 issue 写实现设计。
 
 ## 行动指南
 
 先判断目标层级：
 
 - 项目长期真相、独立小需求沉淀、全局统一语言或架构方向 → 更新 `.cs/spec/`。
-- 大需求、跨模块变更、会分多批 issue、规格会反复变化 → 更新 `.cs/epics/YYYY/MM/DD/{短语}/spec.md`。
+- 大需求、跨模块变更、会分多批 issue、规格会反复变化 → 更新 `.cs/epics/{NNN}-o-{名称}/spec.md`（新建时 `NNN` = epics 目录最大序号 + 1）。
 - 跨越多个 Epic 的目标产品全景、候选方向或互斥实验 → 切换 Vision。
-- 没有现成 epic 但明显需要一条变更线 → 先说明为什么需要 epic；用户同意后创建目录型 epic。
+- 没有现成 epic 但明显需要一条变更线 → 先说明为什么需要 epic；用户同意后创建 `{NNN}-o-{名称}/` 目录型 epic。
 
 更新 project spec 时，先读 `.cs/spec/index.md`。按阅读路径找到最近的子层；缺少合适位置时，先补该层 `index.md` 或新建子层入口，不要把结论散落成平级文件。
 
@@ -53,17 +53,17 @@ Spec 模式的职责不是记流水账，而是维护“当前为什么这样”
 
 涉及 UI 结构时读取 `ui-spec.md`。区域位置、分栏分组、页面关系、控件共置、关键状态或响应式结构会影响需求理解时必须画；纯文案、设计 token 或无空间歧义的单控件变化不强制。Project Spec 的图标记为当前，Epic 的图标记当前 / 目标，截图和原型只放相关材料或证据索引。只画关键关系，图下标注角色与入口、交互与状态、稳定约束和仍属示意的部分。
 
-遇到未知系统、术语、角色、状态和流程，先查 `.cs/`、README、代码、历史 issue/epic、notes 和 project spec。查不到或存在多个可能含义时，向用户提带证据的问题；需要顺清“触发如何产生结果”且无法在当前上下文紧凑解释时，切换到完整 Explore。
+遇到未知系统、术语、角色、状态和流程，先查 `.cs/`、README、代码、历史 issue/epic、notes 和 project spec。查不到或存在多个可能含义时，向用户提带证据的问题；需要顺清“触发如何产生结果”且无法在当前上下文紧凑解释时，先做**现状说明**，不够则建 **Explore issue**（见 [explore](explore.md)）。
 
 ## 产物契约
 
 project spec 默认入口是 `.cs/spec/index.md`，使用 `templates/entities/project-spec-index.md`。子层入口用 `templates/entities/spec-section-index.md`。
 
-epic 默认结构只有一个权威入口：`.cs/epics/YYYY/MM/DD/{短语}/spec.md`。使用 `templates/entities/epic-spec.md`；不要创建重复职责的 `index.md`、`plan.md` 或 `changes.md`。材料复杂时可增加按内容命名的相邻文档，但不能承载第二份状态或计划，并必须由 `spec.md` 说明为什么读、何时读。
+epic 默认结构只有一个权威入口：`.cs/epics/{NNN}-o-{名称}/spec.md`（关闭后目录改为 `{NNN}-x-{名称}/`）。使用 `templates/entities/epic-spec.md`；不要创建重复职责的 `index.md`、`plan.md` 或 `changes.md`。材料复杂时可增加按内容命名的相邻文档，但不能承载第二份状态或计划，并必须由 `spec.md` 说明为什么读、何时读。
 
 `spec.md` 必须覆盖：来源 Vision（如有）、当前方案、需求变化、架构考量、统一语言、本轮可推进范围、暂不推进范围、未确认问题、合并回 project spec 的候选，以及关闭时需要检查的 Vision 区域；存在长期质量约束时还要覆盖适用条件、具体目标和取舍，不生成九项空清单。
 
-`spec.md` 中的“当前推进”只记录当前可推进范围、直接切片的结果与证据索引、issue 链接、暂停或废弃项和剩余阻碍；不要在这里复制 issue 正文或实现设计。
+`spec.md` 中的“当前推进”只记录当前可推进范围、epic 内直接推进切片的结果与证据索引、issue 链接、暂停或废弃项和剩余阻碍；不要在这里复制 issue 正文或实现设计。
 
 ## 收尾汇报
 

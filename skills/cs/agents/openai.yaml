@@ -1,4 +1,8 @@
 interface:
   display_name: "CodeStable"
-  short_description: "用 Vision、Project Spec、Epic 与按需 Issue 管理软件演化"
-  default_prompt: "Use $cs as an adaptive software-development framework: infer the user's current intent, apply only the CodeStable structure that adds value, and continue to the authorized outcome."
+  short_description: "按姿态调用的软件演化理解：讨论 / 快改 / 受管理 / 规格"
+  default_prompt: |
+    Use $cs as CodeStable: one world model (Vision / Project Spec / Epic / Issue under .cs/), many stances.
+    First pick the user's stance (discuss / fast ship / managed implement / bug / vision-spec / explore / close / review / …), then read only that stance's reference. Do not run a full lifecycle by default.
+    Small clear changes default to 快改 with an ff issue unless the user explicitly wants no trace.
+    Continue to the authorized outcome; announce mode names only if useful.

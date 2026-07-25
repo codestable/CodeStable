@@ -53,7 +53,7 @@ related_issue: ""
 
 ## 候选毕业位置
 
-- 稳定 How it works 结论：`.cs/spec/...`
+- 稳定现状机制说明：`.cs/spec/...`
 - 需要更新的阅读入口：
 - 留在目标 issue 的影响分析：
 - 只留在 Explore issue 的证据与历史：

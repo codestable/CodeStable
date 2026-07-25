@@ -24,7 +24,7 @@ CodeStable 里的 vision spec、project spec、epic spec、探索型 issue、`no
 
 **阅读路径。** 链接不是为了显得有关联，而是告诉读者下一步去哪：关心 X 读哪篇；要修改 Y 先看什么；只想确认需求看哪里。
 
-**信息分层。** 目标世界、当前真相、候选理解、活规格边界、历史过程和操作经验不能混在一起。vision spec 放跨 Epic 的目标应用全景、候选和互斥方向；project spec 放当前主线真相；epic spec 放有边界变化的当前理解；Explore issue 放未关闭的现状模型和证据；普通 `issues/` 放值得持续管理的执行历史，`notes/` 放可复用经验。直接改变没有必要为了对称补一份 issue 文档。
+**信息分层。** 目标世界、当前真相、候选理解、活规格边界、历史过程和操作经验不能混在一起。vision spec 放跨 Epic 的目标应用全景、候选和互斥方向；project spec 放当前主线真相；epic spec 放有边界变化的当前理解；Explore issue 放未关闭的现状模型和证据；`issues/`、`epics/` 用 `NNN-o|x[-ff]-名称`（epic 为目录 + `spec.md`）；`notes/`、`talks/` 用扁平 `NNN-名称`；均无日期目录。已完成且用户主动整理时可进各自 `done/` 子目录（仍参与检索，不叫 archive）。小改默认落 `ff` issue；仅用户明确不要痕迹时可不建 issue。写入口与命名见 `SKILL.md`。
 
 **第一性原理。** 先回到这个文档要解决的最小本质问题：读者为什么需要它，系统必须守住什么约束，哪些概念不可再拆。不要从已有文件、模板或术语出发堆结构。
 
