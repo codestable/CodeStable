@@ -7,7 +7,7 @@ skill files or a centralized onboard runtime.
 
 | Group | Skill | Responsibility |
 |---|---|---|
-| Navigation | `cs` | Explain CodeStable and recommend one entry; never start a workflow or write files |
+| Navigation | `cs` | Clear action requests dispatch to the target skill in the same turn; advice gets a recommendation only; the overview writes no files |
 | Onboarding | `cs-onboard` | Create minimal project memory and explain a lossless v1 upgrade |
 | Feature | `cs-feat` | Implement new capability; scale design confirmation and independent review with risk |
 | Issue | `cs-issue` | Fix bugs or broken existing behavior with red-to-green evidence |

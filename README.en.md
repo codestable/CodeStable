@@ -182,7 +182,7 @@ High-risk changes, or an explicit owner request, invoke `cs-code-review` for ind
 
 | Group | Skill | Purpose |
 |---|---|---|
-| Navigation | `cs` | Explain the system and recommend an entry; never start another workflow or write files |
+| Navigation | `cs` | Clear action requests dispatch to the target skill in the same turn; advice gets a recommendation only; the overview writes no files |
 | Onboard | `cs-onboard` | Install CodeStable into a repository |
 | Epic | `cs-epic` | Decompose, confirm, and drive multiple deliverable items over time |
 | Feature | `cs-feat` | Implement new capability and scale design confirmation or review with risk |

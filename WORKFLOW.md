@@ -2,8 +2,8 @@
 
 ## 工作流
 
-CodeStable v2 是 8 个独立安装的 thin-harness skill，加一个项目记忆闭环。`cs` 只解释和
-推荐，不自动启动下游流程；确定入口后直接调用对应 skill。
+CodeStable v2 是 8 个独立安装的 thin-harness skill，加一个项目记忆闭环。`cs` 判别用户
+此刻要什么：明确行动诉求**同轮直转**对应 skill 并继续执行；咨询只给推荐；无诉求时介绍体系。
 
 ```text
 不确定入口       -> cs

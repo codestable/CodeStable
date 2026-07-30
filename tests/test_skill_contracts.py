@@ -13,7 +13,7 @@ SKILLS = ROOT / "plugins/codestable/skills"
 LOCAL_SKILLS = ROOT / ".claude/skills"
 
 THIN_SKILL_SAFETY_INVARIANTS = {
-    "cs": ("只解释和推荐", "不启动流程", "不写文件"),
+    "cs": ("同轮直转", "只推荐入口", "不写任何文件"),
     "cs-code-review": ("只读", "独立 subagent reviewer", "blocking 未解决"),
     "cs-epic": ("拆解方案必须经用户确认", "不代替用户做整体验收"),
     "cs-feat": ("不得代替用户确认设计", "与声明相称的可核验证据"),

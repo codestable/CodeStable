@@ -3,8 +3,9 @@
 ## Workflow
 
 CodeStable v2 consists of eight independently installed thin-harness skills and a project-memory
-loop. `cs` only explains and recommends; it does not start another workflow automatically. Once the
-entry is known, invoke that skill directly.
+loop. `cs` classifies what the user wants right now: clear action requests dispatch to the target
+skill in the same turn and continue executing; advice requests get a recommendation only; with no
+request it presents the overview.
 
 ```text
 unsure which entry    -> cs

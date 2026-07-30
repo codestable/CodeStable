@@ -1,16 +1,23 @@
 ---
 name: cs
-description: CodeStable 体系速读。触发：用户想了解 CodeStable、问该用哪个 cs skill，或不确定诉求归属。
-argument-hint: "[问题]"
+description: CodeStable 入口。触发：用户调用 cs、想了解体系、问该用哪个 skill，或带着诉求未选入口。明确行动诉求同轮直转对应 skill。
+argument-hint: "[诉求]"
 ---
 
 # cs
 
-介绍 CodeStable 并帮用户选对入口。本 skill 只解释和推荐，不启动流程、不写文件。
+判断用户此刻要什么：要么直接开始干，要么给推荐，要么介绍体系。**明确的行动诉求不停下等确认。**
 
-## 体系速读
+## 判别与行为
 
-CodeStable 是一层薄的研发纪律加一个项目记忆闭环，7 个入口：
+| 用户输入 | 行为 |
+|---|---|
+| 明确行动诉求（修这个 bug、实现 X、重构 Y、审一下、记住这个…） | **同轮直转**：报一句"按 `cs-xxx` 处理：{一句理由}"，随即在当前回合按该 skill 的纪律继续执行，不要求用户重新调用或再次确认 |
+| 咨询（该用哪个 / 流程怎么走 / 你建议怎么做） | 只推荐入口并说明理由，不启动执行 |
+| 只说 cs、想了解体系、无具体诉求 | 输出体系速读 |
+| 诉求含糊到无法判断行动类型，且选错会实质改变后续（会不会建档、会不会改代码） | 只问一个聚焦问题，不默认重流程 |
+
+## 入口表
 
 | 诉求 | 入口 |
 |---|---|
@@ -22,10 +29,10 @@ CodeStable 是一层薄的研发纪律加一个项目记忆闭环，7 个入口�
 | 沉淀经验、教训、"记住这个" | `cs-keep` |
 | 仓库接入 / v1 升级 | `cs-onboard` |
 
-项目记忆在 `.codestable/`：attention.md（每次必读）、lessons/（grep 检索的经验）、work/（活动中的跨会话任务）。普通任务零产物，证据是 diff 与测试。
+一次只转一个入口；用户同时给出两个独立诉求时，问先做哪个。转入不扩大授权：目标 skill 的硬门槛、checkpoint 与写入规则照常生效。
 
-v1 的旧入口（cs-feat-design、cs-issue-fix、cs-goal、cs-brainstorm、cs-docs、cs-domain、cs-req、cs-audit、cs-roadmap 等）已并入上表：设计与需求澄清是 cs-feat / cs-epic 的内置步骤，审计是 cs-code-review 的模式，ADR 与文档由对应工作顺带完成或直接对话处理。
+## 体系速读
 
-## 回答方式
+CodeStable 是一层薄研发纪律加一个项目记忆闭环。项目记忆在 `.codestable/`：attention.md（每次必读）、lessons/（grep 检索的经验）、work/（活动中的跨会话任务）。普通任务零产物，证据是 diff 与测试。v1 的 24 个旧入口（cs-feat-design、cs-goal、cs-audit、cs-note、cs-feedback、cs-roadmap 系等）已并入上表：设计与需求澄清是 cs-feat / cs-epic 的内置步骤，审计是 cs-code-review 的模式，沉淀统一走 cs-keep。
 
-用户带着具体诉求来时，推荐一个入口并说明理由，让用户自己调用或同意后继续；诉求含糊时只问一个聚焦问题。
+导览与推荐本身不写任何文件。
