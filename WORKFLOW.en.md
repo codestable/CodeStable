@@ -1,69 +1,34 @@
 # CodeStable Workflow and Runtime Structure
 
-## Workflow Layers
+## Design principle: thin harness, thick context
 
-CodeStable is layered and event-driven. Daily use should start from main entries, not stage skill names.
+Rules stay minimal: skills carry engineering experience (when to do what, and why) plus a few hard gates — no process state machines. The route belongs to the model; state is recovered from repository facts. Context is retrieved on demand: before acting, grep the project's accumulated knowledge by task keywords and report the sources of any hits.
 
-The root `cs` entry classifies intake mode first. Action requests dispatch to the target skill in the current run; advice requests only recommend. Overview requests do not start downstream workflows, and ambiguous requests stop for one focused question.
-
-The main-entry relationships are:
+## Workflow
 
 ```text
-cs
-└── cs-onboard
-    ├── cs-req / cs-domain
-    ├── cs-epic
-    │   └── internally uses the roadmap storage model and goal package
-    ├── cs-goal
-    ├── cs-brainstorm
-    ├── cs-feat -> cs-code-review
-    ├── cs-issue -> cs-code-review
-    ├── cs-refactor -> cs-code-review
-    ├── cs-docs
-    ├── cs-feedback
-    └── cs-keep / cs-note / cs-docs-neat
+cs (overview)
+cs-onboard (skeleton)
+cs-feat / cs-issue / cs-refactor (event entries) ──> cs-code-review (independent review on high risk or request)
+cs-epic (large-requirement decomposition, sub-items go through event entries)
+cs-keep (wrap-up distillation; every entry has a built-in recommendation moment)
 ```
 
-The vertical layout is layering, not strict time order. Long-lived records are refreshed repeatedly; `cs-epic` is only for large demands and still writes `.codestable/roadmap/` in the first version; `cs-goal` is the autonomous goal workflow.
+All entries share one execution mainline: **understand the relevant facts → act → run proportionate verification → deliver the result**. Risk is re-judged per request from current facts — no persistent lanes. Escalation signals (public contracts / data / permissions / real trade-offs / large diffs / explicit user request) require a design confirmation before acting. Design and final-acceptance confirmations must never be auto-approved by the model; claiming completion requires verifiable evidence.
 
-The event entries are `cs-feat` for new capability, `cs-issue` for bugs, `cs-refactor` for behavior-preserving cleanup, and `cs-docs` for outward documentation. `cs-code-review` remains the cross-cutting implementation review gate.
+## Persistence
 
-`cs-feat` selects a lane from task risk, never from model identity: Quick is for clear local changes that reuse existing contracts and have targeted verification; Standard adds design and inline acceptance while staying in the current run; Goal is opt-in for explicit long-range execution, existing goal state, or Epic children.
-
-The knowledge and feedback loop remains cross-cutting: `cs-keep` compounds knowledge; explicit `cs-feedback` calls produce local-private incidents/triage and require separate preview confirmation before upload; `cs-docs-neat` handles milestone hygiene.
-
-Old stage skills remain long-term compatibility entries:
-
-- Feature: `cs-feat-design` / `cs-feat-design-review` / `cs-feat-impl` / `cs-feat-qa` / `cs-feat-accept` / `cs-feat-ff`
-- Issue: `cs-issue-report` / `cs-issue-analyze` / `cs-issue-fix`
-- Refactor: `cs-refactor-ff`
-- Docs: `cs-doc-tutorial` / `cs-doc-api`
-- Epic: `cs-roadmap` / `cs-roadmap-review` / `cs-roadmap-impl-goal`
-
-## Runtime Structure
-
-After `/cs-onboard`, the project root contains `.codestable/`:
+Ordinary tasks produce zero CodeStable artifacts — the git diff, test output, and delivery summary are the evidence.
 
 ```text
 .codestable/
-├── requirements/        # requirements + domain model
-├── roadmap/             # internal storage model for epic
-├── goals/
-├── features/
-├── issues/
-├── refactors/
-├── audits/
-├── brainstorms/
-├── feedback/
-├── compound/
-├── tools/
-└── reference/
+├── attention.md    # project facts to read every session, ≤25 entries
+├── lessons/        # distilled experience, one markdown file per lesson, grep-searchable
+└── work/           # active cross-session tasks only, one doc per task (goal/context/boundaries/evidence/acceptance), compressed and deleted on completion
 ```
 
-Key constraints:
+Lesson discipline: never write without traceable evidence; grep for same-domain entries first and merge instead of duplicating; a soft cap of ~50 lessons forces consolidation before addition.
 
-- `requirements/` stores long-lived current-state facts and the domain model.
-- `roadmap/` remains the internal planning layer used by `cs-epic`; user-facing docs call it epic, but historical paths/doc_type are not migrated yet.
-- `features/`, `issues/`, and `refactors/` use `YYYY-MM-DD-{slug}/` directories.
-- `compound/` is the only knowledge compounding directory, written by `cs-keep`.
-- `reference/` is released by `cs-onboard`; shared workflow conventions are read from project-local `.codestable/reference/`.
+## v1 compatibility
+
+v1 artifacts in existing projects (`requirements/`, `roadmap/`, `features/`, `issues/`, `compound/`, `reference/`, `tools/`, etc.) are kept read-only — never migrated or deleted; legacy knowledge stays covered by the same grep retrieval. v1 gates and runtime tools are no longer invoked by skills.

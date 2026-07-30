@@ -1,4 +1,0 @@
-interface:
-  display_name: "CodeStable Roadmap Review"
-  short_description: "Roadmap 人审前 gate"
-  default_prompt: "使用 $cs-epic --stage review 在人工确认前审查已起草的 roadmap；按 Task agent 选择规则处理独立 Task agent reviewer。"

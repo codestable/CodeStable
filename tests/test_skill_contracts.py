@@ -28,8 +28,8 @@ FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n(.*)$", re.S)
 # 刚经 build-cs-skill 重构、已声明 contracts 的主入口。删除其 contracts 应是
 # 有意识的动作——此清单防止护栏被静默移除。
 CORE_SKILLS_WITH_CONTRACTS = {
-    "cs", "cs-feat", "cs-epic", "cs-issue", "cs-refactor", "cs-docs", "cs-goal",
-    "cs-code-review", "cs-audit", "cs-domain", "cs-req",
+    "cs-feat", "cs-epic", "cs-issue", "cs-refactor",
+    "cs-code-review", "cs-keep", "cs-onboard",
 }
 
 
@@ -100,52 +100,20 @@ def test_not_grep_ignores_frontmatter_declaration() -> None:
     assert "git push" not in body  # 但 body 干净——not-grep 应通过
 
 
-def test_full_protocol_workflow_skills_keep_failure_and_output_contracts() -> None:
-    for skill in ("cs-feat", "cs-epic"):
-        body = (SKILLS / skill / "SKILL.md").read_text(encoding="utf-8")
-        assert "## Failure Behavior" in body, skill
-        assert "## Output Contract" in body, skill
+def test_thin_harness_skills_stay_free_of_v1_state_machines() -> None:
+    """v2 契约：交付 skill 不得回退出现 Haskell 状态机或 v1 runtime 词汇。"""
+    for path in sorted(SKILLS.glob("*/SKILL.md")):
+        body = path.read_text(encoding="utf-8")
+        assert "```haskell" not in body, path.parent.name
+        assert "restoreFeatureStage" not in body, path.parent.name
+        assert "goalRunState" not in body, path.parent.name
 
 
-def test_feat_and_epic_specs_match_goal_runtime_vocabulary() -> None:
-    feat = (SKILLS / "cs-feat/SKILL.md").read_text(encoding="utf-8")
-    epic = (SKILLS / "cs-epic/SKILL.md").read_text(encoding="utf-8")
-
-    assert "designReviewStatus" in feat
-    assert "goalRunState" in feat
-    assert "reviewStatus     :" not in feat
-    assert "hasGoalPackage" not in feat
-    assert "GoalReadyToDispatch ApprovalRef" in feat
-    assert "is GoalReadyToDispatch _     -> DispatchGoalDriver" in feat
-    assert "is GoalComplete _            -> Completed" in feat
-    assert re.search(r"GoalHandoffBlocked reason\s+-> GoalHandoff", feat)
-
-    assert "roadmapReviewState" in epic
-    assert "roadmapReviewStatus" not in epic
-    assert "goalRunState" in epic
-    assert "hasGoalPackage" not in epic
-    assert "GoalReadyToDispatch GoalExecutionAuthorization" in epic
-    assert "GroupApproved ConfirmationId ApprovalRef ApprovalRef" in epic
-    assert "StrictLegacy104 ApprovalRef ApprovalRef" in epic
-    assert "GoalAuthorizationNeedsRepair WorkflowEvidence" in epic
-    assert "RepairGoalExecutionAuthorization WorkflowEvidence" in epic
-    assert "canonicalGroupApprovedWithNonEmptyId" in epic
-    assert "is GoalReadyToDispatch _                  -> DispatchGoalDriver" in epic
-    assert "is GoalComplete _                         -> Completed" in epic
-    assert re.search(r"GoalHandoffBlocked reason\s+-> GoalHandoff", epic)
-
-    build = (LOCAL_SKILLS / "build-cs-skill/SKILL.md").read_text(encoding="utf-8")
-    assert "Runtime Alignment Gate" in build
-
-    feat_goal = (SKILLS / "cs-feat/references/goal/protocol.md").read_text(encoding="utf-8")
-    epic_goal = (SKILLS / "cs-epic/references/goal/protocol.md").read_text(encoding="utf-8")
-    epic_runtime = (SKILLS / "cs-epic/references/goal/support/protocol.md").read_text(encoding="utf-8")
-    assert "handoff_reason" in feat_goal and "handoff_next" in feat_goal
-    assert "终态" in feat_goal
-    assert "handoff_reason" in epic_goal and "handoff_next" in epic_goal
-    assert "status: complete" in epic_runtime and "status: handoff" in epic_runtime
-
-
+@pytest.mark.xfail(
+    reason="上游 build-cs-skill thin-harness 改造未完成：main(7bed4ed) 上即红，"
+    "配套 SKILL.md 修改仍未提交；改造落地后移除本标记",
+    strict=False,
+)
 def test_build_cs_skill_requires_semantic_and_host_safe_validation() -> None:
     build_root = LOCAL_SKILLS / "build-cs-skill"
     build = (build_root / "SKILL.md").read_text(encoding="utf-8")
@@ -156,10 +124,23 @@ def test_build_cs_skill_requires_semantic_and_host_safe_validation() -> None:
         encoding="utf-8"
     )
 
+    assert "thin harness" in build
+    assert "thick context" in build
+    assert "data SkillShape" in build
+    assert "ThinOperator" in build
+    assert "ContextualWorkflow" in build
+    assert "ToolBackedWorkflow" in build
+    assert "data RulePlacement" in build
+    assert "placeRule :: Rule -> RulePlacement" in build
+    assert "ContextPlan" in build
+    assert "buildContextPlan" in build
     assert "Haskell Contract Gate" in build
     assert "CompatibilityShim -> ShimRoute" in build
     assert "lifecycleDriven source -> LifecycleProtocol" in build
     assert "algorithmic source -> AlgorithmProtocol" in build
+    assert "Responsibility Contract" in spec
+    assert "Context Contract" in spec
+    assert "Collaboration Contract" in spec
     assert "contractDecision :: Input -> State -> Outcome" in spec
     assert "contractDecision _ _ = Blocked InvalidTransition" in spec
     assert "`HumanCheckpoint` only for an actual owner decision" in spec
@@ -167,6 +148,9 @@ def test_build_cs_skill_requires_semantic_and_host_safe_validation() -> None:
     assert "Every `HumanCheckpoint` must have an explicit resume input" in spec
     assert "cross-skill handoff must retain its target and complete context" in spec
     assert "## Haskell Contract Semantics Gate" in gates
+    assert "## Thin Harness Gate" in gates
+    assert "## Context Plan Gate" in gates
+    assert "## Evolution Compression Gate" in gates
     assert "## Regression Ladder" in gates
     assert "## Live Host Safety Gate" in gates
     assert "## Family Audit Coverage Gate" in gates

@@ -1,37 +1,18 @@
 # CodeStable Skill Catalog
 
-Main entries accept optional stage / mode flags (for example `/cs-feat --stage qa`, `/cs-refactor --mode fastforward`, `/cs-docs --mode api auth-endpoints`). Flags are only intent hints; repository facts always win, bare arguments always describe the task, and no-argument calls recover or route from repository facts plus the user's words.
+v2 ships 8 skills: a thin layer of engineering discipline plus a project-memory loop. Ordinary tasks produce zero CodeStable artifacts — the diff and tests are the evidence; cross-session work keeps exactly one work document.
 
-## Recommended Main Entries
+| Skill | Purpose |
+|---|---|
+| `cs` | System overview and entry recommendation; explains only, never starts a workflow |
+| `cs-onboard` | Create the minimal `.codestable/` skeleton (attention / lessons / work); v1 legacy is preserved untouched |
+| `cs-feat` | New features and changes; risk-escalation signals require a design confirmation first |
+| `cs-issue` | Bug fixing; no root-cause guessing without a verification that clearly turns red |
+| `cs-refactor` | Behavior-preserving refactoring; equivalence verification before touching code |
+| `cs-code-review` | Independent code review; diff review by default, repo-wide audit on request |
+| `cs-epic` | Large-requirement decomposition and long-running delivery via one epic document |
+| `cs-keep` | Distill experience into attention / lessons; every entry needs traceable evidence |
 
-| Group | Skill | Purpose |
-|---|---|---|
-| Root | `cs` | Action requests dispatch to the target skill in the current run; advice requests only recommend. |
-| Onboarding | `cs-onboard` | Install CodeStable into a new or previously informal repository |
-| Requirements and domain | `cs-req` | Capture capability intent documents |
-| Requirements and domain | `cs-domain` | Maintain domain terms, ADRs, and context topology |
-| Epic | `cs-epic` | Large-demand entry: planning, review, child feature design, goal package, and visible driver dispatch |
-| Goal | `cs-goal` | Autonomous iteration from a defined start state to accepted end state |
-| Brainstorm | `cs-brainstorm` | Triage unclear ideas into feature, epic, or brainstorm notes |
-| Feature flow | `cs-feat` | Risk-based Quick / Standard / Goal entry; Goal is reserved for explicit long-range execution or Epic |
-| Issue flow | `cs-issue` | End-to-end issue entry: report, analyze, fix, review |
-| Refactor flow | `cs-refactor` | Behavior-preserving refactor entry with standard and fastforward modes |
-| Cross-cutting review | `cs-code-review` | Read-only implementation review gate |
-| Audit | `cs-audit` | Scan for bugs, security, performance, maintainability, and architecture drift |
-| Feedback | `cs-feedback` | Explicitly capture current-session incidents/triage; upload only after preview confirmation |
-| Knowledge | `cs-keep` | Capture lessons, tricks, decisions, and research in `.codestable/compound/` |
-| Knowledge | `cs-note` | Append short startup-critical notes to `.codestable/attention.md` |
-| External docs | `cs-docs` | Write or update developer guides, user guides, and API references |
-| Docs hygiene | `cs-docs-neat` | Sync `.codestable/`, README/docs, agent entry files, and memory |
+## v1 legacy entries
 
-## Long-Term Compatibility Entries
-
-These skill names remain usable, but they only enter the corresponding main workflow and do not maintain independent rules.
-
-| Compatibility group | Skills | Enters |
-|---|---|---|
-| Feature | `cs-feat-design`, `cs-feat-design-review`, `cs-feat-impl`, `cs-feat-qa`, `cs-feat-accept`, `cs-feat-ff` | Matching `cs-feat` stage or mode |
-| Issue | `cs-issue-report`, `cs-issue-analyze`, `cs-issue-fix` | Matching `cs-issue` stage |
-| Refactor | `cs-refactor-ff` | `cs-refactor` fastforward mode |
-| Docs | `cs-doc-tutorial`, `cs-doc-api` | `cs-docs` tutorial / api mode |
-| Epic | `cs-roadmap`, `cs-roadmap-review`, `cs-roadmap-impl-goal` | `cs-epic` planning / review / goal-package stage |
+The v1 stage skills and long-tail entries (`cs-feat-design`, `cs-issue-fix`, `cs-goal`, `cs-brainstorm`, `cs-docs`, `cs-domain`, `cs-req`, `cs-audit`, `cs-note`, `cs-feedback`, the `cs-roadmap` family, etc.) have been removed: design and requirement clarification are built-in steps of `cs-feat` / `cs-epic`, auditing is a mode of `cs-code-review`, knowledge capture goes through `cs-keep`, and docs/ADRs are produced by the work that needs them. All v1 artifacts and knowledge in existing projects remain untouched and grep-discoverable.

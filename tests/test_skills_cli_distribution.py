@@ -130,7 +130,7 @@ def test_skills_cli_package_root_contains_complete_cs_family() -> None:
 
     assert names
     assert all(name == "cs" or name.startswith("cs-") for name in names)
-    assert {"cs", "cs-onboard", "cs-feat", "cs-issue", "cs-goal"} <= names
+    assert {"cs", "cs-onboard", "cs-feat", "cs-issue", "cs-keep"} <= names
 
 
 def test_repo_root_update_discovery_misses_plugin_but_package_root_is_complete() -> None:

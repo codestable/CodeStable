@@ -1,37 +1,18 @@
 # CodeStable 技能目录
 
-主入口调用时可带 flag 化的阶段 / 模式参数（如 `/cs-feat --stage qa`、`/cs-refactor --mode fastforward`、`/cs-docs --mode api 认证接口`）。参数只是意图提示，仓库事实始终优先；裸参数始终表示任务描述；不传参数时按仓库事实和用户原话恢复或路由。
+v2 共 8 个 skill：一层薄研发纪律 + 一个项目记忆闭环。普通任务零产物，证据是 diff 与测试；跨会话任务一个 work 文档。
 
-## 推荐主入口
+| 技能 | 用途 |
+|---|---|
+| `cs` | 体系速读与入口推荐；只解释，不启动流程 |
+| `cs-onboard` | 创建 `.codestable/` 最小骨架（attention / lessons / work）；v1 存量无损保留 |
+| `cs-feat` | 新功能与功能改造；风险升级信号触发时先对齐设计 |
+| `cs-issue` | bug 修复；没有能变红的验证不许猜根因 |
+| `cs-refactor` | 行为等价重构；先有等价性验证再动代码 |
+| `cs-code-review` | 独立代码审查；默认审 diff，可按需做 repo 审计 |
+| `cs-epic` | 大需求拆解与长程推进；一个 epic 文档维护全景 |
+| `cs-keep` | 沉淀经验到 attention / lessons；写入必须有可追溯证据 |
 
-| 分组 | 技能 | 用途 |
-|---|---|---|
-| 根入口 | `cs` | 行动请求同轮直转，咨询请求只给建议；介绍与歧义请求不误启动 workflow |
-| 接入 | `cs-onboard` | 把 CodeStable 接入新仓库或已有零散文档仓库 |
-| 需求与领域 | `cs-req` | 整理和沉淀能力愿景文档 |
-| 需求与领域 | `cs-domain` | 维护领域模型、术语表、ADR 和多 context 拓扑 |
-| Epic | `cs-epic` | 大需求端到端入口：规划、review、子 feature design、goal 包和可见 driver 派发 |
-| 目标驱动 | `cs-goal` | 给定起点与期望终态后自主迭代到验收 |
-| 讨论入口 | `cs-brainstorm` | 想法模糊时分诊到 feature、epic 或 brainstorm note |
-| 特性流程 | `cs-feat` | 按风险自动选择 Quick / Standard / Goal；Goal 仅用于显式长程执行或 Epic |
-| 问题流程 | `cs-issue` | 问题修复端到端入口：report、analyze、fix、review |
-| 重构流程 | `cs-refactor` | 行为等价重构入口：标准模式或 fastforward mode |
-| 横切审查 | `cs-code-review` | 实现完成后的只读代码审查 gate |
-| 审计 | `cs-audit` | 主动扫描 bug、安全、性能、可维护性和架构偏离 |
-| 反馈 | `cs-feedback` | 显式采集当前会话为 local-private incident/triage；确认 preview 后才可上报 |
-| 知识沉淀 | `cs-keep` | 把坑点、技巧、决策、调研沉淀到 `.codestable/compound/` |
-| 知识沉淀 | `cs-note` | 把一两行启动必读项目注意事项追加到 `.codestable/attention.md` |
-| 对外文档 | `cs-docs` | 写或更新开发者指南、用户指南、API 参考 |
-| 文档收尾 | `cs-docs-neat` | 阶段收尾时同步 `.codestable/`、README/docs、agent 入口和记忆 |
+## v1 旧入口
 
-## 长期兼容入口
-
-这些技能名继续可用，但只转入对应主入口，不维护独立流程规则。
-
-| 兼容组 | 技能 | 转入 |
-|---|---|---|
-| Feature | `cs-feat-design`, `cs-feat-design-review`, `cs-feat-impl`, `cs-feat-qa`, `cs-feat-accept`, `cs-feat-ff` | `cs-feat` 的对应阶段或模式 |
-| Issue | `cs-issue-report`, `cs-issue-analyze`, `cs-issue-fix` | `cs-issue` 的对应阶段 |
-| Refactor | `cs-refactor-ff` | `cs-refactor` 的 fastforward mode |
-| Docs | `cs-doc-tutorial`, `cs-doc-api` | `cs-docs` 的 tutorial / api mode |
-| Epic | `cs-roadmap`, `cs-roadmap-review`, `cs-roadmap-impl-goal` | `cs-epic` 的 planning / review / goal-package 阶段 |
+v1 的阶段技能与长尾入口（`cs-feat-design`、`cs-issue-fix`、`cs-goal`、`cs-brainstorm`、`cs-docs`、`cs-domain`、`cs-req`、`cs-audit`、`cs-note`、`cs-feedback`、`cs-roadmap` 系等）已移除：设计与需求澄清是 `cs-feat` / `cs-epic` 的内置步骤，审计是 `cs-code-review` 的模式，沉淀统一走 `cs-keep`，文档与 ADR 由对应工作顺带完成。存量项目的 v1 产物与沉淀全部保留并可被 grep 检索。

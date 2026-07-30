@@ -7,25 +7,25 @@
 ## 语言与文档
 
 - 默认用中文写面向人的回复、报告和文档；代码、命令、路径、协议字段、YAML/JSON key 保持原格式。
-- 单个 Markdown 文件不得超过 300 行；超过必须拆分。
-- 增加或更新 skill 时，同步检查相关 skill、README/reference、测试和 ADR 中的表述。
-- `AGENTS.md`/`CLAUDE.md` 只写 agent 行为规则；不要替代 `.codestable/attention.md`、design、checklist、ADR 等项目事实载体。
+- 单个 Markdown 文件不得超过 300 行；超过必须拆分（经 owner 明确豁免的设计章程除外）。
+- 增加或更新 skill 时，同步检查相关 skill、SKILL_CATALOG、WORKFLOW、README、测试和 ADR 中的表述。
+- `AGENTS.md`/`CLAUDE.md` 只写 agent 行为规则；不要替代 `.codestable/attention.md`、work 文档、ADR 等项目事实载体。
 
-## Skill 边界
+## Skill 边界（v2：thin harness, thick context）
 
-- 不同 skill 之间不要相互耦合；A skill 在非必须情况下不要读取或依赖 B skill 的内部文件。
-- skill 是独立安装单元，运行时每个 skill 只能稳定看到自己包内文件；不要在 SKILL.md 中写 `B-skill/reference/xxx.md` 这类 sibling 引用。
-- 跨 skill 共享的参考文档必须走项目层：由 `cs-onboard` 复制到项目 `.codestable/reference/`，其他 skill 用项目相对路径 `.codestable/reference/xxx.md` 读取。
-- 要改共享口径时，改 `plugins/codestable/skills/cs-onboard/references/` 下的模板，并同步项目副本、相关 skill 文案和测试。
+- 交付 skill 共 8 个，位于 `plugins/codestable/skills/`；每个 SKILL.md 是薄责任契约（约 30–60 行正文），不写流程状态机、不写 Haskell spec。
+- 不同 skill 之间不相互耦合：公共纪律（开工检索、沉淀推荐、授权边界）以两三行内联进各 SKILL.md，不建跨 skill 共享 reference 机制。
+- 上下文按需检索：skill 只写"去哪取"（attention、`lessons/` grep、项目文档），不把材料复制进 skill 包或项目。
+- 每个 skill 的 frontmatter contracts 只锚硬门槛（2–3 条），不锚措辞；`tests/test_skill_contracts.py` 校验其成立。
 
-## CodeStable Runtime
+## CodeStable 项目数据
 
-- 新版 CodeStable 工具、gate、doctor、workflow-next、DoD runner 等入口必须从 `<cs-onboard skill 目录>/tools/` 调用。
-- 不要新增 `python .codestable/tools/...` 作为新版入口；`.codestable/tools/` 只作 legacy compatibility。
-- 保留老项目里的 `.codestable/tools/`、旧 worktree/branch 文档或 hooks；除非用户明确要求，不要默认删除或覆盖。
-- CodeStable skills 不拥有默认 worktree/branch 策略；是否创建 worktree、如何命名分支、如何 merge，应由宿主、owner 或未来独立 skill 决定。
+- 项目侧只有 `.codestable/{attention.md, lessons/, work/}`；普通任务零产物，跨会话任务一个 work 文档。
+- v1 存量（`reference/`、`tools/`、`gates/`、`hooks/`、`compound/`、`features/` 等）只读保留，不迁移、不删除、不覆盖；旧沉淀由 grep 检索继续生效。
+- 不再有 skill 调用的 gate / runtime 工具与 runtime-manifest 机制；不要新增此类入口。
+- CodeStable skills 不拥有默认 worktree/branch 策略；是否创建 worktree、如何命名分支、如何 merge，由宿主与 owner 决定。
 
 ## 验证
 
-- skill/runtime 改动完成前至少运行相关 pytest 与 `git diff --check`。
-- runtime sync 或 health 行为变化时，运行 `codestable-runtime-sync.py --check --json`，确认 `tool_runtime: skill-global`、managed paths 和 missing paths 符合预期。
+- skill 改动完成前至少运行 `python3 -m pytest tests/` 与 `git diff --check`。
+- skill 行为的量化验证按需使用 `eval-cs-skill`（仅在明确要做测量实验时）。

@@ -43,7 +43,7 @@ def test_queue_enqueue_and_run_next(tmp_path, monkeypatch):
     q = tmp_path / ".queue.jsonl"
     monkeypatch.setattr(eq, "_queue_path", lambda: q)
     exp = tmp_path / "exp"
-    shutil.copytree(ROOT / "experiments/cs-audit-001", exp,
+    shutil.copytree(ROOT / "experiments/cs-code-review-001", exp,
                     ignore=shutil.ignore_patterns("artifacts", "iteration-*.md", "results.md"))
     eq.enqueue(str(exp), "eval")
     eq.enqueue(str(exp), "eval")

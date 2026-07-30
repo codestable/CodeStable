@@ -1,4 +1,0 @@
-interface:
-  display_name: "CodeStable Roadmap Goal"
-  short_description: "把大需求编排成 roadmap goal"
-  default_prompt: "使用 $cs-epic --stage goal-package 把大需求沉淀成 CodeStable roadmap，跑 roadmap/design review gate，完成全部 feature design，并输出可直接粘贴的 /goal 指令。"

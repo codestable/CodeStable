@@ -12,7 +12,7 @@ Tired of OpenSpec's flimsiness, Oh-My-OpenAgent's over-engineering, and Superpow
 
 <p>
   <img src="https://img.shields.io/badge/status-beta-F59E0B?style=flat-square" alt="Status"/>
-  <img src="https://img.shields.io/badge/cs--skills-32-6366F1?style=flat-square" alt="CodeStable Skills"/>
+  <img src="https://img.shields.io/badge/cs--skills-8-6366F1?style=flat-square" alt="CodeStable Skills"/>
   <img src="https://img.shields.io/badge/license-MIT-10B981?style=flat-square" alt="License"/>
 </p>
 
@@ -78,7 +78,7 @@ Restart Claude Code after updating so the new plugin version is applied.
 npx skills@latest add codestable/CodeStable/plugins/codestable --skill '*' -g
 ```
 
-The bare `skills` CLI `update` currently uses different discovery rules for plugin manifests and generic directories, so it can misclassify existing sibling skills as deleted. Upgrade with the full-package reinstall command above instead. It synchronizes every `cs*` skill from `plugins/codestable`; for a project-scoped install, omit `-g` and run it in that project. Do not replace only the root `cs` skill: runtime refresh also requires the matching `cs-onboard` skill and its tools. After the global plugin upgrade, explicitly run `/cs-onboard --mode refresh-runtime` in every onboarded project to refresh and verify its repo-local runtime immediately. If you skip the command, the next CodeStable preflight compares `.codestable/runtime-manifest.json` with the current plugin version and refreshes automatically when the manifest is missing, the version or runtime capabilities do not match, and managed paths are clean; it does not scan repositories in the background. `managed-paths-dirty`, a repository that is not onboarded, or an incomplete skeleton stops the refresh instead of forcing an overwrite.
+The bare `skills` CLI `update` currently uses different discovery rules for plugin manifests and generic directories, so it can misclassify existing sibling skills as deleted. Upgrade with the full-package reinstall command above instead. It synchronizes every `cs*` skill from `plugins/codestable`; for a project-scoped install, omit `-g` and run it in that project. Since v2, all rules live in the skill package itself — there are no runtime assets inside projects to refresh, so upgrading the plugin is the whole procedure.
 
 One command to start working:
 
@@ -147,114 +147,54 @@ CodeStable models real coding work as a set of **entities** and **flows**.
 
 ### Entities
 
-| Entity | Slug | What it does |
+| Entity | Carrier | What it does |
 |------|------|--------|
-| **Requirement** | requirements | User stories + domain glossary (CONTEXT.md) + architecture decisions (ADRs). The escape hatch when code rots |
-| **Epic** | epic | Large demand entry such as "I want a permission system"; user-facing docs call it epic while v1 still stores internal artifacts under `.codestable/roadmap/` |
-| **Goal** | goals | Bounded start/end: write a start report, then let AI iterate autonomously with subagent functional acceptance before completion |
-| **Feature** | feature | Engineering execution where human and AI share responsibility for design, implementation, QA, and acceptance |
-| **Issue** | issue | Bug records and fixes after something should already work |
-| **Refactor** | refactor | Behavior-preserving cleanup when code rots (beta) |
-| **Compound** | compound | The compounding-engineering knowledge base: pitfalls, tricks, decisions, and investigation notes |
+| **Attention** | `attention.md` | Project facts read every session, ≤25 entries |
+| **Lessons** | `lessons/` | The compounding knowledge base: pitfalls, good practices, investigation notes — one markdown file per lesson, grep-searchable, every entry backed by traceable evidence (`cs-keep`) |
+| **Active work** | `work/` | The single state document for cross-session / handoff / epic tasks (goal / context / boundaries / evidence / acceptance), compressed and deleted on completion |
+
+Ordinary tasks produce no CodeStable entities at all — the git diff, test output, and delivery summary are the evidence.
 
 ### Flows
 
-| Flow | Recommended main entry | Notes |
-|------|------------|------|
-| **Feature delivery** | `cs-feat` | Risk-based lanes: Quick implements/tests/reviews directly; Standard stays in the current run with design/implementation/review/inline acceptance; Goal alone creates a long-range goal package with QA/acceptance |
-| **Epic delivery** | `cs-epic` | Plan a large demand, review it, design child features, prepare a goal package, then dispatch a visible goal driver (print `/goal` as fallback) |
-| **Goal achievement** | `cs-goal` | Bounded start/end → interview/grill + start report → autonomous implement/validate/iterate → subagent functional acceptance |
-| **Issue fixing** | `cs-issue` | End-to-end report → analyze → fix → `cs-code-review` |
-| **Refactoring** | `cs-refactor` | Behavior-preserving cleanup; standard or fastforward mode, followed by `cs-code-review` |
-| **External docs** | `cs-docs` | Developer guides, user guides, and API references; hygiene stays in `cs-docs-neat` |
+| Flow | Entry | Hard gate |
+|------|------|--------|
+| **Feature delivery** | `cs-feat` | Risk-escalation signals (public contracts / data / permissions / real trade-offs / large diffs) require design confirmation first — never auto-approved; completion requires verifiable evidence |
+| **Issue fixing** | `cs-issue` | No root-cause guessing without a verification that clearly turns red; the red verification must turn green before claiming the fix |
+| **Refactoring** | `cs-refactor` | Equivalence verification exists before code changes; stop and report the moment behavior would change |
+| **Epic delivery** | `cs-epic` | Decomposition is user-confirmed before execution; one epic document keeps the full picture; final acceptance is never done on the user's behalf |
+| **Independent review** | `cs-code-review` | Read-only; independent subagent perspective; blocking findings must be resolved before passing |
 
-`cs-code-review` is the cross-cutting quality gate at the tail of execution flows, before commit. At a phase or milestone boundary, use `cs-docs-neat` to reconcile `.codestable/`, README/docs, `CLAUDE.md` / `AGENTS.md`, and agent memory so docs do not drift from code.
+Every flow shares one mainline: understand the relevant facts → act → run proportionate verification → deliver. Risk is re-judged per request — no persistent lanes, no stage state machines.
 
 ---
 
 ## Skill catalog
 
-### Recommended main entries
+v2 ships 8 skills — a thin layer of engineering discipline plus a project-memory loop (thin harness, thick context):
 
-| Group | Skill | Purpose |
-|---|---|---|
-| Root | `cs` | Action requests dispatch to the target skill in the current run; advice requests only recommend. |
-| Onboard | `cs-onboard` | Install CodeStable into a repository |
-| Requirements & domain | `cs-req` / `cs-domain` | Capture capability intent, domain terms, ADRs, and context topology |
-| Epic | `cs-epic` | Large demand planning, review, child feature design, and goal package |
-| Brainstorm | `cs-brainstorm` | Triage fuzzy ideas into feature, epic, or brainstorm notes |
-| Goal | `cs-goal` | Autonomous iteration from a bounded start state to acceptance |
-| Feature | `cs-feat` | Quick / Standard / Goal feature workflow; Goal is opt-in for long-range execution |
-| Issue | `cs-issue` | End-to-end issue workflow |
-| Refactor | `cs-refactor` | Behavior-preserving refactor workflow |
-| Review | `cs-code-review` | Cross-cutting read-only implementation review gate |
-| Audit | `cs-audit` | Scan for bugs, security, performance, maintainability, and architecture drift |
-| Feedback | `cs-feedback` | Explicitly capture current-session incidents/triage; upload only after preview confirmation |
-| Knowledge | `cs-keep` / `cs-note` | Capture durable knowledge or short startup-critical notes |
-| External docs | `cs-docs` | Developer guides, user guides, and API references |
-| Docs hygiene | `cs-docs-neat` | Sync `.codestable/`, README/docs, agent entries, and memory |
+| Skill | Purpose |
+|---|---|
+| `cs` | System overview and entry recommendation; explains only, never starts a workflow |
+| `cs-onboard` | Create the minimal `.codestable/` skeleton; v1 legacy preserved untouched |
+| `cs-feat` | New features and changes; design alignment first on risk escalation |
+| `cs-issue` | Bug fixing; no root-cause guessing without a red verification |
+| `cs-refactor` | Behavior-preserving refactoring; equivalence verification first |
+| `cs-code-review` | Independent review; diff by default, repo-wide audit on request |
+| `cs-epic` | Large-requirement decomposition and long-running delivery |
+| `cs-keep` | Distill experience; traceable evidence required |
 
-### Long-term compatibility entries
-
-Old skill names remain usable but only enter the corresponding main workflow:
-
-- Feature: `cs-feat-design` / `cs-feat-design-review` / `cs-feat-impl` / `cs-feat-qa` / `cs-feat-accept` / `cs-feat-ff`
-- Issue: `cs-issue-report` / `cs-issue-analyze` / `cs-issue-fix`
-- Refactor: `cs-refactor-ff`
-- Docs: `cs-doc-tutorial` / `cs-doc-api`
-- Epic: `cs-roadmap` / `cs-roadmap-review` / `cs-roadmap-impl-goal`
-
-See [SKILL_CATALOG.en.md](./SKILL_CATALOG.en.md) for the full catalog. In daily use, call `/cs` when you are unsure.
+The v1 stage skills and long-tail entries (design/impl/qa stage skills, `cs-goal`, `cs-brainstorm`, the `cs-docs` family, `cs-domain`, `cs-req`, `cs-audit`, `cs-note`, `cs-feedback`, the `cs-roadmap` family) have been folded into the table above. See [SKILL_CATALOG.en.md](./SKILL_CATALOG.en.md) for the full catalog. In daily use, call `/cs` when you are unsure.
 
 ---
 
-## Workflow at a glance
+## Workflow and runtime
 
-CodeStable is layered and event-driven:
+Every entry shares one execution mainline: **understand the relevant facts → act → run proportionate verification → deliver**. Risk is re-judged per request from current facts — no persistent lanes, no stage state machines. Before acting, grep the project's accumulated knowledge (including v1 legacy) by task keywords and report the sources of hits. Design and acceptance confirmations are never auto-approved by the model.
 
-```text
-cs
-└── cs-onboard
-    ├── cs-req / cs-domain
-    ├── cs-epic          # user-facing epic; internally still roadmap storage
-    ├── cs-goal
-    ├── cs-brainstorm
-    ├── cs-feat     -> cs-code-review
-    ├── cs-issue    -> cs-code-review
-    ├── cs-refactor -> cs-code-review
-    ├── cs-docs
-    ├── cs-feedback
-    └── cs-keep / cs-note / cs-docs-neat
-```
+`/cs-onboard` creates a minimal `.codestable/`: `attention.md` (read every session, ≤25 entries), `lessons/` (one file per lesson, grep-searchable), and `work/` (active cross-session tasks, compressed and deleted on completion). Ordinary tasks produce zero artifacts; there are no gates, no runtime tools, and no references copied into projects. v1 artifacts in existing projects are kept read-only and stay grep-discoverable.
 
-How to read it:
-
-- `cs` classifies the intake mode before the target. Action requests dispatch to the target skill in the current run; advice requests only recommend. It never routes users to deprecated stage skills.
-- `cs-feat`, `cs-issue`, and `cs-refactor` resume from repository facts. `cs-feat` first selects Quick, Standard, or Goal from task risk: Quick stays minimal, Standard completes in the current run with inline acceptance, and only Goal uses a long-range driver plus standalone QA. `cs-issue` and `cs-refactor` stop at their review, blocking, or user-confirmation checkpoints.
-- `cs-epic` prepares planning and goal packages, then dispatches a visible goal driver; v1 still writes `.codestable/roadmap/`.
-- `cs-code-review` is the cross-cutting gate; `cs-docs-neat` handles hygiene; `cs-docs` writes outward docs.
-- `cs-feedback` explicitly captures a local-private current-session evidence package; public issue upload remains separately confirmed.
-- Old stage skills are long-term compatibility entries for historical users.
-
-See [WORKFLOW.en.md](./WORKFLOW.en.md) for the compact diagram.
-
----
-
-## Runtime structure
-
-After `/cs-onboard`, project artifacts aggregate under `.codestable/`. Python tool scripts run from the installed `cs-onboard` skill package instead of being copied into each repo.
-
-```text
-.codestable/
-├── attention.md
-├── requirements/  roadmap/  goals/
-├── features/  issues/  refactors/
-├── audits/  brainstorms/  feedback/  compound/
-├── gates/
-└── reference/
-```
-
-`requirements/` is the long-lived archive, `roadmap/` is planning, dated work-item directories bundle one workflow, and `compound/` is the single knowledge sink. A skill is an independent install unit: cross-skill references must be released by `cs-onboard` into project-local `.codestable/reference/`, never read from a sibling skill package. See [WORKFLOW.en.md](./WORKFLOW.en.md) for the directory contract.
+See [WORKFLOW.en.md](./WORKFLOW.en.md) for the full contract.
 
 ---
 
@@ -277,7 +217,8 @@ CodeStable is modeled for real-world development scenarios, aiming to handle com
 
 CodeStable adapts to model capability. If a future model nails a module reliably, that module gets removed.
 
-- [ ] Refactor flow needs hardening (`cs-refactor` is still beta)
+- [x] v2 thin-harness rewrite: 32 skills consolidated into 8 thin responsibility contracts (~24k lines → ~340 lines), all state machines / gates / stage artifacts removed; ordinary tasks produce zero artifacts; knowledge unified into attention + lessons + work
+- [ ] Refactor flow needs hardening
 - [ ] …
 
 Issues welcome — share your real-world dev pain and refactoring experience.

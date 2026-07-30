@@ -1,35 +1,49 @@
 ---
 name: cs-keep
-description: 项目知识沉淀。触发：用户要沉淀可复用坑、技巧、调研或非 ADR 结论；结构性 ADR 决策走 cs-domain，一两行每次必读规则走 cs-note。
+description: 沉淀可复用经验与项目记忆。触发：记录踩坑、教训、调研结论、纠偏，或用户说"记住这个"。
+argument-hint: "[要沉淀的内容]"
+contracts:
+  - grep: "没有可追溯证据不写"
+  - grep: "先合并"
 ---
 
 # cs-keep
 
-动作前先跑 CodeStable preflight：读 `.codestable/attention.md`（缺失先 `cs-onboard`）；不要用 `AGENTS.md`/`CLAUDE.md` 等外部入口代替它；细则见 `.codestable/reference/execution-conventions.md`。
+把这次学到的东西沉淀成下次能被检索到的项目记忆。落点由你判断，不追问用户分类。
 
-## Spec
+## 落点判断
 
-```haskell
-data Note = Note { slug :: KebabCase, background :: Text, conclusion :: Text, evidence :: [Evidence] }
-data KeepContext = KeepContext { attentionReady :: Bool }
-data KeepOutcome = Written Path | NeedsHuman Reason
+- 几乎每次会话都必须知道的一两行事实 → 追加到 `.codestable/attention.md`（全文保持 ≤25 条；存量分节结构保留，新条目放进合适分节或末尾。超限先合并旧条目再加）。
+- 其余可复用经验——坑、技巧、调研结论、失败路径、对 CodeStable skill 本身的反馈 → 新建 `.codestable/lessons/YYYY-MM-DD-{slug}.md`。
+- 难回退的结构性技术取舍 → 建议走项目的 ADR（项目惯例位置），不写进 lessons。
+- 临时状态、本周计划、git 提交已表达的事实 → 不沉淀，向用户说明原因。
 
-csKeep :: KeepContext -> Note -> KeepOutcome
-csKeep ctx n
-  | not (attentionReady ctx)                              = NeedsHuman AttentionMissing
-  | validKebabMax 30 (slug n) && not (null (evidence n)) = Written ".codestable/compound/YYYY-MM-DD-{slug}.md"
-  | otherwise                                             = NeedsHuman InvalidNote
+`.codestable/` 或 `lessons/` 不存在时直接创建，不要求先跑 cs-onboard。
 
-render :: Note -> Markdown
-render = markdown ["背景", "结论", "证据"]  -- 无 frontmatter/tags
+## lesson 格式
+
+一条一文件，slug 用小写连字符、≤30 字符：
+
+```markdown
+---
+scope: 适用范围（模块 / 命令 / 场景关键词，供日后 grep）
+date: YYYY-MM-DD
+---
+规则：一两句可执行的结论。
+证据：来自本次对话、diff 或报错的可追溯事实。
+来源：相关文件路径或对话要点。
 ```
 
-## Operation
+## 写入纪律（硬门槛）
 
-先按 preflight 读取 attention，再用关键词查重；命中相近旧文档时更新或新建由用户原始意图决定，分不清才问。校验 slug、背景、结论和至少一条可追溯证据后写三段 Markdown。写完只报路径，不追问分类或 tags。
+- 没有可追溯证据不写；不编造，不从模型记忆里泛化。
+- 写前先 grep `.codestable/lessons/` 与 v1 存量 `.codestable/compound/` 查同域旧条目：能合并就更新旧文件，不新增重复；lessons 超过约 50 条时必须先合并再新增。
+- 一次只写用户拍板过的内容，不顺手多写。
 
-未来要找回来直接 `grep -r "关键词" .codestable/compound/`。
+## 检索约定
 
-## Failure Behavior
+日后找回：`grep -ri "关键词" .codestable/lessons/ .codestable/compound/`。命中引用时必须报告来源路径。
 
-attention 缺失、目标与旧沉淀关系不清、结论没有用户素材或可追溯证据时返回 `NeedsHuman`；不得编造证据，也不得把 ADR 或启动必读短规则塞进 compound。
+## 完成
+
+报告写入或更新的文件路径与一句话摘要即可，不设写后确认。

@@ -1,73 +1,34 @@
 # CodeStable 工作流与运行结构
 
-## 工作流层次
+## 设计原则：thin harness, thick context
 
-CodeStable 的技能是分层 + 事件驱动的。日常使用主入口，不需要记阶段技能名。
+规则点到为止：skill 只传递研发经验（何时该做什么、为什么）与少数硬门槛，不复刻流程状态机；执行路线交给模型，状态从仓库事实恢复。上下文按需检索：每次动手前按任务关键词 grep 项目沉淀，命中报告来源。
 
-根入口 `cs` 先判断入口模式：行动请求同轮直转，咨询请求只给建议；介绍体系不启动下游流程，歧义请求只停一个聚焦问题。
-
-主入口关系如下：
+## 工作流
 
 ```text
-cs
-└── cs-onboard
-    ├── cs-req / cs-domain
-    ├── cs-epic
-    │   └── 内部使用 roadmap 存储模型和 goal 执行包
-    ├── cs-goal
-    ├── cs-brainstorm
-    ├── cs-feat -> cs-code-review
-    ├── cs-issue -> cs-code-review
-    ├── cs-refactor -> cs-code-review
-    ├── cs-docs
-    ├── cs-feedback
-    └── cs-keep / cs-note / cs-docs-neat
+cs（导览）
+cs-onboard（骨架）
+cs-feat / cs-issue / cs-refactor（事件入口）──> cs-code-review（独立审查，高风险或用户要求时）
+cs-epic（大需求拆解，逐子项走事件入口）
+cs-keep（收尾沉淀，所有入口内置推荐时机）
 ```
 
-纵向是层次，不是严格时间顺序。长效档案层会反复刷新；`cs-epic` 只在大需求时进入，第一版内部仍写 `.codestable/roadmap/`；`cs-goal` 是目标驱动自主迭代入口。
+每个入口共用同一执行主线：**理解相关事实 → 行动 → 相称的验证 → 交付结果**。风险每次按当前事实重判，不写入持久 lane；触发升级信号（公开契约 / 数据 / 权限 / 真实取舍 / 大范围 diff / 用户要求）时先对齐设计再动手。design 与整体验收的确认不可被模型自主跳过；声称完成必须附可核验证据。
 
-第 3 层是事件入口：新需求走 `cs-feat`，bug 走 `cs-issue`，腐化走 `cs-refactor`，对外文档走 `cs-docs`。`cs-code-review` 是横切代码审查 gate，feature / issue / refactor 链路都经它产 `{slug}-review.md`。
+## 持久化
 
-`cs-feat` 内部按风险而不是模型名称分三条 lane：
-
-- Quick：需求明确、改动局部、复用既有契约且有目标验证入口；直接实现、验证、首次独立 review，只写 ff-note。
-- Standard：需要 design 或跨模块决策，但适合当前 run 完成；不默认建 goal package，review 后用 accept-inline 聚合验证。
-- Goal：用户明确要求长程自主执行、已有 goal state 或来自 Epic；保留 goal driver、独立 QA 和完整 acceptance。
-
-横切层是知识与反馈飞轮：`cs-keep` 沉淀 compound；`cs-feedback` 仅在显式调用后生成 local-private incident/triage，public preview 经确认后才可上报；`cs-docs-neat` 在里程碑收尾时同步文档与记忆。
-
-旧阶段技能仍是长期兼容入口，但不再作为主路径展示：
-
-- Feature：`cs-feat-design` / `cs-feat-design-review` / `cs-feat-impl` / `cs-feat-qa` / `cs-feat-accept` / `cs-feat-ff`
-- Issue：`cs-issue-report` / `cs-issue-analyze` / `cs-issue-fix`
-- Refactor：`cs-refactor-ff`
-- Docs：`cs-doc-tutorial` / `cs-doc-api`
-- Epic：`cs-roadmap` / `cs-roadmap-review` / `cs-roadmap-impl-goal`
-
-## 运行时结构
-
-`/cs-onboard` 后，项目根下会出现 `.codestable/`：
+普通任务零 CodeStable 产物——git diff、测试输出与交付说明就是证据。
 
 ```text
 .codestable/
-├── requirements/        # 需求文档 + 领域模型：CONTEXT.md 术语表 + adrs/ ADR
-├── roadmap/             # epic 的内部历史存储模型
-├── goals/
-├── features/
-├── issues/
-├── refactors/
-├── audits/
-├── brainstorms/
-├── feedback/
-├── compound/
-├── tools/
-└── reference/
+├── attention.md    # 每次会话必读的项目事实，≤25 条
+├── lessons/        # 沉淀经验，一条一 markdown 文件，grep 检索
+└── work/           # 仅活动中的跨会话任务，一任务一文档（目标/现场/边界/证据/验收五节），完成即压缩删除
 ```
 
-关键约束：
+lesson 写入纪律：没有可追溯证据不写；写前 grep 同域旧条目，能合并不新增；约 50 条上限触发先合并。
 
-- `requirements/` 是长效档案，记现状：既存需求/能力文档，也存 cs-domain 的领域模型。
-- `roadmap/` 是 `cs-epic` 第一版继续复用的内部规划层；用户文档叫 epic，历史路径/doc_type 暂不迁移。
-- `features/`、`issues/`、`refactors/` 用 `YYYY-MM-DD-{slug}/` 聚合单次流程产物。
-- `compound/` 是唯一知识沉淀目录，由 `cs-keep` 写纯 markdown 文件，靠 grep 检索。
-- `reference/` 由 `cs-onboard` 释放共享口径；跨工作流共享约定优先读项目内 `.codestable/reference/`。
+## v1 兼容
+
+存量项目的 v1 产物（`requirements/`、`roadmap/`、`features/`、`issues/`、`compound/`、`reference/`、`tools/` 等）一律只读保留、不迁移不删除；旧沉淀继续被各 skill 的 grep 检索覆盖。v1 的 gate 与 runtime 工具不再被 skill 调用。
