@@ -6,10 +6,10 @@ v2 ships 8 skills: a thin layer of engineering discipline plus a project-memory 
 |---|---|
 | `cs` | System overview and entry recommendation; explains only, never starts a workflow |
 | `cs-onboard` | Create the minimal `.codestable/` skeleton (attention / lessons / work); v1 legacy is preserved untouched |
-| `cs-feat` | New features and changes; risk-escalation signals require a design confirmation first |
+| `cs-feat` | New features and changes; on risk escalation the design passes independent review, then user confirmation |
 | `cs-issue` | Bug fixing; no root-cause guessing without a verification that clearly turns red |
 | `cs-refactor` | Behavior-preserving refactoring; equivalence verification before touching code |
-| `cs-code-review` | Independent code review; diff review by default, repo-wide audit on request |
+| `cs-code-review` | Independent review: diff / design / repo-audit modes; fix-and-rereview capped at 2 rounds |
 | `cs-epic` | Large-requirement decomposition and long-running delivery via one epic document |
 | `cs-keep` | Distill experience into attention / lessons; every entry needs traceable evidence |
 

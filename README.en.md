@@ -159,11 +159,11 @@ Ordinary tasks produce no CodeStable entities at all — the git diff, test outp
 
 | Flow | Entry | Hard gate |
 |------|------|--------|
-| **Feature delivery** | `cs-feat` | Risk-escalation signals (public contracts / data / permissions / real trade-offs / large diffs) require design confirmation first — never auto-approved; completion requires verifiable evidence |
+| **Feature delivery** | `cs-feat` | On risk escalation the design passes independent agent review, then user confirmation — never auto-approved; test-first when a test setup exists; completion requires verifiable evidence |
 | **Issue fixing** | `cs-issue` | No root-cause guessing without a verification that clearly turns red; the red verification must turn green before claiming the fix |
 | **Refactoring** | `cs-refactor` | Equivalence verification exists before code changes; stop and report the moment behavior would change |
 | **Epic delivery** | `cs-epic` | Decomposition is user-confirmed before execution; one epic document keeps the full picture; final acceptance is never done on the user's behalf |
-| **Independent review** | `cs-code-review` | Read-only; independent subagent perspective; blocking findings must be resolved before passing |
+| **Independent review** | `cs-code-review` | Read-only; independent subagent perspective; designs and changes reviewed by default; blocking findings must be resolved, fix-and-rereview capped at 2 rounds before human arbitration |
 
 Every flow shares one mainline: understand the relevant facts → act → run proportionate verification → deliver. Risk is re-judged per request — no persistent lanes, no stage state machines.
 
@@ -177,10 +177,10 @@ v2 ships 8 skills — a thin layer of engineering discipline plus a project-memo
 |---|---|
 | `cs` | System overview and entry recommendation; explains only, never starts a workflow |
 | `cs-onboard` | Create the minimal `.codestable/` skeleton; v1 legacy preserved untouched |
-| `cs-feat` | New features and changes; design alignment first on risk escalation |
+| `cs-feat` | New features and changes; on risk escalation the design passes independent review, then user confirmation |
 | `cs-issue` | Bug fixing; no root-cause guessing without a red verification |
 | `cs-refactor` | Behavior-preserving refactoring; equivalence verification first |
-| `cs-code-review` | Independent review; diff by default, repo-wide audit on request |
+| `cs-code-review` | Independent review: diff / design / repo-audit modes |
 | `cs-epic` | Large-requirement decomposition and long-running delivery |
 | `cs-keep` | Distill experience; traceable evidence required |
 
