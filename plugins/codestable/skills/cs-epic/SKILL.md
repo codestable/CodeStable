@@ -2,9 +2,6 @@
 name: cs-epic
 description: 大需求或系统级能力的拆解与长程推进。单个功能走 cs-feat，bug 走 cs-issue。
 argument-hint: "[大需求描述]"
-contracts:
-  - grep: "拆解方案必须经用户确认"
-  - grep: "不代替用户做整体验收"
 ---
 
 # cs-epic

@@ -2,11 +2,6 @@
 name: cs-feat
 description: 实现新功能或功能改造。不用于纯 bug 修复（cs-issue）、行为等价重构（cs-refactor）、大需求拆解（cs-epic）。
 argument-hint: "[功能描述]"
-contracts:
-  - grep: "不得代替用户确认设计"
-  - grep: "与声明相称的可核验证据"
-  - grep: "写入 `.codestable/work/"
-  - not-grep: "git push"
 ---
 
 # cs-feat

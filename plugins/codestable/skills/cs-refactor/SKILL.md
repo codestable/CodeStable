@@ -2,9 +2,6 @@
 name: cs-refactor
 description: 行为等价的重构、拆分、性能优化。会改变外部可观察行为的诉求走 cs-feat 或 cs-issue。
 argument-hint: "[重构目标]"
-contracts:
-  - grep: "行为等价"
-  - grep: "先有能自证等价的验证"
 ---
 
 # cs-refactor

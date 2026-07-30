@@ -25,11 +25,16 @@ LOCAL_SKILLS = ROOT / ".claude/skills"
 
 FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n(.*)$", re.S)
 
-# 刚经 build-cs-skill 重构、已声明 contracts 的主入口。删除其 contracts 应是
-# 有意识的动作——此清单防止护栏被静默移除。
-CORE_SKILLS_WITH_CONTRACTS = {
-    "cs-feat", "cs-epic", "cs-issue", "cs-refactor",
-    "cs-code-review", "cs-keep", "cs-onboard",
+# v2 交付 skill 不带 contracts frontmatter（owner 决策：交付物不含自测元数据）。
+# 硬门槛锚由本文件直接对 SKILL.md 正文断言，保护等价、交付更薄。
+SHIPPED_HARD_GATE_ANCHORS = {
+    "cs-feat": ["不得代替用户确认设计", "与声明相称的可核验证据", "写入 `.codestable/work/"],
+    "cs-issue": ["能明确变红的验证", "变红的验证必须变绿"],
+    "cs-refactor": ["行为等价", "先有能自证等价的验证"],
+    "cs-code-review": ["只读", "blocking 未解决", "最多 2 轮"],
+    "cs-epic": ["拆解方案必须经用户确认", "不代替用户做整体验收"],
+    "cs-keep": ["没有可追溯证据不写", "先合并"],
+    "cs-onboard": ["存量文件一律不动", "不复制"],
 }
 
 
@@ -80,24 +85,45 @@ def test_frontmatter_contracts_hold_against_body(skill_md: Path) -> None:
     )
 
 
-def test_core_skills_declare_contracts() -> None:
-    """cs-feat / cs-epic 必须保留 contracts，防止护栏被静默删除。"""
-    declared = {p.parent.name for p in SKILLS_WITH_CONTRACTS}
-    missing = CORE_SKILLS_WITH_CONTRACTS - declared
-    assert not missing, f"这些主入口应声明 contracts 却未声明: {sorted(missing)}"
+def test_shipped_skills_keep_hard_gate_anchors() -> None:
+    """交付 skill 的硬门槛锚：防止演进/汰换时把硬约束静默削掉。
+
+    锚是行为不变量短语，不是措辞快照；改写措辞时同步更新此清单是
+    有意识的动作。同时锁定外发禁令：正文不得出现 git push 指令。
+    """
+    shipped = {p.parent.name for p in SKILLS.glob("*/SKILL.md")}
+    assert shipped == set(SHIPPED_HARD_GATE_ANCHORS) | {"cs"}, (
+        "交付 skill 清单变化，先更新 SHIPPED_HARD_GATE_ANCHORS"
+    )
+    for skill, anchors in SHIPPED_HARD_GATE_ANCHORS.items():
+        body = (SKILLS / skill / "SKILL.md").read_text(encoding="utf-8")
+        for anchor in anchors:
+            assert anchor in body, f"{skill} 缺硬门槛锚: {anchor!r}"
+        assert "git push" not in body, f"{skill} 出现外发指令字样"
+
+
+def test_shipped_skills_carry_no_contracts_frontmatter() -> None:
+    """owner 决策：交付 skill 不带 contracts frontmatter（自测元数据留在仓库测试）。"""
+    for path in sorted(SKILLS.glob("*/SKILL.md")):
+        frontmatter, _ = _split_frontmatter(path.read_text(encoding="utf-8"))
+        assert frontmatter is None or "contracts:" not in frontmatter, path.parent.name
 
 
 def test_not_grep_ignores_frontmatter_declaration() -> None:
     """回归护栏：校验器必须扫 body 而非全文件。
 
-    cs-feat 的 frontmatter 含 `- not-grep: "git push"` 声明行；若校验器错误
-    地扫全文件，会命中该行而误报。此测试锁死"只扫 body"的语义。
+    build-cs-skill 的 frontmatter 含 not-grep 声明行；若校验器错误地扫
+    全文件，会命中声明行自身而误报。此测试锁死"只扫 body"的语义。
     """
-    text = (SKILLS / "cs-feat" / "SKILL.md").read_text(encoding="utf-8")
+    text = (LOCAL_SKILLS / "build-cs-skill" / "SKILL.md").read_text(encoding="utf-8")
     frontmatter, body = _split_frontmatter(text)
     assert frontmatter is not None
-    assert 'not-grep: "git push"' in frontmatter  # 声明确实在 frontmatter
-    assert "git push" not in body  # 但 body 干净——not-grep 应通过
+    assert "not-grep:" in frontmatter  # 声明确实在 frontmatter
+    meta = yaml.safe_load(frontmatter)
+    not_greps = [e["not-grep"] for e in meta.get("contracts", []) if "not-grep" in e]
+    assert not_greps, "样本 skill 需至少一条 not-grep 声明"
+    for phrase in not_greps:
+        assert phrase not in body  # body 干净——not-grep 应通过
 
 
 def test_thin_harness_skills_stay_free_of_v1_state_machines() -> None:

@@ -2,9 +2,6 @@
 name: cs-code-review
 description: 独立代码审查。默认审当前 diff；也可按用户要求做 repo 或模块级审计扫描。只读，不改代码。
 argument-hint: "[--range <git-range>] [scope 或 audit 目标]"
-contracts:
-  - grep: "只读"
-  - grep: "blocking 未解决"
 ---
 
 # cs-code-review

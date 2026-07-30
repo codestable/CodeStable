@@ -1,9 +1,6 @@
 ---
 name: cs-onboard
 description: 仓库接入 CodeStable：创建最小骨架，或为 v1 存量项目做无损升级说明。
-contracts:
-  - grep: "存量文件一律不动"
-  - grep: "不复制"
 ---
 
 # cs-onboard

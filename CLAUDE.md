@@ -16,7 +16,7 @@
 - 交付 skill 共 8 个，位于 `plugins/codestable/skills/`；每个 SKILL.md 是薄责任契约（约 30–60 行正文），不写流程状态机、不写 Haskell spec。
 - 不同 skill 之间不相互耦合：公共纪律（开工检索、沉淀推荐、授权边界）以两三行内联进各 SKILL.md，不建跨 skill 共享 reference 机制。
 - 上下文按需检索：skill 只写"去哪取"（attention、`lessons/` grep、项目文档），不把材料复制进 skill 包或项目。
-- 每个 skill 的 frontmatter contracts 只锚硬门槛（2–3 条），不锚措辞；`tests/test_skill_contracts.py` 校验其成立。
+- 交付 skill 不带 contracts frontmatter；硬门槛锚由 `tests/test_skill_contracts.py` 直接对 SKILL.md 正文断言（改硬门槛措辞须同步更新锚清单）。
 
 ## CodeStable 项目数据
 

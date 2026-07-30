@@ -2,9 +2,6 @@
 name: cs-issue
 description: 修复 bug、报错或既有行为异常。不用于新功能（cs-feat）或行为等价重构（cs-refactor）。
 argument-hint: "[问题描述]"
-contracts:
-  - grep: "能明确变红的验证"
-  - grep: "变红的验证必须变绿"
 ---
 
 # cs-issue

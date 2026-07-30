@@ -2,9 +2,6 @@
 name: cs-keep
 description: 沉淀可复用经验与项目记忆。触发：记录踩坑、教训、调研结论、纠偏，或用户说"记住这个"。
 argument-hint: "[要沉淀的内容]"
-contracts:
-  - grep: "没有可追溯证据不写"
-  - grep: "先合并"
 ---
 
 # cs-keep
