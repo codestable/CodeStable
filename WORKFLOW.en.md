@@ -24,7 +24,7 @@ Ordinary tasks produce zero CodeStable artifacts — the git diff, test output, 
 .codestable/
 ├── attention.md    # project facts to read every session, ≤25 entries
 ├── lessons/        # distilled experience, one markdown file per lesson, grep-searchable
-└── work/           # active cross-session tasks only, one doc per task (goal/context/boundaries/evidence/acceptance), compressed and deleted on completion
+└── work/           # active cross-session tasks only, one doc per task (goal/context/boundaries/evidence/acceptance/status-and-open-items), compressed and deleted on completion
 ```
 
 Lesson discipline: never write without traceable evidence; grep for same-domain entries first and merge instead of duplicating; a soft cap of ~50 lessons forces consolidation before addition.

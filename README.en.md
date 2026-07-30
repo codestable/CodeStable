@@ -151,7 +151,7 @@ CodeStable models real coding work as a set of **entities** and **flows**.
 |------|------|--------|
 | **Attention** | `attention.md` | Project facts read every session, ≤25 entries |
 | **Lessons** | `lessons/` | The compounding knowledge base: pitfalls, good practices, investigation notes — one markdown file per lesson, grep-searchable, every entry backed by traceable evidence (`cs-keep`) |
-| **Active work** | `work/` | The single state document for cross-session / handoff / epic tasks (goal / context / boundaries / evidence / acceptance), compressed and deleted on completion |
+| **Active work** | `work/` | The single state document for cross-session / handoff / epic tasks (goal / context / boundaries / evidence / acceptance / status-and-open-items), compressed and deleted on completion |
 
 Ordinary tasks produce no CodeStable entities at all — the git diff, test output, and delivery summary are the evidence.
 

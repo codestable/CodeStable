@@ -19,7 +19,7 @@ contracts:
 └── work/           # 活动中的跨会话任务文档，完成即清
 ```
 
-创建后确认 `.codestable/` 未被 .gitignore 忽略（它必须入库共享）。attention.md 初始只写一行标题和一句用途说明，不预置分节模板。
+创建后确认 `.codestable/` 未被 .gitignore 忽略（它必须入库共享）；发现被忽略时停下报告，由用户决定怎么改，不擅自修改 .gitignore。attention.md 初始只写一行标题和一句用途说明，不预置分节模板。
 
 ## 硬门槛
 
