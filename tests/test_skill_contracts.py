@@ -109,11 +109,6 @@ def test_thin_harness_skills_stay_free_of_v1_state_machines() -> None:
         assert "goalRunState" not in body, path.parent.name
 
 
-@pytest.mark.xfail(
-    reason="上游 build-cs-skill thin-harness 改造未完成：main(7bed4ed) 上即红，"
-    "配套 SKILL.md 修改仍未提交；改造落地后移除本标记",
-    strict=False,
-)
 def test_build_cs_skill_requires_semantic_and_host_safe_validation() -> None:
     build_root = LOCAL_SKILLS / "build-cs-skill"
     build = (build_root / "SKILL.md").read_text(encoding="utf-8")

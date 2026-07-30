@@ -1,140 +1,253 @@
 # CodeStable Skill Quality Gates
 
-Use this reference when reviewing whether a `cs-*` skill is maintainable and testable.
+审查 `cs-*` skill 是否形成 `thin harness, thick context` 且能够持续演进时读取本规范。
+这些 gate 验证行为与放置，不按章节数量或行数判定质量。
+
+## 目录
+
+- [Shape Selection Gate](#shape-selection-gate)
+- [Thin Harness Gate](#thin-harness-gate)
+- [Rule Placement Gate](#rule-placement-gate)
+- [Context Plan Gate](#context-plan-gate)
+- [Haskell Contract Semantics Gate](#haskell-contract-semantics-gate)
+- [Runtime Alignment Gate](#runtime-alignment-gate)
+- [Canonical Handoff Gate](#canonical-handoff-gate)
+- [Collaboration Contract Gate](#collaboration-contract-gate)
+- [Regression Ladder](#regression-ladder)
+- [Evolution Admission Gate](#evolution-admission-gate)
+- [Evolution Compression Gate](#evolution-compression-gate)
+- [Live Host Safety Gate](#live-host-safety-gate)
+- [Family Audit Coverage Gate](#family-audit-coverage-gate)
 
 ## Prompt-As-Code Rule
 
-A skill is an executable protocol, not an explanatory article. Quality comes from:
+skill 是责任与决策契约，不是教程。质量来自：
 
-- narrow trigger;
-- explicit state model;
-- process protocol appropriate to the skill kind;
-- recoverable outputs;
-- clear failure behavior;
-- small active protocol;
-- machine-checkable invariants;
-- decision fixtures for risky branches.
+- 窄而准确的触发面；
+- 与 fragility 相称的 `SkillShape`；
+- 正确的规则放置和最小 always-loaded harness；
+- 高相关、按需加载且可复用的 `ContextPlan`；
+- 可观察的 gate、失败与完成证据；
+- 对高风险分支的 typed recovery 和确定性回归。
 
-Longer is not automatically better. Extra context can reduce reliability when it hides the rules the agent must follow.
+显式 state model 只属于确有闭合状态或恢复需求的 skill。简单 active operator 没有完整
+workflow/Haskell state machine，不构成缺陷。
 
-## P0/P1/P2/P3 Sorting
+## Shape Selection Gate
 
-Sort every paragraph by priority:
+先验证责任，再验证 shape：
 
-| Level | Meaning | Best location |
-|---|---|---|
-| P0 | Safety/security that must not rely on prompt obedience | hooks, scripts, sandbox, CI |
-| P1 | Workflow contract the agent must follow | top-level `SKILL.md`, `## Spec`, contracts |
-| P2 | Quality preference needing judgment | review checklist, QA protocol |
-| P3 | Background, examples, rationale, templates | `references/` or docs |
+| Shape | 通过条件 |
+|---|---|
+| `NoActiveSkill` | 没有独立责任；行为已有更小的 canonical owner；不创建 active trigger |
+| `ThinOperator` | 单一责任；没有伪造阶段；少量 guard 足以安全完成 |
+| `ContextualWorkflow` | 真实阶段/迭代/恢复存在；仓库事实决定状态；按阶段加载 context |
+| `ToolBackedWorkflow` | 确定性工具实际存在；接口、失败和 alignment 可验证 |
+| `ShimSkill` | 仅转发 canonical entry 与 legacy preset；不复制主规则 |
+| `ReferenceSkill` | 只有独立分发的知识；有 load condition 且没有 active workflow |
 
-Refactor when P3 appears before P1, or when the first 150 lines do not tell the agent how to act.
+以下情况拒绝 shape：
 
-## Progressive Loading Gate
+- 为了形式完整把单步 operator 扩写成 workflow；
+- 有可恢复阶段却选择只靠聊天记忆的 `ThinOperator`；
+- 声称 tool-backed 但没有真实可调用工具或 fail-closed 行为；
+- reference 内容伪装成 active methodology skill；
+- 已有 canonical owner 时仍创建重复 active skill。
 
-For skills with references, check:
+## Thin Harness Gate
 
-- main `SKILL.md` names each reference;
-- each reference has a clear load condition;
-- startup does not read every reference;
-- each stage loads one protocol first;
-- support files are loaded only when the protocol asks for them.
+顶层 `SKILL.md` 只应包含每次调用在首次关键决策前必须知道的控制面：
 
-Good wording:
+- trigger 与 Responsibility Contract；
+- Context Contract 及 source 的 load condition；
+- 决策/授权/停止 gate；
+- 必要的 typed resume、runtime interface 与 canonical handoff；
+- Done / Recovery Contract；
+- 只有发生 dispatch 时才加入 Collaboration Contract。
 
-```text
-Load exactly one stage protocol before acting, plus only the support files that protocol requests.
-```
+检查：
 
-## Idempotent Context Loading Gate
+- 删除任一句 harness 文字，是否会改变责任、决策、gate、context 选择、恢复或完成证据？
+- StageContext / ProjectContext 的正文是否被复制进顶层？
+- tool 的确定性算法是否被提示词再次实现？
+- 一个没有聊天历史的 fresh agent 能否从入口选对 context，并正确完成或停止？
 
-Progressive loading answers *which* reference a stage loads; this gate answers *whether a project fact already in context must be re-read*. They are complementary — stage granularity vs session granularity.
+简单 operator 的 30-80 行、workflow front door 的 60-120 行可作为增长警报，但不是硬性
+验收线。超出时重新执行 placement；不要通过压缩语句牺牲必要语义来追求行数。
 
-Project facts (`attention.md`, `CONTEXT.md`, `adrs/`, `compound/`, prior `features/` designs) are read to load project conventions and prevent term conflicts / ADR violations. That value is real on the first read in a fresh context, but re-reading the same fact later in one session (per-skill preflight re-reading `attention.md`, brainstorm→design, multi-round design, or epic×N children) only burns tokens. Startup steps worded as "必读 / 总是先搜 / 共同必读 / 先跑 preflight" encode unconditional re-reads.
+## Rule Placement Gate
 
-For any startup step that loads project facts, check:
+Every new or changed rule must re-enter `placeRule`.
 
-- does it say to reuse already-loaded facts instead of unconditionally re-Glob+Read?
-- is the first-read value (term-conflict / ADR check) preserved, not deleted?
-- for batch fan-out (epic → child designs), is the skip driven by a **structural flag**, not wording?
+逐条验证：
 
-Good wording (soft guard, single-session continuation):
+- 能机械判定的规则进入 `DeterministicGate`，harness 只保留调用接口与失败语义；
+- 不可机械化的安全规则，或所有调用首次关键决策前都需要且改变行为的规则，进入 `Harness`；
+- 阶段/变体专属方法进入 `StageContext`；
+- ADR、术语、项目历史和局部约束进入 `ProjectContext`；
+- 可推断、重复、过时或没有行为证据的规则进入 `Remove`。
 
-```text
-首次进入该工作项时读 CONTEXT.md / adrs / compound（防术语冲突、防违反已拍板决策）；
-若本会话/本阶段已加载过这些全局输入，则复用已读摘要，不重复 Glob+Read。
-```
+每条规则只能有一个 canonical owner。`SKILL.md`、reference、runtime 与项目 artifact
+可以互相引用或映射，但不得复制同一协议正文。
 
-Batch fan-out needs a structural flag, not wording — a soft "reuse if already read" cannot be relied on across N dispatched child stages, because the model has no durable signal that a sibling already loaded the fact. Thread an internal flag (reuse an existing one such as `epic_child_batch` rather than inventing a new state field) so the parent loads global inputs once and children skip explicitly. This mirrors **Measured Rules 6**: batch repetition is a structural gap, not a wording problem.
+## Context Plan Gate
 
-**Fixture note (why this gate ships contract-only).** The current `routing_decision` scorer compares only the final decision JSON; the api harness is single-turn, tool-less, and hands repo facts in as pre-recovered text. "Did not re-read a file" is therefore inexpressible and unscorable today. Guard this gate with a frontmatter contract (anchor the skip sentence in a SKILL.md body) + `test_skill_contracts.py` + the structural flag, not with a measured fixture. A measured fixture is future work needing a multi-turn, tool-enabled harness or an action-assertion scorer; a routing eval run here is a no-regression check on existing decisions only, never validation of this guard.
+每个 `ContextPlan` source 必须有：
 
-## Contract Gate
+- `loadWhen`：哪项决策或阶段触发加载；
+- `purpose`：缺少它会做错什么；
+- `sufficientWhen`：读到何处即可行动；
+- `reuseKey`：同一 session/batch 如何识别已加载；
+- `stopCondition`：必需 source 缺失或冲突时是否停止。
 
-Contracts protect the skeleton of the skill. They do not prove the agent will make the right decision.
+检查加载行为：
 
-Good contract targets:
+- entry 只加载首次决策所需的最小事实；
+- 选中阶段后先加载恰好一个 stage protocol，再加载其明确请求的 support files；
+- startup 不扫描或读取全部 references、ADR、compound 或历史 artifacts；
+- thick context 的“厚”来自当前阶段的相关性、证据密度和完整性，不来自体积；
+- 顶层只列 reference 的用途与 load condition，不复述 reference；
+- skill 专属 reference 可随独立安装单元分发；跨 skill 共享资料通过项目
+  `.codestable/reference/`，不读取 sibling skill 文件。
 
-- the routing function name (`restoreXStage` / `selectXAction`) when the Spec is the sole routing truth;
-- behavioral invariant phrases (required artifacts, checkpoint sentences, forbidden-action rules);
-- forbidden actions as `not-grep`;
-- critical marker names.
-
-Bad contract targets:
-
-- bare Spec type names (`XState`, `XOutcome`, `HumanCheckpoint`, `CheckpointReason`) — they only prove the Spec block exists, not that any behavior is protected (measured: routing eval 2026-07 showed they add no behavioral value);
-- generic words like `quality`, `review`, `check`, `best`;
-- strings that appear in examples but not in the actual rule;
-- brittle sentences likely to change during normal editing.
-
-If frontmatter contracts are not supported in the local system, keep the invariant list in `## Machine Contracts` so it can be wired later.
+首次读取项目事实的价值必须保留；同一会话继续时复用已读摘要。batch fan-out 必须传
+结构化 flag/reuse key，让 child 明确跳过 parent 已加载的全局输入，不能只写“如已读则复用”。
 
 ## Haskell Contract Semantics Gate
 
-For every changed Haskell-style block, apply the Haskell Contract Standard in
-`cs-skill-spec-standard.md`. Check semantics, not just the fence:
+仅当目标存在闭合 decision、transition、lifecycle、gate 或 invariant 时要求 Haskell
+contract；一旦使用，就按语义检查而不是只检查 fence：
 
-- at least one typed boundary (`::`) or closed `data` domain identifies what the contract decides;
-- at least one equation/guard maps inputs and state to an outcome;
-- terminal, failed, blocked, checkpoint, and invalid states remain distinct where recovery differs;
-- wildcard branches are last and do not make a specific branch unreachable;
-- named invariants and termination predicates agree with the completion prose;
-- every stage-level resume decision is representable in the canonical main entry and forwarded to
-  the selected stage; a locally closed reference type does not prove end-to-end resume coverage;
-- every `Awaiting` branch has persisted state/reason/run-id evidence and the real restore path rejects
-  missing ids plus ambiguous legacy `blocked` states;
-- constructors and field names agree with sibling protocols, persisted artifacts, fixtures, and the
-  real runtime router when one exists.
+- 至少一个 typed boundary (`::`) 或闭合 `data` domain 指明契约决定什么；
+- 至少一个 equation/guard 将输入和状态映射到 outcome；
+- guard priority 正确，wildcard 在最后，不吞掉具体 failure/terminal branch；
+- terminal、failed、blocked、checkpoint、awaiting 与 invalid 在恢复不同处保持独立；
+- completion prose 与命名 invariant/termination predicate 一致；
+- 每个 stage-level resume decision 都能由 canonical main entry 表达并转发；
+  a locally closed reference type does not prove end-to-end resume coverage；
+- 每个 `HumanCheckpoint` 都有 typed resume input 或持久化 transition；
+- 每个 `Awaiting` 都有 state/reason/external run id；真实 restore path rejects
+  missing ids plus ambiguous legacy `blocked` states；
+- constructor/field 与 sibling protocol、persisted artifact、fixture、真实 runtime 一致。
 
-A generic test may prove that the contract has a domain and decision surface. Risky branches still
-need exact scenario assertions; syntax cannot prove semantic completeness.
+语法测试只能证明 decision surface 存在；高风险分支仍需 exact scenario 或真实 runtime
+conformance。
+
+## Runtime Alignment Gate
+
+先区分决策 owner：
+
+- `ContextualWorkflow` 的 prompt-routed 分支以一个 compact Haskell contract 为唯一 prompt
+  truth，不再并列散文 branch table。
+- `ToolBackedWorkflow` 的真实 router/hook/parser/gate 是确定性执行面；harness 只描述调用
+  条件、schema、invariant、outcome 和 fail-closed 行为。
+
+Tool-backed workflows must not copy the deterministic branch table into `SKILL.md` or a reference.
+
+共同检查四个 surface：
+
+- persisted fields/value 显式映射到 normalized state / contract constructors；
+- guard order、invalid-state 与 terminal-state precedence 一致；
+- outcome 区分 continue、dispatch、report、handoff、awaiting、completion 和 unknown；
+- fixtures 使用当前字段，并覆盖 typed resume、run identity 与 stale metadata。
+
+conformance 必须调用真实 runtime。单独手写的 test router 即使为绿色，也不能证明生产
+alignment。schema 变化后，受影响的历史结果失效，必须重跑当前 fixture。
+
+## Canonical Handoff Gate
+
+cross-skill 路由必须 target the canonical main entry without selecting its internal stage/lane。
+handoff packet 保留 intent、artifact identity、relevant evidence、pending owner decision 和
+recovery pointer；接收方自行恢复状态。
+
+只有 `ShimSkill` 可以传 legacy `requested_stage` / `requested_mode`。长任务已经启动
+时，返回 `Awaiting` 前必须写入 external run identity；可见 fallback 不能丢失原 target 和
+完整 context。
+
+## Collaboration Contract Gate
+
+只有 scope 可独立拥有、并有独立验收证据时才 dispatch：
+
+- task packet 包含 goal、relevant context、scope ownership、boundaries、evidence 和 return
+  contract；
+- 子 agent 不获得无关的全仓 context，也不被预编排固定实现步骤；
+- 返回包含改动、证据、风险和未决项；
+- 主 agent 持有集成、冲突处理和最终验证；
+- owner decision 不得委托或由 agent 投票替代。
+
+没有独立 scope 或独立验收方式时，保持单 agent。
+
+## Contract Gate
+
+machine contract 保护行为骨架，不代替场景测试。优先锚定：
+
+- 关键 decision/runtime function 或 tool invocation；
+- required artifact、checkpoint、forbidden action 与 run-id invariant；
+- reference load condition、reuse guard 和 canonical handoff；
+- deprecated key/入口作为 `not-grep`。
+
+不要锚定裸 type name、通用词、只出现在示例中的字符串或正常编辑极易变化的整句。
+
+## Behavior Gate
+
+对每个重要分支回答：
+
+- 哪些 repository facts 触发它？
+- 哪个 artifact/runtime result 证明它发生？
+- 跳过什么会不安全？
+- 最近的 unsafe sibling outcome 是什么？
+
+一个 fixture 只断言一个 decision。无法直接测量 context action 时，先用静态 contract
+保护 load/reuse 规则；不要把单轮 routing 结果冒充“没有重复读取”的证据。
 
 ## Regression Ladder
 
-Choose the cheapest layer that can fail on the defect, then add downstream evidence when the change
-crosses a boundary:
+选择能直接暴露缺陷的最便宜层；跨边界时再增加下游证据：
 
-1. **Shape**: frontmatter, reference links/classification, Markdown line limits, required/forbidden
-   anchors, schema parsing.
-2. **Contract semantics**: Haskell domain + decision surface, constructor vocabulary, guard order,
-   explicit negative/terminal branches.
-3. **Cross-file**: template/runtime copy equality, shared-convention vocabulary, main-entry/deep-
-   protocol agreement, deprecated term absence.
-4. **Scenario**: exact repository facts -> exact outcome, plus the nearest unsafe sibling outcome as
-   a negative assertion. One decision per fixture.
-5. **Runtime conformance**: invoke the real router/hook/parser where it exists; never validate a
-   separately hand-written mirror as production evidence.
-6. **Forward test**: give a fresh agent the original task and raw artifacts, without the intended
-   answer or suspected defect. Use measured multi-model eval only after deterministic layers pass.
+1. **Shape**：frontmatter、shape/placement、reference link、required/forbidden anchor、schema。
+2. **Contract semantics**：Haskell domain、guard order、explicit negative/terminal branch、
+   typed resume、run identity。
+3. **Cross-file**：template/runtime copy equality、main/deep protocol agreement、deprecated term。
+4. **Scenario**：exact facts -> exact outcome，并断言最近的 unsafe sibling outcome。
+5. **Runtime conformance**：调用真实 router/hook/parser，不验证手写 mirror。
+6. **Forward test**：把原始任务和 artifact 给 fresh agent，不泄露预期答案、缺陷或修复。
 
-Every review finding or user correction that changes behavior must gain a regression at the nearest
-deterministic layer. Where practical, verify that the test fails against the pre-fix text/code. A
-marker-only test does not close a branch bug; pair it with an exact scenario or cross-file assertion.
-Do not report the whole suite green when an infrastructure timeout prevented a layer from completing.
+每个行为修正都在最近的确定性层获得回归。能做到时先证明该测试在修复前失败。基础设施
+timeout 导致某层未运行时，不能报告整套验证通过。
+
+## Evolution Admission Gate
+
+新规则必须指向至少一种证据：
+
+- 真实事故或 unsafe near miss；
+- owner correction 或公开契约变化；
+- 多次出现的同类错误/上下文缺口；
+- 新增 runtime/schema invariant；
+- forward test 暴露的可复现失败。
+
+没有行为证据的解释性内容不进入 harness。准入前先检查能否修正现有规则、reference 或
+gate；准入后重新 placement，并在 Regression Ladder 最近层增加回归。
+
+## Evolution Compression Gate
+
+禁止 additive-only evolution：不能把每次事故总结都追加到顶层并保留旧说法。
+
+每轮演进后检查：
+
+- Every new or changed rule must re-enter `placeRule`.
+- 新规则是否替换了冲突、重复或过时规则；
+- 可机械判断内容是否已迁移到 `DeterministicGate`；
+- StageContext / ProjectContext 是否回到唯一 owner；
+- 顶层每句话是否仍改变责任、决策、gate、context、恢复或完成；
+- reference 与 `SKILL.md` 是否存在语义重复；
+- fresh agent 冷启动能否选对 context、完成或安全停止。
+
+行数增长只触发重新 placement 和压缩，不触发机械删词。压缩后不得损失 typed resume、
+Awaiting identity、owner checkpoint、canonical handoff 或安全 gate。
 
 ## Live Host Safety Gate
 
-Classify every planned command before execution:
+执行前给每个命令分类：
 
 | Impact | Allowed behavior |
 |---|---|
@@ -143,100 +256,43 @@ Classify every planned command before execution:
 | `LiveReadOnly` | identity/capability snapshots only; no lifecycle mutation |
 | `LiveMutating` | explicit owner approval and a dedicated disposable environment required |
 
-For developer machines with active host-managed agent sessions:
+在存在 host-managed agent session 的开发机上：
 
-- forbid stop/restart/archive/close/kill of external services and forbid broad `pkill`/`killall`;
-- never write the user's agent home, route index, socket, endpoint, or provider config;
-- isolate integration tests with a per-run temporary home, endpoint, route/cache, and bounded timeout;
-- run heavy suites, Go validation, multi-target builders, and package installs serially with an
-  explicit worker/resource budget; fixed-concurrency builders must not overlap other heavy work;
-- clean up only a PID recorded as created by this run, after an immediate match on PID, UID, argv,
-  process start identity, and expected temp path/parent. On any mismatch, preserve it and report;
-- for `LiveReadOnly`, compare before/after PID, UID, argv, version/server id, home, and listen address;
-  any identity change fails the gate even if assertions passed.
+- 禁止 stop/restart/archive/close/kill external services，禁止 broad `pkill` / `killall`；
+- 不写用户的 agent home、route index、socket、endpoint 或 provider config；
+- integration test 使用 per-run temporary home、endpoint、route/cache 和 bounded timeout；
+- heavy suite、Go validation、multi-target builder、package install 串行执行，并声明
+  worker/resource budget；
+- 只清理由本次运行记录的 PID；signal 前立即核对 PID、UID、argv、process start identity、
+  expected temp path/parent，任一不符就保留并报告；
+- `LiveReadOnly` 前后比较 PID、UID、argv、version/server id、home 和 listen address；identity
+  变化即失败。
 
-Completion requires: deterministic targeted layers passed; skipped heavy/live layers and reasons are
-listed; every test-owned child is reaped or preserved with an ownership warning; external host
-identity is unchanged. CI or a quiet disposable host should own the final full-suite/build matrix.
-
-## Behavior Gate
-
-For each important branch, ask:
-
-- What repository facts trigger it?
-- What artifact proves it happened?
-- What would be unsafe to skip?
-- Can a fixture test the decision?
-
-If a branch cannot be tested directly, at least document the expected input state and output outcome.
+完成要求：targeted deterministic layers 通过；列出 skipped heavy/live layers 及原因；
+test-owned child 已回收或带 ownership warning 保留；external host identity 未变化。
+CI or a quiet disposable host 应承担最终 full-suite/build matrix。
 
 ## Family Audit Coverage Gate
 
-When a request covers every skill or reference in a family, recursively discover the filesystem set first and compare it with the reviewed/classified set by equality. Include every non-`SKILL.md` Markdown file, including root-level `reference.md`, not only `references/**/*.md`. Keep active entries, compatibility shims, Haskell contracts, and structured references in explicit disjoint sets. A sampled list or a one-way subset assertion cannot prove that a newly added skill/reference was reviewed.
+当请求覆盖一个 family 的全部 skill/reference 时，先递归发现 filesystem set，再
+compare it with the reviewed/classified set by equality。包含所有非 `SKILL.md` Markdown，包括根层
+`reference.md`，不能只枚举 `references/` 下的任意层级 `*.md`。
 
-For cross-skill routing, assert that upstream operators target the canonical main entry without selecting its internal stage/lane. Compatibility shims may pass a legacy preset; ordinary brainstorm, router, audit, or workflow handoffs may not.
+active entries、compatibility shims、Haskell contracts、structured references 必须进入显式且
+互斥的集合。sample list 或单向 subset assertion 无法证明新文件已被审计。
 
-## Runtime Alignment Gate
-
-`SKILL.md` remains the sole prompt routing truth. When a deterministic router, hook, or persisted state schema also exists, it is executable enforcement of that Spec and must be semantically identical.
-
-Check all four surfaces together:
-
-- Spec fields and enums map explicitly to persisted artifact fields/values;
-- guard order and terminal-state precedence match runtime code;
-- outcomes distinguish continue, dispatch, report, handoff, completion, and invalid/unknown state;
-- fixtures use the current Spec field names and cover risky runtime branches.
-
-Conformance tests must invoke the real runtime router where one exists. A separately hand-written "test router" can test a desired story while both prompt and production runtime drift, so it is not alignment evidence. Also add static assertions for deprecated fixture keys and critical Spec/runtime outcome names. Any state-schema change invalidates affected historical routing results until the updated fixtures are rerun.
-
-## Refactor Completeness Gate
-
-Label the depth before judging quality:
-
-- `minimal hardening patch`: only tightens trigger, adds a small Spec, adds contracts, or fixes one local rule.
-- `full protocol refactor`: rewrites the active skill body into a complete recoverable protocol.
-
-A full protocol refactor must include trigger contract, Spec, process protocol appropriate to the skill kind, state restoration or branch selection, decision rules when needed, progressive loading when references exist, human checkpoints when applicable, failure behavior, output contract, machine contracts, runtime alignment when applicable, and fixture recommendations. A proposal that only adds three sections is useful hardening, but it is not a full refactor.
-
-## Measured Rules（routing eval 2026-07，7 skill × 3 模型 × k3，[measured]）
-
-以下规则有量化依据（evidence: `experiments/cs-issue-routing-001/results.md`）：
-
-1. **Spec 必须是唯一的 prompt 路由真相，不与散文状态机表格并列**。确定性 runtime 只能作为同一 Spec 的可执行 enforcement，并须通过 Runtime Alignment Gate。并列冗余接近装饰甚至有害：cs-epic 上「表格+Spec 并列」(0.833) 低于重构前只有表格的原版 (0.867)；替代后 0.989。
-2. **Spec 的行为增益与原规则含混度成正比**（cs-docs +0.43 > refactor +0.22 > epic +0.12 > feat +0.10 > issue ±0）。规则本就简单清晰的 skill 不必为形式重写。
-3. **增益集中在非顶级模型与复杂/嵌套分支**（epic 批量上下文、fastforward 资格、多产物状态恢复）。顶级模型对表达形式不敏感。
-4. **给中小模型的分支澄清要显式排除错误选项**（负向澄清），只加正向描述可能引入新歧义：cs-feat ff 分支加「并说明」后 haiku 从全对变全错（答成 NeedsHuman），改为「结果是 RoutedTo Design（不是 NeedsHuman、不是 checkpoint）」后三模型全对。
-5. **decision fixture 的 oracle 必须宽容语义等价措辞**（`result_type_any`/`target_any`），且先抽查 observed 再下 verdict——未校准的严格 oracle 会对无 Spec 词汇的旧版本系统性不公平（cs-docs original 校准前 0.222 → 校准后 0.528）。
-6. **措辞优化两轮无效 → 查结构缺失，别继续磨措辞**。模型在某分支上持续答错且答案集中在"最接近的枚举项"，通常是 Spec 生命周期有分支没形式化（模型无 guard 可走）：cs-goal rt-g02 两轮枚举限定 0.33→0.33，补上 grill 入口 guard 后一轮 0.33→0.89。routing 函数必须覆盖从触发到退出的**完整**生命周期（含入口/重建/降级分支），guard 顺序即优先级，不可达的尾分支是 bug。
+跨 skill 路由还要断言 canonical main entry 规则；普通 operator/router/audit/workflow
+handoff 不得预选接收方内部 stage/lane。
 
 ## Anti-Patterns
 
-Fix these before adding more prose:
+先修复以下问题，不要继续加 prose：
 
-- Spec branch function AND a prose state-machine table both present (duplicate routing truths — measured harmful, see Measured Rules 1);
-- active skill has no `## Spec`;
-- workflow skill has no concise `## Workflow`, `## Protocol`, or `## Lifecycle`;
-- single-step operator has no `## Operation` or `## Algorithm`;
-- stage routing relies on chat history;
-- prompt Spec、persisted state、runtime router、fixtures 使用不同字段或终态优先级；
-- 测试复制一份手写 router，却不调用真实 runtime 做 alignment；
-- compatibility skill duplicates main rules;
-- fastforward mode has no rejection criteria;
-- implementation details appear before routing rules;
-- reference files are loaded eagerly;
-- failure path says only "ask user" without current artifact and next action;
-- skill can continue past a human checkpoint without explicit confirmation;
-- unconditionally re-reads project facts (CONTEXT/ADR/compound) already loaded earlier in the same session or batch.
-
-## Review Output
-
-When reviewing a skill, report:
-
-- skill kind;
-- trigger overlap risks;
-- missing or weak Spec pieces;
-- P1/P3 ordering issues;
-- contracts to add;
-- fixtures to add;
-- references to split or defer-load;
-- one or two highest-leverage edits.
+- 所有 active skill 被强制同一套 workflow/state machine；
+- Haskell/工具 branch 与散文 branch table 并列；
+- reference 在 startup 全量加载，或与 `SKILL.md` 重复并把“厚”理解为体积；
+- routing/resume 依赖聊天记忆，或 `Awaiting` 没有 external run identity；
+- shim 复制主规则，或普通 cross-skill handoff 预选接收方 stage/lane；
+- Collaboration Contract 固定角色和实现步骤，却没有 scope ownership；
+- project facts 在同一 session/batch 无条件重复读取；
+- failure 只写“ask user”，或用 additive prose 替代 artifact、原因、安全下一步和旧规则修正。
