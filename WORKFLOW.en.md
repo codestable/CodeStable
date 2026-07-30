@@ -14,7 +14,7 @@ cs-epic (large-requirement decomposition, sub-items go through event entries)
 cs-keep (wrap-up distillation; every entry has a built-in recommendation moment)
 ```
 
-All entries share one execution mainline: **understand the relevant facts → act → run proportionate verification → deliver the result**. Risk is re-judged per request from current facts — no persistent lanes. Escalation signals (public contracts / data / permissions / real trade-offs / large diffs / explicit user request) require design alignment before acting: the proposal passes an independent agent design review (fix-and-rereview capped at 2 rounds; beyond that, escalate with the disagreement) and is then confirmed by the user. Design and final-acceptance confirmations must never be auto-approved by the model; completed changes get an independent review by default; claiming completion requires verifiable evidence.
+All entries share one execution mainline: **understand the relevant facts → act → run proportionate verification → deliver the result**. Risk is re-judged per request from current facts — no persistent lanes. Escalation signals (public contracts / data / permissions / real trade-offs / large diffs / explicit user request) require design alignment before acting: the proposal is persisted into a work document, passes an independent agent design review (fix-and-rereview capped at 2 rounds; beyond that, escalate with the disagreement), and is then confirmed by the user. Design and final-acceptance confirmations must never be auto-approved by the model; completed changes get an independent review by default; claiming completion requires verifiable evidence.
 
 ## Persistence
 

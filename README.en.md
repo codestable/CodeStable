@@ -159,7 +159,7 @@ Ordinary tasks produce no CodeStable entities at all — the git diff, test outp
 
 | Flow | Entry | Hard gate |
 |------|------|--------|
-| **Feature delivery** | `cs-feat` | On risk escalation the design passes independent agent review, then user confirmation — never auto-approved; test-first when a test setup exists; completion requires verifiable evidence |
+| **Feature delivery** | `cs-feat` | On risk escalation the design is persisted to a work document, passes independent agent review, then user confirmation — never auto-approved; test-first when a test setup exists; completion requires verifiable evidence |
 | **Issue fixing** | `cs-issue` | No root-cause guessing without a verification that clearly turns red; the red verification must turn green before claiming the fix |
 | **Refactoring** | `cs-refactor` | Equivalence verification exists before code changes; stop and report the moment behavior would change |
 | **Epic delivery** | `cs-epic` | Decomposition is user-confirmed before execution; one epic document keeps the full picture; final acceptance is never done on the user's behalf |
