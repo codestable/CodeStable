@@ -12,6 +12,7 @@ argument-hint: "[功能描述]"
 
 - 有 `.codestable/attention.md` 就先读。
 - 按功能关键词 grep `.codestable/lessons/`、`.codestable/compound/`、`.codestable/requirements/` 与项目文档，命中要报告来源路径；写代码前先看相邻实现，写得像这个项目原本的代码。
+- 动手前先定归属：这能力属于哪里、沿用现有词汇叫什么——不丢进最近的文件、不起新同义词。结构与取舍拿不准时读 `references/code-design.md` 与 `references/economy.md`（最小充分 ≠ 最小 diff；有界简化必须记上限、触发与方向）。
 - 对照检查：目标、现场上下文、边界与取舍、证据要求、验收标准。缺少会改变实现方向的事实时先问，一次最多 3 个问题，形成可执行共识即停；不问不影响方向的细节。
 
 ## 默认执行
@@ -20,7 +21,7 @@ argument-hint: "[功能描述]"
 
 ## 风险升级信号
 
-出现任何一条，走设计对齐再动手：把方案要点（改什么、契约变化、取舍、影响面）写入 `.codestable/work/{slug}.md` → 用 `cs-code-review` 的 design review 做独立审查（修复-复审最多 2 轮，超限连分歧一起上交）→ 交用户确认后动手。信号清单：
+出现任何一条，走设计对齐再动手：把方案要点（改什么、契约变化、取舍、影响面——影响面分**必须修改 / 需要验证 / 仍待调查**三层）写入 `.codestable/work/{slug}.md` → 用 `cs-code-review` 的 design review 做独立审查（修复-复审最多 2 轮，超限连分歧一起上交）→ 交用户确认后动手。存在会卡死方案的技术风险时，先按风险降序垂直打通主路径再铺开（穿刺协议见 `references/code-design.md`）。信号清单：
 
 - 公开 interface、持久化 schema 或跨模块协议变化；
 - 权限、信息安全、数据迁移、并发或不可恢复副作用；

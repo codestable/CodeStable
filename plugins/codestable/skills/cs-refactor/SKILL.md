@@ -13,6 +13,7 @@ argument-hint: "[重构目标]"
 - 有 `.codestable/attention.md` 就先读。
 - 按目标模块关键词 grep `.codestable/lessons/`、`.codestable/compound/` 与项目文档，命中要报告来源路径。
 - 先确认诉求真是行为不变：一旦包含"顺便支持 X / 改成 Y"，把那部分拆出去转 `cs-feat` 或 `cs-issue`，不夹带。
+- 结构好坏用**深度**衡量：小接口承载大行为是深，接口和实现一样复杂是浅；重构应让调用方用更少认知换更多能力，不为"看起来干净"搬家，不把模块越拆越碎。
 
 ## 硬门槛
 
