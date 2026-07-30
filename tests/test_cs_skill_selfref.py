@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import shutil
 import sys
 from pathlib import Path
 
@@ -42,13 +41,24 @@ def test_selfref_does_not_invoke_cs_skill_tools(tmp_path):
 def test_queue_enqueue_and_run_next(tmp_path, monkeypatch):
     q = tmp_path / ".queue.jsonl"
     monkeypatch.setattr(eq, "_queue_path", lambda: q)
-    exp = tmp_path / "exp"
-    shutil.copytree(ROOT / "experiments/cs-code-review-001", exp,
-                    ignore=shutil.ignore_patterns("artifacts", "iteration-*.md", "results.md"))
-    eq.enqueue(str(exp), "eval")
-    eq.enqueue(str(exp), "eval")
+    calls = []
+
+    def fake_run(argv):
+        calls.append(argv)
+        return 0
+
+    monkeypatch.setattr(eq.runner, "main", fake_run)
+    exp = str(tmp_path / "exp")
+    eq.enqueue(exp, "eval")
+    eq.enqueue(exp, "eval")
+
     assert eq.run_next() == 0
-    assert eq._load()[0]["status"] == "done"
-    assert eq.run_next() == 0            # 第二个
-    assert all(i["status"] == "done" for i in eq._load())
-    assert eq.run_next() == 0            # 队列空，幂等
+    assert [item["status"] for item in eq._load()] == ["done", "queued"]
+    assert calls == [["--experiment", exp]]
+
+    assert eq.run_next() == 0
+    assert [item["status"] for item in eq._load()] == ["done", "done"]
+    assert calls == [["--experiment", exp], ["--experiment", exp]]
+
+    assert eq.run_next() == 0
+    assert len(calls) == 2

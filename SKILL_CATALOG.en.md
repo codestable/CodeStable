@@ -1,18 +1,38 @@
-# CodeStable Skill Catalog
+# CodeStable v2 Skill Catalog
 
-v2 ships 8 skills: a thin layer of engineering discipline plus a project-memory loop. Ordinary tasks produce zero CodeStable artifacts — the diff and tests are the evidence; cross-session work keeps exactly one work document.
+v2 ships exactly 8 skills. Each is an independent installation unit and does not depend on sibling
+skill files or a centralized onboard runtime.
 
-| Skill | Purpose |
+## Current Entries
+
+| Group | Skill | Responsibility |
+|---|---|---|
+| Navigation | `cs` | Explain CodeStable and recommend one entry; never start a workflow or write files |
+| Onboarding | `cs-onboard` | Create minimal project memory and explain a lossless v1 upgrade |
+| Feature | `cs-feat` | Implement new capability; scale design confirmation and independent review with risk |
+| Issue | `cs-issue` | Fix bugs or broken existing behavior with red-to-green evidence |
+| Refactor | `cs-refactor` | Change structure or performance under verifiable behavioral equivalence |
+| Epic | `cs-epic` | Decompose, confirm, and drive multiple deliverable items over time |
+| Review | `cs-code-review` | Perform independent read-only review or an on-demand module/repository audit |
+| Memory | `cs-keep` | Store evidence-backed frequent facts or reusable lessons in project memory |
+
+## Retired v1.0.4 Entries
+
+The following 24 names are retired and not shipped in v2. No compatibility shims are installed.
+Upgrading preserves historical project artifacts; it only removes these triggers from the new skill
+package.
+
+| v1 names | v2 approach |
 |---|---|
-| `cs` | System overview and entry recommendation; explains only, never starts a workflow |
-| `cs-onboard` | Create the minimal `.codestable/` skeleton (attention / lessons / work); v1 legacy is preserved untouched |
-| `cs-feat` | New features and changes; on risk escalation the design passes independent review, then user confirmation |
-| `cs-issue` | Bug fixing; no root-cause guessing without a verification that clearly turns red |
-| `cs-refactor` | Behavior-preserving refactoring; equivalence verification before touching code |
-| `cs-code-review` | Independent review: diff / design / repo-audit modes; fix-and-rereview capped at 2 rounds |
-| `cs-epic` | Large-requirement decomposition and long-running delivery via one epic document |
-| `cs-keep` | Distill experience into attention / lessons; every entry needs traceable evidence |
+| `cs-feat-design`, `cs-feat-design-review`, `cs-feat-impl`, `cs-feat-qa`, `cs-feat-accept`, `cs-feat-ff` | Use `cs-feat`; risk and repository facts determine execution strength |
+| `cs-issue-report`, `cs-issue-analyze`, `cs-issue-fix` | Use `cs-issue` |
+| `cs-refactor-ff` | Use `cs-refactor` |
+| `cs-audit` | Use the audit mode of `cs-code-review` |
+| `cs-goal`, `cs-roadmap`, `cs-roadmap-review`, `cs-roadmap-impl-goal` | Use `cs-epic` for large initiatives; ordinary cross-session work uses one work document |
+| `cs-brainstorm`, `cs-domain`, `cs-req` | Clarify within `cs-feat` / `cs-epic`; update project docs or ADRs directly |
+| `cs-docs`, `cs-docs-neat`, `cs-doc-api`, `cs-doc-tutorial` | Update docs as part of the owning development task, or request a standalone documentation edit directly |
+| `cs-note` | Use `cs-keep` |
+| `cs-feedback` | Store project lessons with `cs-keep`; submit product feedback through the repository issue process |
 
-## v1 legacy entries
-
-The v1 stage skills and long-tail entries (`cs-feat-design`, `cs-issue-fix`, `cs-goal`, `cs-brainstorm`, `cs-docs`, `cs-domain`, `cs-req`, `cs-audit`, `cs-note`, `cs-feedback`, the `cs-roadmap` family, etc.) have been removed: design and requirement clarification are built-in steps of `cs-feat` / `cs-epic`, auditing is a mode of `cs-code-review`, knowledge capture goes through `cs-keep`, and docs/ADRs are produced by the work that needs them. All v1 artifacts and knowledge in existing projects remain untouched and grep-discoverable.
+Call `cs` when the mapping is unclear. See
+[WORKFLOW.en.md](./WORKFLOW.en.md#v1-upgrade-boundary) for v1 project-asset preservation.

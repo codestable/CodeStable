@@ -6,9 +6,9 @@
 
 要测的是「skill 在其**设计环境**下的真实能力」，不是「skill 在残缺环境下的反应」。一轮真实模型 campaign 里，每个看似的「模型/skill gap」核查后都是**评测缺陷**：
 
-1. **复现 onboard 运行环境**：cs skills 为已 onboard 的 `.codestable/` 仓库设计；裸输入下弱模型会（正确地）拒绝执行 → 假 gap。用 `inject_context: true` 补齐 attention/来源 spec/git（cs-code-review haiku bare 0.31 → 补上下文 0.92）。
+1. **复现被测 skill 的实际 context contract**：fixture 提供任务/diff，并按声明补可选 attention、相关 lessons、项目文档或 ADR；不注入集中式 runtime。缺失必要输入会让模型正确拒绝，形成假 gap（历史 cs-code-review campaign：haiku bare 0.31 → 补上下文 0.92）。
 2. **散文 answer 用语义 oracle**：token 重叠对「`>=` 改成 `>`」「删掉早返回守卫」这类符号/散文 answer 会误判漏检（cs-refactor 两模型满分被打成 0.62/0.75）。用 `recall_judge`（judge 语义判定）+ `planted_defect`（机械兜底）。
-3. **fixture 必须内嵌 subject matter**：转换/文档型 skill 需要被操作的对象。给 cs-docs「写配置文档」却不给配置，模型会（正确地）要材料而非捏造（sonnet 0.75）。review 需要 diff、docs 需要 code/config/API、design/plan 可只从需求推导。
+3. **fixture 必须内嵌 subject matter**：转换/文档型任务需要被操作的对象。v1 `cs-docs` 历史 campaign 中，给「写配置文档」却不给配置时模型会正确要材料而非捏造（sonnet 0.75）。review 需要 diff，文档任务需要 code/config/API，design/plan 可只从需求推导。
 
 核查纪律：**分模型看**（合计数掩盖 haiku↔sonnet 差异）、**手工读原始输出**（token 数字会骗人）、**k=1 有 variance**（同一 fixture 会抖，发布级结论 k≥5）。
 
@@ -38,7 +38,7 @@
 ```
 
 - `variants`：`baseline`=当前仓库被测 skill 的 SKILL.md；其余=optimize 产出的 `experiments/{name}/variants/<v>.md`。
-- `inject_context`（**效度关键，默认 true**）：cs skills 为已 onboard 的 `.codestable/` 仓库设计（启动检查要 attention.md / 来源 spec / git diff）。评测须在 prompt 里补齐这套 onboard 上下文，否则测到的是「skill 在错误环境下拒绝执行」的假象而非真实能力（实测：cs-code-review haiku bare=0.31 → 补上下文=0.92）。设 `false` 只用于专门测「bare-input/ad-hoc 健壮性」。
+- `inject_context`（**效度关键，默认 true**）：按被测 skill 的真实 context contract 补任务、diff、可选 attention、相关 lessons 与项目文档，不假设统一 onboard runtime。设 `false` 只用于专门测「bare-input/ad-hoc 健壮性」。
 - `model_list` ≥2（跨模型一致性，BAIME 硬约束）。`judge_model` 须独立于被测 model。
 
 ## 2. 作 fixtures

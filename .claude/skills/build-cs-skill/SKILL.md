@@ -1,15 +1,6 @@
 ---
 name: build-cs-skill
 description: "CodeStable skill authoring and evolution protocol. Use when creating, refactoring, simplifying, or reviewing cs-* skills under plugins/codestable/skills or .claude/skills. Produces a thin harness, an explicit context plan, evidence gates, and an optional agent collaboration contract. Do not use for product implementation; use eval-cs-skill only for measured experiment loops."
-contracts:
-  - grep: "selectSkillShape"
-  - grep: "placeRule"
-  - grep: "thin harness"
-  - grep: "thick context"
-  - grep: "buildContextPlan"
-  - grep: "Additive-only evolution is a failure mode"
-  - grep: "eval-cs-skill"
-  - not-grep: "read `.codestable/attention.md` just to author"
 ---
 
 # build-cs-skill
@@ -94,16 +85,17 @@ conditions. Authoring itself does not require project preflight. A generated ski
 when its behavior depends on project setup, repository facts, artifact writes, or recovery.
 
 If there is no independent installable responsibility, or an existing skill/reference/tool owns it,
-select `NoActiveSkill`. Use `ReferenceSkill` only when knowledge has an independent distribution contract.
+select `NoActiveSkill`. A retired v1 CodeStable name also selects `NoActiveSkill`; migration prose is
+not an instruction to recreate a compatibility shim. Use `ReferenceSkill` only when knowledge has an
+independent distribution contract.
 
 ### 2. Choose the minimum shape
 
 Classify before writing; do not default to a full protocol refactor. Use `ThinOperator` for one
 action/artifact, `ContextualWorkflow` for staged or recoverable work, and `ToolBackedWorkflow` when a
 deterministic router/gate owns fragile choices. `ShimSkill` contains only a canonical target and
-preset; `ReferenceSkill` contains knowledge without an invented workflow. As of skills v2 the shipped
-family has no `ToolBackedWorkflow` or `ShimSkill` instance — treat these shapes as available, not as
-precedent to imitate.
+preset, and is allowed only when a newly accepted distribution contract explicitly ships that alias.
+`ReferenceSkill` contains knowledge without an invented workflow.
 
 Use high freedom for safe implementation choices, medium for preferred patterns, and low only for
 fragile operations or invariant-sensitive ordering.
@@ -173,10 +165,12 @@ For `ToolBackedWorkflow`, state the tool contract, invariant boundaries, outcome
 behavior without copying its branch table. Align persisted schema, normalization, terminal
 precedence, and outcomes across harness, runtime, references, and tests.
 
-Each skill remains independently installable: do not require sibling skill files; shared discipline is
-inlined per skill (a few duplicated lines beat a reference mechanism). v2 skills invoke no runtime
-tools or gates; legacy `.codestable/` assets (reference/, tools/, gates/) stay read-only and must not
-become new entry points. Branch/worktree policy and agent backends remain host-owned.
+Each skill remains independently installable: do not require sibling skill files or a centralized
+onboard runtime. Skill-specific context and deterministic helpers belong to the owning skill's
+`references/` and `scripts/`. Project context belongs in `.codestable/attention.md`,
+`.codestable/lessons/`, `.codestable/work/`, or the project's existing docs and ADRs. A v2 skill may
+search useful v1 artifacts, but must not execute their tools or treat them as current distribution
+surfaces. Shims stay thin. Branch/worktree policy and agent backends remain host-owned.
 
 ### 8. Compress, validate, and finish
 

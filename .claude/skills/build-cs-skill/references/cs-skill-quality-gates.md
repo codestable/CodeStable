@@ -43,7 +43,7 @@ workflow/Haskell state machine，不构成缺陷。
 | `ThinOperator` | 单一责任；没有伪造阶段；少量 guard 足以安全完成 |
 | `ContextualWorkflow` | 真实阶段/迭代/恢复存在；仓库事实决定状态；按阶段加载 context |
 | `ToolBackedWorkflow` | 确定性工具实际存在；接口、失败和 alignment 可验证 |
-| `ShimSkill` | 仅转发 canonical entry 与 legacy preset；不复制主规则 |
+| `ShimSkill` | 新发布契约明确交付 alias；仅转发 canonical entry 与 preset，不复制主规则 |
 | `ReferenceSkill` | 只有独立分发的知识；有 load condition 且没有 active workflow |
 
 以下情况拒绝 shape：
@@ -53,6 +53,7 @@ workflow/Haskell state machine，不构成缺陷。
 - 声称 tool-backed 但没有真实可调用工具或 fail-closed 行为；
 - reference 内容伪装成 active methodology skill；
 - 已有 canonical owner 时仍创建重复 active skill。
+- 为 v2 已退役名称恢复 compatibility shim。
 
 ## Thin Harness Gate
 
@@ -107,8 +108,9 @@ Every new or changed rule must re-enter `placeRule`.
 - startup 不扫描或读取全部 references、ADR、compound 或历史 artifacts；
 - thick context 的“厚”来自当前阶段的相关性、证据密度和完整性，不来自体积；
 - 顶层只列 reference 的用途与 load condition，不复述 reference；
-- skill 专属 reference 可随独立安装单元分发；跨 skill 共享资料通过项目
-  `.codestable/reference/`，不读取 sibling skill 文件。
+- skill 专属 reference 可随独立安装单元分发；跨 skill 的项目事实通过
+  `.codestable/attention.md`、`.codestable/lessons/`、`.codestable/work/` 或项目既有文档
+  与 ADR 获取，不读取 sibling skill 文件，也不依赖集中式 onboard runtime。
 
 首次读取项目事实的价值必须保留；同一会话继续时复用已读摘要。batch fan-out 必须传
 结构化 flag/reuse key，让 child 明确跳过 parent 已加载的全局输入，不能只写“如已读则复用”。
@@ -177,14 +179,14 @@ recovery pointer；接收方自行恢复状态。
 
 没有独立 scope 或独立验收方式时，保持单 agent。
 
-## Contract Gate
+## Static Evidence Gate
 
-machine contract 保护行为骨架，不代替场景测试。优先锚定：
+静态检查保护行为骨架，不代替场景测试。优先验证：
 
 - 关键 decision/runtime function 或 tool invocation；
 - required artifact、checkpoint、forbidden action 与 run-id invariant；
 - reference load condition、reuse guard 和 canonical handoff；
-- deprecated key/入口作为 `not-grep`。
+- deprecated key/入口使用显式负向断言，不写入 skill frontmatter。
 
 不要锚定裸 type name、通用词、只出现在示例中的字符串或正常编辑极易变化的整句。
 
@@ -197,7 +199,7 @@ machine contract 保护行为骨架，不代替场景测试。优先锚定：
 - 跳过什么会不安全？
 - 最近的 unsafe sibling outcome 是什么？
 
-一个 fixture 只断言一个 decision。无法直接测量 context action 时，先用静态 contract
+一个 fixture 只断言一个 decision。无法直接测量 context action 时，先用静态检查
 保护 load/reuse 规则；不要把单轮 routing 结果冒充“没有重复读取”的证据。
 
 ## Regression Ladder
@@ -278,8 +280,8 @@ CI or a quiet disposable host 应承担最终 full-suite/build matrix。
 compare it with the reviewed/classified set by equality。包含所有非 `SKILL.md` Markdown，包括根层
 `reference.md`，不能只枚举 `references/` 下的任意层级 `*.md`。
 
-active entries、compatibility shims、Haskell contracts、structured references 必须进入显式且
-互斥的集合。sample list 或单向 subset assertion 无法证明新文件已被审计。
+shipped active set 必须与 package manifest/distribution 精确相等，退役名称有负向断言；
+accepted shims、Haskell contracts、structured references 进入显式互斥集合。subset 不足以证明完整。
 
 跨 skill 路由还要断言 canonical main entry 规则；普通 operator/router/audit/workflow
 handoff 不得预选接收方内部 stage/lane。

@@ -1,34 +1,52 @@
-# CodeStable 工作流与运行结构
-
-## 设计原则：thin harness, thick context
-
-规则点到为止：skill 只传递研发经验（何时该做什么、为什么）与少数硬门槛，不复刻流程状态机；执行路线交给模型，状态从仓库事实恢复。上下文按需检索：每次动手前按任务关键词 grep 项目沉淀，命中报告来源。
+# CodeStable v2 工作流与项目结构
 
 ## 工作流
 
+CodeStable v2 是 8 个独立安装的 thin-harness skill，加一个项目记忆闭环。`cs` 只解释和
+推荐，不自动启动下游流程；确定入口后直接调用对应 skill。
+
 ```text
-cs（导览）
-cs-onboard（骨架）
-cs-feat / cs-issue / cs-refactor（事件入口）──> cs-code-review（独立审查：设计与改动默认过审，微小改动可跳过）
-cs-epic（大需求拆解，逐子项走事件入口）
-cs-keep（收尾沉淀，所有入口内置推荐时机）
+不确定入口       -> cs
+仓库接入 / v1 升级 -> cs-onboard
+新功能           -> cs-feat ---------\
+bug / 行为异常    -> cs-issue ----------> cs-code-review（高风险或按需）
+行为等价重构      -> cs-refactor ------/
+大需求拆解        -> cs-epic -> cs-feat / cs-issue / cs-refactor
+经验与项目记忆    -> cs-keep
 ```
 
-每个入口共用同一执行主线：**理解相关事实 → 行动 → 相称的验证 → 交付结果**。风险每次按当前事实重判，不写入持久 lane；触发升级信号（公开契约 / 数据 / 权限 / 真实取舍 / 大范围 diff / 用户要求）时先对齐设计再动手：方案要点落盘为 work 文档，经独立 agent design review（修复-复审最多 2 轮，超限连分歧一起上交）后交用户确认。design 与整体验收的确认不可被模型自主跳过；改动完成默认独立 review；声称完成必须附可核验证据。
+执行强度与风险相称：
 
-## 持久化
+- `cs-feat` 默认直接理解、实现、验证；公开契约、数据、权限、并发或真实方案取舍先经用户确认。
+- `cs-issue` 先建立能明确变红的验证，再修复并证明它变绿。
+- `cs-refactor` 先建立等价性证据，分步改动并持续保持验证为绿。
+- `cs-epic` 用一个 work 文档维护子项、依赖和验收；拆解与边界变更由用户确认。
+- `cs-code-review` 是只读独立审查，也承接模块或全仓 audit。
+- `cs-keep` 把高频事实压进 attention，把可复用经验写成 lesson。
 
-普通任务零 CodeStable 产物——git diff、测试输出与交付说明就是证据。
+普通任务不生成阶段文档。diff、测试输出和交付说明就是证据；只有跨会话、多人交接或用户
+要求留痕时，才维护一个 work 文档，完成后删除或按用户要求保留。
+
+## 项目记忆
+
+`/cs-onboard` 为新项目创建最小骨架：
 
 ```text
 .codestable/
-├── attention.md    # 每次会话必读的项目事实，≤25 条
-├── lessons/        # 沉淀经验，一条一 markdown 文件，grep 检索
-└── work/           # 仅活动中的跨会话任务，一任务一文档（目标/现场/边界/证据/验收/状态与未决六节），完成即压缩删除
+├── attention.md    # 每次会话需要的少量项目事实，最多 25 条
+├── lessons/        # 一条经验一个 Markdown 文件，按关键词检索
+└── work/           # 活动中的跨会话任务，完成即清
 ```
 
-lesson 写入纪律：没有可追溯证据不写；写前 grep 同域旧条目，能合并不新增；约 50 条上限触发先合并。
+skill 专属 context 与 helper 分别由 owning skill 的 `references/` 和 `scripts/` 提供。项目
+事实放在上述目录或项目既有文档与 ADR 中。skill 不读取 sibling skill 文件，也不依赖集中式
+onboard runtime；worktree、branch 和 agent backend 策略由宿主或 owner 决定。
 
-## v1 兼容
+## v1 升级边界
 
-存量项目的 v1 产物（`requirements/`、`roadmap/`、`features/`、`issues/`、`compound/`、`reference/`、`tools/` 等）一律只读保留、不迁移不删除；旧沉淀继续被各 skill 的 grep 检索覆盖。v1 的 gate 与 runtime 工具不再被 skill 调用。
+v2 不迁移或清理 v1 项目的历史目录。已有 `requirements/`、`roadmap/`、`features/`、
+`issues/`、`compound/`、tool、gate、hook 和 manifest 原样保留；新 skill 可以按任务关键词
+检索其中的项目知识，但不会执行旧 runtime，也不会继续生成 v1 阶段产物。
+
+v1.0.4 的 32 个 skill 在 v2 收敛为 8 个；其余 24 个入口已退役且不随 v2 安装。完整映射见
+[SKILL_CATALOG.md](./SKILL_CATALOG.md)。

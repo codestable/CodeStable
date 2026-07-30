@@ -8,7 +8,8 @@ argument-hint: "[--stage author|eval|optimize|release] [--experiment <dir>] <ski
 
 ## 启动必读
 
-动作前先跑 CodeStable preflight：读 `.codestable/attention.md`（缺失先 `cs-onboard`）；不要用 `AGENTS.md`/`CLAUDE.md` 等外部入口代替它；细则见 `.codestable/reference/execution-conventions.md`。
+动作前读取仓库 agent 规则；存在 `.codestable/attention.md` 时再读项目事实。评测 context 以
+被测 skill 的实际声明为准，不要求集中式 onboard runtime 或共享 reference。
 
 `eval-cs-skill` 是「造 skill 的 skill」：把 CodeStable 各 skill 的 **编写 → 评测 → 优化 → 再评测** 做成一条可复现、跨 model/agent 的迭代闭环。它编排的对象是 **skill 自身的生命周期**，不是业务代码 feature。它**自指**——同一套 harness 也能评测并优化 `eval-cs-skill` 自己。
 
@@ -38,7 +39,7 @@ argument-hint: "[--stage author|eval|optimize|release] [--experiment <dir>] <ski
 ## 闭环是什么（速读）
 
 ```text
-生产失败(cs-feedback) ┐
+regression fixtures ────┐
 planted-defect fixtures ┼─▶ runner.py（多 harness/model 执行被测 skill，隔离宿主）
 golden 任务 ────────────┘        │
                                  ▼
@@ -139,12 +140,14 @@ python3 {skill_dir}/scripts/bump_version.py --to X.Y.Z
 - 当前 stage 产物已落盘，状态可由 `experiments/` 事实恢复。
 - eval 产出带 tag 的 measured 分数与 evidence_pointer。
 - optimize 产出 iteration-N 与收敛判定；release 产出合规回写 + 版本同步 + 回归结论。
-- 需要外部文档时提示 `cs-docs`；需要沉淀坑/决策时提示 `cs-keep`。
+- 需要外部文档时直接更新对应项目文档；需要沉淀坑/决策时提示 `cs-keep`。
 
 ---
 
 ## 相关入口
 
-- `cs-feedback`：生产失败采集；其失败案例可转成 `fixtures/regression/`。
-- `cs-code-review` / `cs-issue` / `cs-audit`：常见被测 skill。
-- `cs-onboard`：runtime 与共享 reference 的属主。
+- `cs-code-review` / `cs-issue` / `cs-feat`：常见活动被测 skill。
+- `cs-onboard`：最小项目记忆骨架；不提供评测 runtime。
+
+`scripts/promote_feedback_fixture.py` 仅用于显式导入冻结的 v1 `cs-feedback` candidate，不是
+v2 production feedback 入口；新反馈如何进入 regression 不在当前协议中定义。

@@ -13,7 +13,7 @@ argument-hint: "[--stage ...] <arg>"   # 仅主入口
 ```
 
 - `description` 是唯一决定「是否自动触发」的字段：写「用来做 X，触发词 A/B/C」，不要写「关于 X 的」。略偏推销：任务有 Y 特征就触发。
-- 主入口用 `--stage/--mode` 显式语义；兼容入口是薄壳（≤40 行、无独立规则）。
+- 只有用户确实需要稳定参数契约时才加 `--stage/--mode`；不要为已退役入口创建兼容薄壳。
 
 ## 渐进披露（progressive disclosure）
 
@@ -33,8 +33,9 @@ plugins/codestable/skills/cs-xxx/
 ```
 
 - 用 `references/`（复数），嵌套用 `support/`，不得 `reference/` 单数或二层 `references/`。
-- 不复制 `.codestable/tools/`；跨 skill 共享参考走项目层 `.codestable/reference/`（由 `cs-onboard` 复制）。
-- skill 间不耦合：A skill 不读 B skill 包内文件。
+- helper 放 owning skill 的 `scripts/`，不复制到项目；v2 不依赖 repo-local runtime。
+- skill 间不耦合：A skill 不读 B skill 包内文件。项目事实走 `.codestable/attention.md`、
+  `.codestable/lessons/`、`.codestable/work/` 或项目既有文档与 ADR。
 
 ## model/harness 无关（关键）
 

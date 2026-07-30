@@ -1,7 +1,8 @@
 ---
 adr: "001"
 title: "CodeStable 工具从已安装的 skill 包运行"
-status: Accepted
+status: Superseded
+superseded-by: "004"
 date: 2026-07-06
 applies-to:
   - "plugins/codestable/skills/cs-onboard/tools/"
@@ -14,6 +15,9 @@ lint: "python3 -m pytest tests/test_codestable_doctor.py tests/test_skill_entry_
 ---
 
 # ADR-001: CodeStable 工具从已安装的 skill 包运行
+
+> 本决策已被 [ADR-004](004-project-knowledge-not-runtime-distribution.md) 取代。以下内容保留为
+> v1 架构记录。
 
 ## Context
 

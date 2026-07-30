@@ -15,6 +15,16 @@ PACKAGE_ROOT = ROOT / "plugins/codestable"
 RUN_E2E = os.environ.get("CODESTABLE_RUN_SKILLS_CLI_E2E") == "1"
 CLI_COMMAND = os.environ.get("CODESTABLE_SKILLS_CLI")
 LEGACY_INVENTORY = ROOT / "tests/fixtures/skills-cli/legacy-cs-inventory.json"
+V2_SKILLS = {
+    "cs",
+    "cs-code-review",
+    "cs-epic",
+    "cs-feat",
+    "cs-issue",
+    "cs-keep",
+    "cs-onboard",
+    "cs-refactor",
+}
 SKILLS_CLI_1_5_17_PRIORITY_PREFIXES = (
     "",
     "skills/",
@@ -60,7 +70,7 @@ def package_skill_names(package_root: Path) -> set[str]:
 
 def skill_md_paths(root: Path) -> set[str]:
     tracked = subprocess.run(
-        ["git", "ls-files", "-z"],
+        ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
         cwd=root,
         check=True,
         capture_output=True,
@@ -69,7 +79,7 @@ def skill_md_paths(root: Path) -> set[str]:
     return {
         path
         for path in tracked
-        if path and Path(path).name.lower() == "skill.md"
+        if path and Path(path).name.lower() == "skill.md" and (root / path).is_file()
     }
 
 
@@ -125,12 +135,10 @@ def installed_skill_names(home: Path) -> set[str]:
     }
 
 
-def test_skills_cli_package_root_contains_complete_cs_family() -> None:
+def test_skills_cli_package_root_contains_exact_v2_skill_family() -> None:
     names = package_skill_names(PACKAGE_ROOT)
 
-    assert names
-    assert all(name == "cs" or name.startswith("cs-") for name in names)
-    assert {"cs", "cs-onboard", "cs-feat", "cs-issue", "cs-keep"} <= names
+    assert names == V2_SKILLS
 
 
 def test_repo_root_update_discovery_misses_plugin_but_package_root_is_complete() -> None:
@@ -148,13 +156,14 @@ def test_repo_root_update_discovery_misses_plugin_but_package_root_is_complete()
     assert package_discovery == canonical_paths
 
 
-def test_update_deletion_detection_preserves_complete_package_siblings() -> None:
+def test_v1_package_discovery_identifies_exact_retired_set() -> None:
     legacy = json.loads(LEGACY_INVENTORY.read_text(encoding="utf-8"))
     legacy_names = set(legacy["skills"])
     current_names = package_skill_names(PACKAGE_ROOT)
+    retired_names = legacy_names - current_names
     locked_paths = {
         name: f"plugins/codestable/skills/{name}/SKILL.md"
-        for name in current_names
+        for name in legacy_names
     }
     root_discovery = skills_cli_1_5_17_priority_discovery(ROOT)
     package_discovery = skills_cli_1_5_17_priority_discovery(ROOT, "plugins/codestable")
@@ -162,18 +171,49 @@ def test_update_deletion_detection_preserves_complete_package_siblings() -> None
     deleted_from_root = skills_cli_1_5_17_deleted_skills(locked_paths, root_discovery)
     deleted_from_package = skills_cli_1_5_17_deleted_skills(locked_paths, package_discovery)
 
-    assert legacy_names <= current_names
-    assert deleted_from_root == current_names
-    assert deleted_from_package == set()
+    assert current_names == V2_SKILLS
+    assert current_names <= legacy_names
+    assert len(legacy_names) == 32
+    assert len(retired_names) == 24
+    assert deleted_from_root == legacy_names
+    assert deleted_from_package == retired_names
+
+
+def write_legacy_package(source: Path) -> set[str]:
+    legacy = json.loads(LEGACY_INVENTORY.read_text(encoding="utf-8"))
+    names = set(legacy["skills"])
+    manifest_dir = source / ".codex-plugin"
+    manifest_dir.mkdir(parents=True)
+    (manifest_dir / "plugin.json").write_text(
+        json.dumps(
+            {
+                "name": "codestable",
+                "version": legacy["source_ref"].removeprefix("v"),
+                "description": "CodeStable v1 upgrade fixture.",
+                "skills": "./skills/",
+            }
+        ),
+        encoding="utf-8",
+    )
+    for name in names:
+        skill_dir = source / "skills" / name
+        skill_dir.mkdir(parents=True)
+        (skill_dir / "SKILL.md").write_text(
+            f"---\nname: {name}\ndescription: v1 upgrade fixture for {name}.\n---\n\n# {name}\n",
+            encoding="utf-8",
+        )
+    return names
 
 
 @pytest.mark.skipif(
     not RUN_E2E or not CLI_COMMAND,
     reason="set CODESTABLE_RUN_SKILLS_CLI_E2E=1 and CODESTABLE_SKILLS_CLI for a real CLI E2E",
 )
-def test_full_package_reinstall_preserves_sibling_skills(tmp_path: Path) -> None:
+def test_v1_full_package_reinstall_retires_removed_and_preserves_siblings(
+    tmp_path: Path,
+) -> None:
     source = tmp_path / "source/codestable"
-    shutil.copytree(PACKAGE_ROOT, source)
+    legacy_names = write_legacy_package(source)
     home = tmp_path / "home"
     state = tmp_path / "state"
     env = os.environ.copy()
@@ -213,6 +253,14 @@ def test_full_package_reinstall_preserves_sibling_skills(tmp_path: Path) -> None
         "-y",
         "--copy",
     ]
+    retired_names = legacy_names - V2_SKILLS
+    remove_retired_command = [
+        *shlex.split(CLI_COMMAND),
+        "remove",
+        *sorted(retired_names),
+        "-g",
+        "-y",
+    ]
 
     subprocess.run(
         unrelated_command,
@@ -226,14 +274,41 @@ def test_full_package_reinstall_preserves_sibling_skills(tmp_path: Path) -> None
     assert "third-party-probe" in installed_skill_names(home)
 
     subprocess.run(command, cwd=tmp_path, env=env, check=True, capture_output=True, text=True, timeout=120)
+    assert legacy_names <= installed_skill_names(home)
+
+    shutil.rmtree(source)
+    shutil.copytree(PACKAGE_ROOT, source)
+    subprocess.run(
+        remove_retired_command,
+        cwd=tmp_path,
+        env=env,
+        check=True,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    assert installed_skill_names(home) == V2_SKILLS | {"third-party-probe"}
+
+    subprocess.run(command, cwd=tmp_path, env=env, check=True, capture_output=True, text=True, timeout=120)
+
     expected = package_skill_names(source)
-    before = installed_skill_names(home)
-    assert expected <= before
+    after_upgrade = installed_skill_names(home)
+    assert after_upgrade == expected | {"third-party-probe"}
+    assert after_upgrade.isdisjoint(legacy_names - expected)
+    installed_cs = home / ".agents/skills/cs/SKILL.md"
+    assert installed_cs.read_text(encoding="utf-8") == (
+        source / "skills/cs/SKILL.md"
+    ).read_text(encoding="utf-8")
 
     skill_md = source / "skills/cs/SKILL.md"
-    skill_md.write_text(skill_md.read_text(encoding="utf-8") + "\n", encoding="utf-8")
+    skill_md.write_text(
+        skill_md.read_text(encoding="utf-8") + "\n# e2e-update-marker\n",
+        encoding="utf-8",
+    )
     subprocess.run(command, cwd=tmp_path, env=env, check=True, capture_output=True, text=True, timeout=120)
 
     after = installed_skill_names(home)
-    assert expected <= after
-    assert "third-party-probe" in after
+    assert after == expected | {"third-party-probe"}
+    assert installed_cs.read_text(encoding="utf-8") == skill_md.read_text(
+        encoding="utf-8"
+    )

@@ -1,6 +1,6 @@
 # CodeStable Skill Fixture Patterns
 
-为 `cs-*` skill 设计行为回归时读取本规范。fixture 验证决策；静态 contract 验证 shape、
+为 `cs-*` skill 设计行为回归时读取本规范。fixture 验证决策；静态检查验证 shape、
 placement、reference link 与 invariant。两者不能互相冒充。
 
 ## 目录
@@ -22,7 +22,7 @@ fixture 数量由 fragility 和分支数决定，不要求每个 skill 固定 5-
 | `ThinOperator` | 1 个 happy path；存在危险边界时再加 failure/forbidden case |
 | `ContextualWorkflow` | 每个高风险 branch 一个 decision case；resume/terminal 各有正反例 |
 | `ToolBackedWorkflow` | 真实 runtime conformance；unknown/schema mismatch fail closed |
-| `ShimSkill` | canonical target 与 legacy preset passthrough 各一项断言 |
+| `ShimSkill` | 仅在新发布契约明确交付 alias 时验证 canonical target；v2 退役入口选择 `NoActiveSkill` |
 | `ReferenceSkill` | 不造 routing fixture；验证归属、链接、load condition 和无 active workflow |
 
 一个 fixture 只验证一个 decision。不要把 routing、输出格式、artifact 内容和 context action
@@ -33,17 +33,18 @@ fixture 数量由 fragility 和分支数决定，不要求每个 skill 固定 5-
 使用小型 YAML/JSON，并显式断言最近的 unsafe sibling outcome：
 
 ```yaml
-name: no-design-routes-to-design
+name: public-contract-change-requires-owner-confirmation
 skill: cs-feat
-step: restoreFeatureStage
-state:
-  feature_dir_exists: true
-  has_design: false
-  qa_status: missing
+step: planChange
+input:
+  request: add a required field to the public API
+facts:
+  changes_public_interface: true
+  explicit_owner_approval: false
 expect:
-  result_type: RoutedTo
-  stage: Design
-  must_not_route_to: Implementation
+  result_type: HumanCheckpoint
+  reason: ConfirmDesign
+  forbidden_actions: [edit_code]
 ```
 
 ### Owner Checkpoint
@@ -51,32 +52,33 @@ expect:
 checkpoint case 必须证明这是 owner decision，而不是 missing input 或普通等待：
 
 ```yaml
-name: review-passed-requires-owner-confirmation
-step: selectNextAction
-state:
-  design_status: draft
-  design_review: passed
+name: prior-discussion-is-not-owner-approval
+skill: cs-feat
+step: planChange
+input:
+  request: change the persisted schema
+facts:
+  prior_discussion_exists: true
+  explicit_owner_approval: false
 expect:
   result_type: HumanCheckpoint
   reason: ConfirmDesign
-  must_not_route_to: GoalPackage
+  forbidden_actions: [edit_code]
 ```
 
 同时增加 typed resume case，防止自由文本或错误 checkpoint 被接受：
 
 ```yaml
-name: confirm-design-resumes-through-main-entry
-step: entrypoint
+name: explicit-confirmation-allows-feature-work
+skill: cs-feat
+step: planChange
 input:
-  resume:
+  request: change the persisted schema
+  owner_reply:
     kind: ConfirmDesign
     decision: Approved
-state:
-  design_status: draft
-  design_review: passed
 expect:
-  result_type: RoutedTo
-  stage: GoalPackage
+  result_type: Execute
   must_not_result_type: NeedsHuman
 ```
 
@@ -85,30 +87,31 @@ expect:
 ### Forbidden Action
 
 ```yaml
-name: docs-skill-must-not-change-code
-step: planAction
+name: code-review-must-not-change-code
+skill: cs-code-review
+step: review
 input:
-  request: update public docs for the auth API
+  mode: diff-review
 expect:
-  result_type: RoutedTo
-  stage: Docs
+  result_type: ReviewReport
   forbidden_actions:
     - edit_source_code
-    - git_push
+    - apply_fix
 ```
 
 ### Failure Path
 
 ```yaml
-name: ambiguous-feature-target-needs-human
-step: restoreFeatureTarget
-state:
-  matching_features:
-    - .codestable/features/2026-07-01-auth
-    - .codestable/features/2026-07-03-auth-refresh
+name: issue-without-red-check-must-not-edit
+skill: cs-issue
+step: establishEvidence
+facts:
+  stable_failing_check: false
+  manual_reproduction_confirmed: false
 expect:
   result_type: NeedsHuman
-  reason_contains: which feature
+  reason_contains: reproducible validation
+  forbidden_actions: [edit_code]
 ```
 
 failure fixture 应断言当前 artifact 与安全下一步，而不只是结果名称。
@@ -117,34 +120,36 @@ failure fixture 应断言当前 artifact 与安全下一步，而不只是结果
 
 ### Awaiting Run Identity
 
-外部工作已启动时，正例必须携带真实 run identity：
+本节只适用于确实拥有外部异步工作的未来 `ContextualWorkflow` / `ToolBackedWorkflow`；当前
+v2 活动 skill 不因历史 goal driver 示例而获得这项机制。外部工作已启动时，正例必须携带
+真实 run identity：
 
 ```yaml
-name: active-driver-is-awaiting
-step: restoreGoalRun
+name: active-external-job-is-awaiting
+step: restoreExternalJob
 state:
-  goal_run_state: active
-  run_id: run-20260730-01
+  job_state: active
+  run_id: job-20260730-01
 expect:
   result_type: Awaiting
-  run_id: run-20260730-01
+  run_id: job-20260730-01
   must_not_result_type: HumanCheckpoint
 ```
 
 缺失 id 的 companion case 必须 fail closed：
 
 ```yaml
-name: active-driver-without-id-is-invalid
-step: restoreGoalRun
+name: active-external-job-without-id-is-invalid
+step: restoreExternalJob
 state:
-  goal_run_state: active
+  job_state: active
   run_id: null
 expect:
   result_type_any: [Blocked, NeedsHuman]
   must_not_result_type: Awaiting
 ```
 
-对含混 legacy `blocked` state 也增加拒绝恢复的 case。terminal case 带 stale driver metadata，
+对含混旧 `blocked` state 也增加拒绝恢复的 case。terminal case 带 stale run metadata，
 验证 terminal precedence。
 
 ### 完整生命周期
@@ -163,8 +168,8 @@ expect:
 
 ### Real Runtime Conformance
 
-`ToolBackedWorkflow` 的 fixture 必须调用真实 router/hook/parser。输入使用当前 persisted schema，
-断言真实 stdout/JSON/exit status，再映射到 contract outcome。
+`ToolBackedWorkflow` 的 fixture 必须调用 owning skill `scripts/` 中的真实 router/hook/parser。
+输入使用当前 persisted schema，断言真实 stdout/JSON/exit status，再映射到 contract outcome。
 
 禁止在测试中重写一个同构 branch table；那只能证明测试模型自洽，不能证明生产 runtime
 与 harness aligned。至少覆盖：
@@ -177,12 +182,13 @@ expect:
 ### Canonical Handoff
 
 ```yaml
-name: upstream-routes-to-canonical-feature-entry
-skill: cs-brainstorm
+name: epic-item-routes-to-canonical-feature-entry
+skill: cs-epic
 step: handoff
 input:
   intent: add public auth API
-  artifact: .codestable/brainstorms/auth.md
+  artifact: .codestable/work/auth-epic.md
+  evidence: [tests/auth_contract_test.py]
 expect:
   route_to: cs-feat
   must_not_set:
@@ -190,43 +196,45 @@ expect:
     - requested_mode
 ```
 
-只有 shim fixture 可以断言 legacy preset：
+v2 的退役入口必须保持缺席，不能因为需要迁移说明就生成 shim：
 
 ```yaml
-name: legacy-qa-entry-routes-to-main-skill
-skill: cs-feat-qa
-step: entrypoint
-input:
-  args: ""
+name: retired-v1-entry-remains-absent
+candidate_skill: cs-feat-qa
+canonical_owner: cs-feat
 expect:
-  route_to: cs-feat
-  requested_stage: qa
-  must_not_define_independent_rules: true
+  skill_shape: NoActiveSkill
+  shipped: false
+  compatibility_shim: false
 ```
+
+只有新的、已接受的发布契约明确要求 alias 时才选择 `ShimSkill`，并验证它只转交 canonical
+target，不复制规则。v1 的 24 个退役名称不是该例外。
 
 handoff 还应验证 target、artifact identity、relevant evidence、pending owner decision 和
 recovery pointer 没有丢失。
 
-### Fastforward Eligibility
+### Responsibility Boundary
 
 ```yaml
-name: fastforward-rejects-public-contract-change
-step: chooseMode
+name: refactor-rejects-observable-behavior-change
+skill: cs-refactor
+step: checkEquivalence
 input:
-  args: --mode fastforward add new public auth API
-state:
-  crosses_public_contract: true
+  request: refactor auth and add a new public field
+facts:
+  changes_observable_behavior: true
 expect:
-  result_type: RoutedTo
-  stage: Design
-  must_not_route_to: FastForward
+  result_type: NeedsHuman
+  suggested_entry: cs-feat
+  forbidden_actions: [continue_refactor]
 ```
 
 ## ContextPlan
 
 常规单轮 routing fixture 看不到文件是否被加载或重复读取。因此：
 
-- 静态 contract 验证每个 source 的 `loadWhen`、`sufficientWhen`、`reuseKey` 和
+- 静态检查验证每个 source 的 `loadWhen`、`sufficientWhen`、`reuseKey` 和
   `stopCondition`；
 - cross-file test 验证顶层只引用、不复制 reference；
 - 有 tool-enabled/action trace 时，才断言 entry 未加载无关 StageContext、同一 reuse key
@@ -257,5 +265,6 @@ oracle 可以接受语义等价措辞，例如 `result_type_any` / `target_any`�
 - `Awaiting` 有 run-id 正反例；
 - tool-backed case 调用真实 runtime；
 - cross-skill handoff 进入 canonical main entry；
+- v2 退役入口保持 `NoActiveSkill`，没有 compatibility shim；
 - ContextPlan 只声明实际可观察的证据；
 - 新事故/owner correction 在最近的确定性层获得回归。

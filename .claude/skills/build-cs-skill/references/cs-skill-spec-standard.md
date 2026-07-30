@@ -42,11 +42,11 @@ data RulePlacement
 | `ThinOperator` | 单一责任、少量分支、一次性产物或动作 | 责任、最小上下文、关键 gate、完成证据 |
 | `ContextualWorkflow` | 有阶段、恢复、迭代或按阶段方法 | 责任、`ContextPlan`、最小决策面、恢复与完成契约 |
 | `ToolBackedWorkflow` | 路由、状态检查或安全判断由确定性工具执行 | 工具调用条件、输入输出、fail-closed 规则、完成证据 |
-| `ShimSkill` | 旧入口转发到 canonical skill | 目标入口和原样透传的 preset/参数 |
+| `ShimSkill` | 新发布契约明确要求一个 alias 转发到 canonical skill | 目标入口和原样透传的 preset/参数 |
 | `ReferenceSkill` | 有独立分发价值但没有 active workflow | 参考内容、归属与加载条件 |
 
-`NoActiveSkill` 是合法的构建结论。`ReferenceSkill` 不注册 active `cs-*` 触发面。`ShimSkill`
-仍是独立安装单元，只按名称调用 canonical skill，不能读取 sibling skill 文件或复制其规则。
+`NoActiveSkill` 是合法的构建结论。v2 已退役的 24 个旧名称必须保持 `NoActiveSkill`，迁移说明不构成恢复 shim 的发布契约。
+`ReferenceSkill` 不注册 active `cs-*` 触发面。新的 `ShimSkill` 仍是独立安装单元，只按名称调用 canonical skill，不能读取 sibling skill 文件或复制其规则。
 
 ## Shape 选择
 
@@ -59,7 +59,7 @@ data RulePlacement
   `ContextualWorkflow`。
 - 已有可靠 router、hook、parser 或 gate 能做确定性判断时，选择
   `ToolBackedWorkflow`。
-- 入口仅为兼容旧名称或旧 preset 时，选择 `ShimSkill`。
+- 只有新发布契约明确交付 alias 时选择 `ShimSkill`；已退役 v1 名称选择 `NoActiveSkill`。
 - 知识有独立分发价值、但没有 active workflow 时，选择 `ReferenceSkill`。
 
 以下任一条件会提高 fragility，并要求更低的自由度：
@@ -83,8 +83,7 @@ every-invocation 和 remove 分类。reference 不复制第二份实现。
 - `Harness`：不可机械化的安全规则，或每次调用在首次关键决策前都必须知道且会改变责任、
   权限、上下文选择、gate、恢复或完成判断的规则。
 - `StageContext`：仅在某阶段、变体或方法被选中后才需要的协议、模板、示例和检查表。
-- `ProjectContext`：ADR、术语、项目约束、既有模式与历史经验；放在项目
-  `.codestable/` artifacts 中。
+- `ProjectContext`：ADR、术语、项目约束、既有模式与历史经验；放在 `.codestable/attention.md`、`.codestable/lessons/`、`.codestable/work/` 或项目既有文档中。
 - `DeterministicGate`：能机械判定的安全、schema、状态、格式或同步约束；顶层只保留
   调用时机、输入输出和失败语义。
 - `Remove`：模型可可靠推断、已被其他规则覆盖、只有历史解释或没有行为证据的内容。
@@ -144,8 +143,9 @@ buildContextPlan :: SkillShape -> [PlacedRule] -> ContextPlan
 - batch fan-out 必须传结构化复用信号；不能依赖“可能已经读过”的自然语言猜测。
 - `thick context` 指高相关、可追溯、足以完成当前阶段，不是把所有 reference 和仓库文档
   全量倒入上下文。
-- skill 专属知识放本 skill 的 `references/`；跨 skill 共享知识放项目
-  `.codestable/reference/`，其模板源由 `cs-onboard` 管理。
+- skill 专属知识放本 skill 的 `references/`；跨 skill 的项目事实放
+  `.codestable/attention.md`、`.codestable/lessons/`、`.codestable/work/` 或项目既有文档与
+  ADR。不要假设另一个 skill 或集中式 onboard runtime 可用。
 
 ### Decision / Gate Contract
 
@@ -250,8 +250,8 @@ persisted artifact fields -> normalized Spec state -> runtime outcome
 - fixture 字段与真实 runtime schema。
 
 存在 runtime 时必须用真实 router 做 conformance；手写一份测试 router 不是 alignment
-evidence。新版 CodeStable tool/gate 从目标安装的 `cs-onboard/tools/` 调用，不新增
-`.codestable/tools/` 默认入口。
+evidence。确定性 helper 由 owning skill 的 `scripts/` 提供；v2 不新增或调用 repo-local
+runtime。v1 项目里的旧 tool/gate 可以保留，但不构成新 skill 的依赖。
 
 ## Collaboration Contract
 

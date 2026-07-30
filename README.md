@@ -77,10 +77,17 @@ Claude 更新后需要重启 Claude Code 才会应用新版插件。
 `skills` CLI：
 
 ```bash
+npx skills@latest remove \
+  cs-audit cs-brainstorm cs-doc-api cs-doc-tutorial cs-docs cs-docs-neat \
+  cs-domain cs-feat-accept cs-feat-design cs-feat-design-review cs-feat-ff \
+  cs-feat-impl cs-feat-qa cs-feedback cs-goal cs-issue-analyze cs-issue-fix \
+  cs-issue-report cs-note cs-refactor-ff cs-req cs-roadmap \
+  cs-roadmap-impl-goal cs-roadmap-review \
+  -g -y
 npx skills@latest add codestable/CodeStable/plugins/codestable --skill '*' -g
 ```
 
-当前 `skills` CLI 的裸 `update` 对 plugin manifest 与通用目录使用不同的发现逻辑，可能把仍存在的 sibling skills 误判为已删除；因此升级使用上面的完整 package 重装命令。它会从 `plugins/codestable` 同步全部 `cs*` skills；如果原来是项目级安装，去掉 `-g` 并在项目中执行。v2 起规则全部随 skill 包生效，项目里没有需要刷新的 runtime 资产——升级插件即完成，无需在各项目中执行任何刷新命令。
+当前 `skills` CLI 的 `add` / `update` 不会自动删除新版 package 已移除的旧 skill，因此从 v1.0.4 升级到 v2.0.0 时，先用第一条命令精确删除 24 个退役入口，再完整安装 v2 的 8 个。CLI 按名称删除，不校验安装来源：命令不会影响其他名称，但如果你用相同名称维护过自定义或第三方 skill，请先备份并从删除列表移除对应名称。以后同一 major 内升级只需重新执行 `add`。如果原来是项目级安装，两条命令都去掉 `-g` 并在项目中执行。项目里的 v1 历史资产原样保留，不需要逐仓库刷新运行时。
 
 只需要一键，开始工作：
 
@@ -126,7 +133,7 @@ CodeStable 走的是**另一个方向**：
 <tr><th></th><th>Agent 编排派</th><th>CodeStable</th></tr>
 <tr><td><b>核心实体</b></td><td>Agent / Role / Team</td><td>Requirement / Architecture / Feature / Issue / Decision</td></tr>
 <tr><td><b>主线问题</b></td><td>Agent 之间怎么分工、传递、协调？</td><td>软件的需求、约束、决策怎么被记下来、被检索、被复用？</td></tr>
-<tr><td><b>状态存在哪</b></td><td>Agent 的 session / 消息总线 / 队列</td><td>项目里的 <code>.codestable/</code> 文件树（人和 AI 都能读）</td></tr>
+<tr><td><b>状态存在哪</b></td><td>Agent 的 session / 消息总线 / 队列</td><td>项目文档与 <code>.codestable/</code> 项目记忆（人和 AI 都能读）</td></tr>
 <tr><td><b>解决的痛点</b></td><td>单 Agent 能力不够，需要协同放大</td><td>软件复杂度膨胀撑破上下文、隐知识丢失、需求漂移</td></tr>
 <tr><td><b>对人的定位</b></td><td>人少介入越好，理想是全自动</td><td>人在环 —— 程序员对整体把控负责，AI 是高效的执行体</td></tr>
 </table>
@@ -148,56 +155,66 @@ CodeStable 走的是**另一个方向**：
 
 CodeStable 顺着软件编码的真实流程来设计，把开发活动建模成一组**实体**和**流程**。
 
-### 实体
+### 项目记忆
 
-| 实体 | 载体 | 干什么 |
-|------|------|--------|
-| **注意事项** | `attention.md` | 每次会话必读的项目事实，≤25 条 |
-| **经验** | `lessons/` | 复利工程的知识库：踩过的坑、好做法、调研结论，一条一文件，grep 检索（`cs-keep` 写入，写入必须有可追溯证据） |
-| **活动任务** | `work/` | 跨会话 / 交接 / epic 任务的唯一状态文档（目标 / 现场 / 边界 / 证据 / 验收 / 状态与未决六节），完成即压缩删除 |
-
-普通任务不产生任何 CodeStable 实体——git diff、测试输出与交付说明就是证据。
+| 实体 | 干什么 |
+|------|--------|
+| **attention** | 每次会话都要知道的少量项目事实，保持在 25 条以内 |
+| **lessons** | 一条一文件的踩坑、技巧和调研结论，靠关键词检索后按需加载 |
+| **work** | 跨会话或多人交接的活动任务；普通任务不创建，完成后清理 |
+| **项目文档 / ADR** | 需求、领域模型、公开契约与长期技术决策的 canonical owner |
 
 ### 流程
 
-| 流程 | 入口 | 硬门槛 |
-|------|------|--------|
-| **特性引入** | `cs-feat` | 触发风险升级信号（公开契约 / 数据 / 权限 / 真实取舍 / 大 diff）时，设计落盘 work 文档、过独立 agent review 再交人确认，不 auto-approve；测试设施可用时测试先行；完成必须附可核验证据 |
-| **问题修复** | `cs-issue` | 没有能明确变红的验证不许猜根因；修复完成时变红的验证必须变绿 |
-| **代码重构** | `cs-refactor` | 先有能自证行为等价的验证再动代码；发现要改行为立即停下转向 |
-| **大需求** | `cs-epic` | 拆解方案经用户确认后执行；一个 epic 文档维护全景；不代替用户做整体验收 |
-| **独立审查** | `cs-code-review` | 只读；独立 subagent 视角；设计与改动默认过审；blocking 未解决不得通过，修复-复审最多 2 轮后交人裁决 |
+| 流程 | 推荐主入口 | 说明 |
+|------|------------|------|
+| **特性引入** | `cs-feat` | 默认直接理解、实现、验证；遇到高风险契约或真实取舍时先让用户确认 |
+| **大需求端到端** | `cs-epic` | 维护一个 work 文档，确认拆解后逐个推进 feature / issue / refactor 子项 |
+| **问题修改** | `cs-issue` | 先建立会变红的验证，再修复并证明它变绿 |
+| **代码重构** | `cs-refactor` | 先建立等价性证据，分步调整结构并持续验证 |
+| **代码审查 / 审计** | `cs-code-review` | 独立只读审查当前 diff，或按指定范围做 audit |
+| **知识沉淀** | `cs-keep` | 把有证据的高频事实或可复用经验写入项目记忆 |
 
-每个流程共用同一主线：理解相关事实 → 行动 → 相称的验证 → 交付结果。风险每次按当前事实重判，没有持久 lane、没有阶段状态机。
+高风险改动或用户要求时，执行流调用 `cs-code-review` 做独立审查。文档与 ADR 由拥有该变化的开发任务同步，不再需要独立的阶段 skill。
 
 ---
 
 ## 技能总览
 
-v2 共 8 个 skill——一层薄研发纪律 + 一个项目记忆闭环（thin harness, thick context）：
+### 当前 8 个 skill
 
-| 技能 | 用途 |
-|---|---|
-| `cs` | 体系速读与入口推荐；只解释，不启动流程 |
-| `cs-onboard` | 创建 `.codestable/` 最小骨架；v1 存量无损保留 |
-| `cs-feat` | 新功能与功能改造；风险升级时设计经独立 review 后交人确认 |
-| `cs-issue` | bug 修复；没有能变红的验证不许猜根因 |
-| `cs-refactor` | 行为等价重构；先有等价性验证再动代码 |
-| `cs-code-review` | 独立审查：diff / design / repo 审计三模式 |
-| `cs-epic` | 大需求拆解与长程推进 |
-| `cs-keep` | 沉淀经验；写入必须有可追溯证据 |
+| 分组 | 技能 | 用途 |
+|---|---|---|
+| 导航 | `cs` | 解释体系并推荐入口；不启动下游流程、不写文件 |
+| 接入 | `cs-onboard` | 把 CodeStable 接入新仓库或已有零散文档仓库 |
+| 大需求 | `cs-epic` | 拆解、确认并长程推进多个子项 |
+| 功能 | `cs-feat` | 实现新功能或功能改造，按风险升级设计确认与 review |
+| 问题 | `cs-issue` | 用红到绿证据修复 bug 或既有行为异常 |
+| 重构 | `cs-refactor` | 在行为等价证据下调整结构或性能 |
+| 审查 | `cs-code-review` | 独立只读 diff review 或按需 audit |
+| 记忆 | `cs-keep` | 沉淀有证据的高频事实与可复用经验 |
 
-v1 的阶段技能与长尾入口（design/impl/qa 阶段技能、`cs-goal`、`cs-brainstorm`、`cs-docs` 系、`cs-domain`、`cs-req`、`cs-audit`、`cs-note`、`cs-feedback`、`cs-roadmap` 系）已并入上表对应入口。完整目录见 [SKILL_CATALOG.md](./SKILL_CATALOG.md)。日常不知道用哪个时直接调用 `/cs`。
+v1.0.4 的另外 24 个名称已退役且不随 v2 交付，不再安装兼容 shim。映射与升级边界见
+[SKILL_CATALOG.md](./SKILL_CATALOG.md)；不知道用哪个时调用 `/cs` 获取推荐。
 
 ---
 
-## 工作流与运行时
+## 工作流与项目记忆
 
-所有入口共用一条执行主线：**理解相关事实 → 行动 → 相称的验证 → 交付结果**。风险每次按当前事实重判，没有持久 lane、没有阶段状态机；动手前按任务关键词 grep 项目沉淀（含 v1 存量），命中报告来源。design 与验收的确认不可被模型自主跳过。
+CodeStable v2 用 thin harness 保留责任、硬门槛和完成证据，把项目事实按需加载。`cs` 只做导航；功能、问题与重构入口直接完成工作，高风险或用户要求时再调用独立审查；`cs-epic` 用一个 work 文档维护跨会话全景。
 
-`cs-onboard` 在项目根生成极简 `.codestable/`：`attention.md`（每次必读，≤25 条）、`lessons/`（一条一文件的经验，grep 检索）、`work/`（活动中的跨会话任务，完成即压缩删除）。普通任务零产物；没有 gate、没有 runtime 工具、没有复制到项目的 reference。v1 存量项目的旧产物只读保留，旧沉淀继续被检索覆盖。
+`cs-onboard` 在项目根生成最小 `.codestable/`：
 
-完整工作流与持久化约定见 [WORKFLOW.md](./WORKFLOW.md)。
+```text
+.codestable/
+├── attention.md
+├── lessons/
+└── work/
+```
+
+skill 专属 context/helper 归 owning skill；项目需求、领域模型与 ADR 继续使用项目自己的文档结构。v1 历史目录、tool、gate 与 hook 原样保留并可作为知识检索，但 v2 不执行旧 runtime，也不复制或刷新它们。
+
+完整工作流、目录树和跨 skill 引用约束见 [WORKFLOW.md](./WORKFLOW.md)。
 
 ---
 
@@ -222,8 +239,10 @@ CodeStable 的 skill 不靠"感觉写得更清楚了"来演进，而是**用可�
 
 **两个配套工具（仓库内，不随插件交付）：**
 
-- `build-cs-skill`：skill 的编写协议——thin harness 写法：每个 SKILL.md 是薄责任契约（责任、硬门槛、证据要求、停止条件），frontmatter `contracts` 只锚定行为不变量；流程状态机与厚 reference 不再存在。
+- `build-cs-skill`：skill 的编写协议（prompt-as-code）——用最小 harness 承载责任、上下文选择和硬 gate，阶段方法与项目事实按需加载；行为不变量由直接测试、decision fixtures 或真实 runtime gate 验证。
 - `eval-cs-skill`：skill 的评测引擎——把 skill 的关键决策做成 **decision fixtures**（给定仓库状态 → 期望的下一步），让真实模型跨供应商（Claude / GPT）多次作答，用程序机械判分（`[measured]`），而不是靠人或裁判打分。
+
+深层 `references/**/*.md` 只承载按条件加载的领域或阶段上下文；可机械判定的规则进入直接测试或 runtime gate，顶层只保留调用接口和失败语义。新增规则必须通过 `placeRule` 确认唯一 owner 与证据层级。
 
 **闭环：** `编写 → 评测 → 定位失败 → 优化 → 复评 → 结论回写方法论`。
 
@@ -245,8 +264,7 @@ CodeStable 的 skill 不靠"感觉写得更清楚了"来演进，而是**用可�
 
 CodeStable 会根据模型能力的发展进行调整。如果未来某个模型做到某个模块的稳定产出，那么这个模块就可以删除。
 
-- [x] 简化 cs skills 体系：核心保留 `cs-feat` / `cs-epic` / `cs-issue` 等主入口，兼容入口收薄
-- [x] v2 thin-harness 重构：32 个 skill 收敛为 8 个薄责任契约（约 2.4 万行 → 约 340 行），删除全部状态机 / gate / 阶段产物，普通任务零产物，沉淀统一为 attention + lessons + work
+- [x] 简化 cs skills 体系：v2 收敛为 8 个独立 thin-harness skill，退役 24 个旧入口
 - [x] 端到端测评 · 基础路由评测：decision fixtures + 跨模型机械判分，[measured] 证明重构增益
 - [x] 端到端测评 · 效果评测：种子仓库 + 隐藏验收测试 + 真 agent 对照裸 agent，`cs-issue`/`cs-feat` 已跑，诚实测出能力边界与过程契约价值
 - [ ] 效果评测扩容：cs-epic 多子 feature 端到端；design 对弱模型增益补统计功效

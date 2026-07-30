@@ -1,34 +1,58 @@
-# CodeStable Workflow and Runtime Structure
-
-## Design principle: thin harness, thick context
-
-Rules stay minimal: skills carry engineering experience (when to do what, and why) plus a few hard gates — no process state machines. The route belongs to the model; state is recovered from repository facts. Context is retrieved on demand: before acting, grep the project's accumulated knowledge by task keywords and report the sources of any hits.
+# CodeStable v2 Workflow and Project Structure
 
 ## Workflow
 
+CodeStable v2 consists of eight independently installed thin-harness skills and a project-memory
+loop. `cs` only explains and recommends; it does not start another workflow automatically. Once the
+entry is known, invoke that skill directly.
+
 ```text
-cs (overview)
-cs-onboard (skeleton)
-cs-feat / cs-issue / cs-refactor (event entries) ──> cs-code-review (independent review: designs and changes by default, trivial edits may skip)
-cs-epic (large-requirement decomposition, sub-items go through event entries)
-cs-keep (wrap-up distillation; every entry has a built-in recommendation moment)
+unsure which entry    -> cs
+onboard / v1 upgrade  -> cs-onboard
+new capability        -> cs-feat ---------\
+bug / broken behavior -> cs-issue ----------> cs-code-review (high risk or on demand)
+equivalent refactor   -> cs-refactor ------/
+large initiative      -> cs-epic -> cs-feat / cs-issue / cs-refactor
+lessons and memory    -> cs-keep
 ```
 
-All entries share one execution mainline: **understand the relevant facts → act → run proportionate verification → deliver the result**. Risk is re-judged per request from current facts — no persistent lanes. Escalation signals (public contracts / data / permissions / real trade-offs / large diffs / explicit user request) require design alignment before acting: the proposal is persisted into a work document, passes an independent agent design review (fix-and-rereview capped at 2 rounds; beyond that, escalate with the disagreement), and is then confirmed by the user. Design and final-acceptance confirmations must never be auto-approved by the model; completed changes get an independent review by default; claiming completion requires verifiable evidence.
+Execution strength follows risk:
 
-## Persistence
+- `cs-feat` normally understands, implements, and verifies directly. Public contracts, data,
+  authorization, concurrency, or real design tradeoffs require owner confirmation first.
+- `cs-issue` establishes a reliably failing check before changing code, then proves it turns green.
+- `cs-refactor` establishes equivalence evidence first and keeps verification green after each step.
+- `cs-epic` maintains one work document for items, dependencies, and acceptance. The owner confirms
+  decomposition and boundary changes.
+- `cs-code-review` is an independent read-only review and also handles module or repository audits.
+- `cs-keep` compresses frequently needed facts into attention and reusable experience into lessons.
 
-Ordinary tasks produce zero CodeStable artifacts — the git diff, test output, and delivery summary are the evidence.
+Ordinary work creates no stage artifacts. The diff, test output, and delivery report are the evidence.
+Create one work document only for cross-session work, multi-agent handoff, or an explicit request for
+a durable record; remove it when complete unless the owner asks to retain it.
+
+## Project Memory
+
+`/cs-onboard` creates this minimal skeleton for a new project:
 
 ```text
 .codestable/
-├── attention.md    # project facts to read every session, ≤25 entries
-├── lessons/        # distilled experience, one markdown file per lesson, grep-searchable
-└── work/           # active cross-session tasks only, one doc per task (goal/context/boundaries/evidence/acceptance/status-and-open-items), compressed and deleted on completion
+├── attention.md    # a small set of facts needed every session, at most 25 entries
+├── lessons/        # one Markdown file per reusable lesson, searched by keyword
+└── work/           # active cross-session work, removed on completion
 ```
 
-Lesson discipline: never write without traceable evidence; grep for same-domain entries first and merge instead of duplicating; a soft cap of ~50 lessons forces consolidation before addition.
+Skill-specific context and helpers belong to the owning skill's `references/` and `scripts/`.
+Project facts belong in the structure above or the project's existing docs and ADRs. A skill does not
+read sibling skill files or depend on a centralized onboard runtime. Worktree, branch, and agent
+backend policy remain host- or owner-controlled.
 
-## v1 compatibility
+## v1 Upgrade Boundary
 
-v1 artifacts in existing projects (`requirements/`, `roadmap/`, `features/`, `issues/`, `compound/`, `reference/`, `tools/`, etc.) are kept read-only — never migrated or deleted; legacy knowledge stays covered by the same grep retrieval. v1 gates and runtime tools are no longer invoked by skills.
+v2 does not migrate or clean historical v1 project directories. Existing requirements, roadmap,
+features, issues, compound knowledge, tools, gates, hooks, and manifests remain untouched. New skills
+may search those artifacts for project knowledge, but they do not execute the old runtime or produce
+new v1 stage artifacts.
+
+The 32 skills in v1.0.4 converge to eight in v2. The other 24 entries are retired and are not installed
+with v2. See [SKILL_CATALOG.en.md](./SKILL_CATALOG.en.md) for the complete mapping.
