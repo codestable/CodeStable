@@ -10,6 +10,8 @@
 
 Tired of OpenSpec's flimsiness, Oh-My-OpenAgent's over-engineering, and Superpowers' fragmentation — I built a lightweight, **human-in-the-loop** AI harness from scratch.
 
+The v2 methodology in one line: **thin harness, thick context** — write responsibilities for strong models, not step-by-step scripts; retrieve context on demand, never preload it.
+
 <p>
   <img src="https://img.shields.io/badge/status-beta-F59E0B?style=flat-square" alt="Status"/>
   <img src="https://img.shields.io/badge/cs--skills-8-6366F1?style=flat-square" alt="CodeStable Skills"/>
@@ -148,31 +150,35 @@ I built CodeStable because I believe **the chaos of software engineering isn't r
 
 ---
 
-## Design: entities + flows
+## Design: thin harness, thick context
 
-CodeStable models real coding work as a set of **entities** and **flows**.
+The core judgment of v2: **the stronger the model, the more you should write responsibilities instead of steps.** v1 guarded weak models with 20k+ lines of state machines, gates, and stage artifacts; v2 deletes all of that and ships 8 **thin responsibility contracts** of 30–60 lines each — every skill states exactly three things: what must be achieved, what must not be crossed, and how completion is proven. The route belongs to the model.
 
-### Project memory
+Thin rules do not mean no boundaries. What remains are **hard gates**, each decidable in one sentence:
 
-| Entity | What it does |
+| Flow | Entry | Hard gate |
+|------|------|--------|
+| **Feature delivery** | `cs-feat` | High-risk designs are persisted to a work doc, pass independent agent review, then user confirmation — never auto-approved; test-first when a setup exists; completion requires verifiable evidence |
+| **Issue fixing** | `cs-issue` | No root-cause guessing without a check that clearly turns red; the red check must turn green before claiming the fix |
+| **Refactoring** | `cs-refactor` | Equivalence evidence exists before code changes; stop and report the moment behavior would change |
+| **Epic delivery** | `cs-epic` | Decomposition passes independent review and user confirmation; one epic doc keeps the full picture; final acceptance is never done on the user's behalf |
+| **Independent review** | `cs-review` | Read-only, independent subagent perspective; blocking findings must be resolved, fix-and-rereview capped at 3 rounds before human arbitration |
+
+Engineering judgment does not occupy the always-loaded context: module depth, implementation economy, and debug escalation live in **on-demand references**, read only when the scene calls for them — the thin harness owns reliability, the thick context owns quality.
+
+### The six homes of knowledge
+
+The capture principle: **everything in its place, no archive hall**:
+
+| Home | What it carries |
 |------|--------|
-| **attention** | A small set of project facts needed every session, kept to at most 25 entries |
-| **lessons** | One file per pitfall, technique, or research result, retrieved by keyword when relevant |
-| **work** | Active cross-session or multi-agent work, filenames carry a type prefix feat-/issue-/refactor-/epic-; ordinary tasks create none, completed work is removed |
-| **Project docs / ADRs** | The canonical owner for requirements, domain models, public contracts, and long-lived decisions |
+| `attention.md` | Project facts read every session, ≤25 entries |
+| `lessons/` | One file per pitfall, technique, or research result; traceable evidence required, dedupe-and-merge first |
+| Project docs / ADRs | The canonical owner of current facts and structural decisions — CodeStable builds no parallel truth |
+| `work/` | Active cross-session tasks, filenames type-prefixed feat-/issue-/refactor-/epic-; ordinary tasks create none |
+| git / PR | Execution history |
 
-### Flows
-
-| Flow | Recommended main entry | Notes |
-|------|------------|------|
-| **Feature delivery** | `cs-feat` | Understand, implement, and verify directly; confirm high-risk contracts or real tradeoffs first |
-| **Epic delivery** | `cs-epic` | Maintain one work document and drive confirmed feature / issue / refactor items |
-| **Issue fixing** | `cs-issue` | Establish a failing check first, then fix the issue and prove it turns green |
-| **Refactoring** | `cs-refactor` | Establish equivalence evidence, change structure incrementally, and keep verification green |
-| **Review / audit** | `cs-review` | Independently review the current diff or audit a requested scope, read-only |
-| **Knowledge capture** | `cs-keep` | Store evidence-backed frequent facts or reusable lessons in project memory |
-
-High-risk changes, or an explicit owner request, invoke `cs-review` for independent review. The development task that owns a change also updates its docs and ADRs; separate stage skills are no longer needed.
+Completed work docs **graduate before deletion**: the final report must list the graduation destinations — which conclusion went into which project doc, which lesson was distilled, or an explicit "nothing to graduate" — no list, no deletion. When a destination does not exist, the agent proposes one and keeps the doc until the owner decides.
 
 ---
 
@@ -183,31 +189,23 @@ High-risk changes, or an explicit owner request, invoke `cs-review` for independ
 | Group | Skill | Purpose |
 |---|---|---|
 | Navigation | `cs` | Clear action requests dispatch to the target skill in the same turn; advice gets a recommendation only; the overview writes no files |
-| Onboard | `cs-onboard` | Install CodeStable into a repository |
-| Epic | `cs-epic` | Decompose, confirm, and drive multiple deliverable items over time |
-| Feature | `cs-feat` | Implement new capability and scale design confirmation or review with risk |
+| Onboard | `cs-onboard` | Create the minimal project-memory skeleton; v1 legacy preserved untouched |
+| Feature | `cs-feat` | Implement new capability with process strength proportional to risk |
 | Issue | `cs-issue` | Fix bugs or broken behavior with red-to-green evidence |
 | Refactor | `cs-refactor` | Change structure or performance under behavioral-equivalence evidence |
-| Review | `cs-review` | Perform independent read-only diff review or an on-demand audit |
-| Memory | `cs-keep` | Capture evidence-backed frequent facts and reusable lessons |
+| Epic | `cs-epic` | Decompose, confirm, and drive multiple items; sub-designs inline-first, standalone only when risk escalates |
+| Review | `cs-review` | Independent review in three modes: diff / design / repo audit |
+| Memory | `cs-keep` | Capture evidence-backed lessons and project facts with automatic tier selection |
 
-The other 24 names from v1.0.4 are retired and not shipped with v2; no compatibility shims are installed. See [SKILL_CATALOG.en.md](./SKILL_CATALOG.en.md) for mappings and upgrade boundaries. Call `/cs` when you are unsure which entry fits.
+`cs-code-review` ships as the single compatibility alias of `cs-review` (the carried-over v1 name, forwarding only). The other 24 names from v1.0.4 are retired and not shipped with v2; no compatibility shims are installed for them. See [SKILL_CATALOG.en.md](./SKILL_CATALOG.en.md) for mappings and upgrade boundaries. Call `/cs` when you are unsure which entry fits.
 
 ---
 
 ## Workflow and project memory
 
-CodeStable v2 keeps responsibility, hard gates, and completion evidence in a thin harness, then loads project facts only when relevant:
+Every entry shares one execution mainline: **understand the relevant facts → act → run proportionate verification → deliver**. Risk is re-judged per request — no persistent lanes, no stage state machines; ordinary tasks produce zero CodeStable artifacts — the diff, test output, and delivery summary are the evidence.
 
-```text
-cs                 # navigation only
-cs-onboard          # project setup / v1 upgrade
-cs-epic             # large initiative -> feature / issue / refactor items
-cs-feat     ---\
-cs-issue    ----> cs-review when risk or the owner requires it
-cs-refactor ---/
-cs-keep             # project memory
-```
+Captured knowledge only has value when it gets read: before acting, every skill greps `lessons/`, v1 legacy knowledge, and project docs by task keywords, and reports the sources of any hits.
 
 After `/cs-onboard`, a new project has only this CodeStable-owned memory:
 
@@ -218,7 +216,7 @@ After `/cs-onboard`, a new project has only this CodeStable-owned memory:
 └── work/
 ```
 
-Skill-specific context and helpers belong to the owning skill. Requirements, domain models, and ADRs stay in the project's own documentation structure. Historical v1 directories, tools, gates, and hooks remain available for knowledge retrieval, but v2 neither executes nor refreshes that runtime. See [WORKFLOW.en.md](./WORKFLOW.en.md) for the full boundary.
+Skill-specific context and helpers belong to the owning skill. Requirements, domain models, and ADRs stay in the project's own documentation structure. v1 projects migrate nothing: historical directories, tools, gates, and hooks remain untouched and retrievable, but v2 neither executes nor refreshes that runtime. See [WORKFLOW.en.md](./WORKFLOW.en.md) for the full boundary.
 
 ---
 
@@ -241,7 +239,9 @@ CodeStable is modeled for real-world development scenarios, aiming to handle com
 
 CodeStable adapts to model capability. If a future model nails a module reliably, that module gets removed.
 
-- [ ] Refactor flow needs hardening (`cs-refactor` is still beta)
+- [x] Simplified the cs skills family: v2 converges on 8 independent thin-harness skills, retiring 24 v1 entries
+- [x] v2 dogfood loop in motion: same-turn dispatch, graduation lists, type-prefixed work docs, and the 3-round review cap all landed from real usage feedback
+- [ ] Refactor flow needs hardening
 - [ ] …
 
 Issues welcome — share your real-world dev pain and refactoring experience.
