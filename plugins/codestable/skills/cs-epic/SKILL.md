@@ -16,18 +16,19 @@ argument-hint: "[大需求描述]"
 
 ## Epic 文档
 
-epic 天然跨会话，全程维护一个 `.codestable/work/{slug}-epic.md`：
+epic 天然跨会话，全程维护一个 `.codestable/work/epic-{slug}.md`（work 文档一律带类型前缀）：
 
 ```markdown
 # {epic 名}
 目标 / 边界与取舍 / 验收标准
 
 ## 子项
-- [ ] {子项一句话}（类型：feat/issue/refactor；依赖；验收要点）
+- [ ] {子项一句话}（类型：feat/issue/refactor；依赖；验收要点；设计要点就写在此条目下）
+- [ ] {高风险子项} → 设计独立落盘 [work/feat-{slug}.md](feat-{slug}.md)
 - [x] {已完成子项} → 结果一句话
 ```
 
-需要正式 requirement 文档时沿用项目已有位置（如 `.codestable/requirements/`），epic 文档里放指针，不复制两份。
+子项设计**就近优先**：默认写在子项条目下（几行要点即可）；只有触发风险升级信号的子项才独立落 `work/feat-{slug}.md`，其 frontmatter 标 `epic: {epic-slug}`，子项行回链——双向指针，平铺不建子目录。需要正式 requirement 文档时沿用项目已有位置（如 `.codestable/requirements/`），epic 文档里放指针，不复制两份。
 
 ## 硬门槛
 
@@ -37,5 +38,5 @@ epic 天然跨会话，全程维护一个 `.codestable/work/{slug}-epic.md`：
 
 ## 收尾
 
-- 验收通过后压缩收尾：稳定结论进项目文档 / requirements，经验进 lessons，然后删除 epic work 文档（用户要求留档则保留）。
+- 验收通过后压缩收尾：稳定结论进项目文档 / requirements，经验进 lessons，然后删除 epic work 文档**及其全部子项 work 文档**（按 frontmatter `epic:` 归属收拢；用户要求留档则保留）。
 - 本轮若踩坑或被纠偏，推荐用 cs-keep 沉淀一条；用户拒绝即跳过。

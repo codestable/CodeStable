@@ -35,7 +35,7 @@ bug / 行为异常    -> cs-issue ----------> cs-review（高风险或按需）
 .codestable/
 ├── attention.md    # 每次会话需要的少量项目事实，最多 25 条
 ├── lessons/        # 一条经验一个 Markdown 文件，按关键词检索
-└── work/           # 活动中的跨会话任务，完成即清
+└── work/           # 活动中的跨会话任务，文件名带类型前缀 feat-/issue-/refactor-/epic-，完成即清
 ```
 
 skill 专属 context 与 helper 分别由 owning skill 的 `references/` 和 `scripts/` 提供。项目

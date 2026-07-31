@@ -158,7 +158,7 @@ CodeStable models real coding work as a set of **entities** and **flows**.
 |------|--------|
 | **attention** | A small set of project facts needed every session, kept to at most 25 entries |
 | **lessons** | One file per pitfall, technique, or research result, retrieved by keyword when relevant |
-| **work** | Active cross-session or multi-agent work; ordinary tasks create none, completed work is removed |
+| **work** | Active cross-session or multi-agent work, filenames carry a type prefix feat-/issue-/refactor-/epic-; ordinary tasks create none, completed work is removed |
 | **Project docs / ADRs** | The canonical owner for requirements, domain models, public contracts, and long-lived decisions |
 
 ### Flows

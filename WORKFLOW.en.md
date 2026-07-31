@@ -40,7 +40,7 @@ a durable record; remove it when complete unless the owner asks to retain it.
 .codestable/
 ├── attention.md    # a small set of facts needed every session, at most 25 entries
 ├── lessons/        # one Markdown file per reusable lesson, searched by keyword
-└── work/           # active cross-session work, removed on completion
+└── work/           # active cross-session work, filenames carry a type prefix feat-/issue-/refactor-/epic-, removed on completion
 ```
 
 Skill-specific context and helpers belong to the owning skill's `references/` and `scripts/`.
