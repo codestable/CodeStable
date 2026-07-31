@@ -13,8 +13,10 @@ skill files or a centralized onboard runtime.
 | Issue | `cs-issue` | Fix bugs or broken existing behavior with red-to-green evidence |
 | Refactor | `cs-refactor` | Change structure or performance under verifiable behavioral equivalence |
 | Epic | `cs-epic` | Decompose, confirm, and drive multiple deliverable items over time |
-| Review | `cs-code-review` | Perform independent read-only review or an on-demand module/repository audit |
+| Review | `cs-review` | Perform independent read-only review or an on-demand module/repository audit |
 | Memory | `cs-keep` | Store evidence-backed frequent facts or reusable lessons in project memory |
+
+`cs-code-review` ships as the single compatibility alias of `cs-review` (the carried-over v1 name; forwarding only, no independent rules).
 
 ## Retired v1.0.4 Entries
 
@@ -27,7 +29,7 @@ package.
 | `cs-feat-design`, `cs-feat-design-review`, `cs-feat-impl`, `cs-feat-qa`, `cs-feat-accept`, `cs-feat-ff` | Use `cs-feat`; risk and repository facts determine execution strength |
 | `cs-issue-report`, `cs-issue-analyze`, `cs-issue-fix` | Use `cs-issue` |
 | `cs-refactor-ff` | Use `cs-refactor` |
-| `cs-audit` | Use the audit mode of `cs-code-review` |
+| `cs-audit` | Use the audit mode of `cs-review` |
 | `cs-goal`, `cs-roadmap`, `cs-roadmap-review`, `cs-roadmap-impl-goal` | Use `cs-epic` for large initiatives; ordinary cross-session work uses one work document |
 | `cs-brainstorm`, `cs-domain`, `cs-req` | Clarify within `cs-feat` / `cs-epic`; update project docs or ADRs directly |
 | `cs-docs`, `cs-docs-neat`, `cs-doc-api`, `cs-doc-tutorial` | Update docs as part of the owning development task, or request a standalone documentation edit directly |

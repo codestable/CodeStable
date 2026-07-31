@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 V2_SKILLS = {
     "cs",
-    "cs-code-review",
+    "cs-review",
     "cs-epic",
     "cs-feat",
     "cs-issue",
@@ -20,6 +20,9 @@ V2_SKILLS = {
     "cs-onboard",
     "cs-refactor",
 }
+
+# 发布契约显式交付的唯一兼容别名（v1 沿用名 -> v2 新名）；不算独立能力。
+SHIM_SKILLS = {"cs-code-review"}
 
 PUBLIC_DOCS = (
     "README.md",
@@ -85,7 +88,7 @@ def test_skills_cli_major_upgrade_removes_exactly_the_retired_v1_names() -> None
     legacy = json.loads(
         _read("tests/fixtures/skills-cli/legacy-cs-inventory.json")
     )
-    retired = set(legacy["skills"]) - V2_SKILLS
+    retired = set(legacy["skills"]) - V2_SKILLS - SHIM_SKILLS
 
     assert len(retired) == 24
     zh = _read("README.md")

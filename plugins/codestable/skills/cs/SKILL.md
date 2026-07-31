@@ -24,7 +24,7 @@ argument-hint: "[诉求]"
 | 新功能、功能改造 | `cs-feat` |
 | bug、报错、行为异常 | `cs-issue` |
 | 行为等价的重构、优化 | `cs-refactor` |
-| 审查 diff 或按需审计代码 | `cs-code-review` |
+| 审查 diff 或按需审计代码 | `cs-review` |
 | 大需求拆解与长程推进 | `cs-epic` |
 | 沉淀经验、教训、"记住这个" | `cs-keep` |
 | 仓库接入 / v1 升级 | `cs-onboard` |
@@ -33,6 +33,6 @@ argument-hint: "[诉求]"
 
 ## 体系速读
 
-CodeStable 是一层薄研发纪律加一个项目记忆闭环。项目记忆在 `.codestable/`：attention.md（每次必读）、lessons/（grep 检索的经验）、work/（活动中的跨会话任务）。普通任务零产物，证据是 diff 与测试。v1 的 24 个旧入口（cs-feat-design、cs-goal、cs-audit、cs-note、cs-feedback、cs-roadmap 系等）已并入上表：设计与需求澄清是 cs-feat / cs-epic 的内置步骤，审计是 cs-code-review 的模式，沉淀统一走 cs-keep。
+CodeStable 是一层薄研发纪律加一个项目记忆闭环。项目记忆在 `.codestable/`：attention.md（每次必读）、lessons/（grep 检索的经验）、work/（活动中的跨会话任务）。普通任务零产物，证据是 diff 与测试。v1 的 24 个旧入口（cs-feat-design、cs-goal、cs-audit、cs-note、cs-feedback、cs-roadmap 系等）已并入上表：设计与需求澄清是 cs-feat / cs-epic 的内置步骤，审计是 cs-review 的模式，沉淀统一走 cs-keep。
 
 导览与推荐本身不写任何文件。

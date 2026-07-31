@@ -13,8 +13,10 @@ runtime。
 | 问题 | `cs-issue` | 用红到绿的验证修复 bug 或既有行为异常 |
 | 重构 | `cs-refactor` | 在可核验的行为等价约束下调整结构或性能 |
 | 大需求 | `cs-epic` | 拆解、确认并长程推进多个可交付子项 |
-| 审查 | `cs-code-review` | 独立只读审查；按需做模块或全仓 audit |
+| 审查 | `cs-review` | 独立只读审查；按需做模块或全仓 audit |
 | 记忆 | `cs-keep` | 将有证据的高频事实或可复用经验写入项目记忆 |
+
+`cs-code-review` 作为 `cs-review` 的唯一兼容别名随包交付（v1 沿用名，只转发、不含独立规则）。
 
 ## v1.0.4 退役入口
 
@@ -26,7 +28,7 @@ runtime。
 | `cs-feat-design`, `cs-feat-design-review`, `cs-feat-impl`, `cs-feat-qa`, `cs-feat-accept`, `cs-feat-ff` | 统一进入 `cs-feat`，由风险与仓库事实决定执行强度 |
 | `cs-issue-report`, `cs-issue-analyze`, `cs-issue-fix` | 统一进入 `cs-issue` |
 | `cs-refactor-ff` | 进入 `cs-refactor` |
-| `cs-audit` | 使用 `cs-code-review` 的 audit 模式 |
+| `cs-audit` | 使用 `cs-review` 的 audit 模式 |
 | `cs-goal`, `cs-roadmap`, `cs-roadmap-review`, `cs-roadmap-impl-goal` | 大需求进入 `cs-epic`；普通跨会话任务使用一个 work 文档 |
 | `cs-brainstorm`, `cs-domain`, `cs-req` | 功能或大需求在 `cs-feat` / `cs-epic` 内澄清；项目事实直接更新到项目文档或 ADR |
 | `cs-docs`, `cs-docs-neat`, `cs-doc-api`, `cs-doc-tutorial` | 在对应开发任务中同步文档，或直接提出独立文档请求 |

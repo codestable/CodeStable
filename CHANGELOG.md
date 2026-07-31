@@ -3,7 +3,10 @@
 ## 2.0.0
 
 - Reduced the shipped package from the 32 skills in v1.0.4 to 8 thin-harness skills: `cs`,
-  `cs-onboard`, `cs-feat`, `cs-issue`, `cs-refactor`, `cs-code-review`, `cs-epic`, and `cs-keep`.
+  `cs-onboard`, `cs-feat`, `cs-issue`, `cs-refactor`, `cs-review`, `cs-epic`, and `cs-keep`.
+- Renamed `cs-code-review` to `cs-review` — it now reviews designs and runs audits, not only code.
+  `cs-code-review` ships as the single thin compatibility alias (forwarding only), the one exception
+  to the no-shim rule below.
 - Retired the other 24 v1 entry names without compatibility shims. A one-time exact-name removal is
   required before the `skills` CLI full-package reinstall because that CLI does not prune removed
   package members. Removal is name-based, so same-name custom skills require an explicit backup.

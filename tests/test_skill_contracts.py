@@ -14,7 +14,8 @@ LOCAL_SKILLS = ROOT / ".claude/skills"
 
 THIN_SKILL_SAFETY_INVARIANTS = {
     "cs": ("同轮直转", "只推荐入口", "不写任何文件"),
-    "cs-code-review": ("只读", "独立 subagent reviewer", "blocking 未解决"),
+    "cs-review": ("只读", "独立 subagent reviewer", "blocking 未解决"),
+    "cs-code-review": ("兼容别名", "按 `cs-review` 的 SKILL.md 执行", "不含任何独立规则"),
     "cs-epic": ("拆解方案必须经用户确认", "不代替用户做整体验收"),
     "cs-feat": ("不得代替用户确认设计", "与声明相称的可核验证据"),
     "cs-issue": ("能明确变红的验证", "变红的验证必须变绿"),
@@ -25,7 +26,7 @@ THIN_SKILL_SAFETY_INVARIANTS = {
 
 THIN_SKILL_FORBIDDEN_TEXT = {
     "cs": ("L0-L4",),
-    "cs-code-review": ("git push", "read all references"),
+    "cs-review": ("git push", "read all references"),
     "cs-epic": ("ConfirmGoalCommitAuthorization", "git push", "read all references"),
     "cs-feat": ("git push", "read all references"),
     "cs-issue": ("git push", "read all references"),

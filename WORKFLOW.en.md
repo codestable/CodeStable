@@ -11,7 +11,7 @@ request it presents the overview.
 unsure which entry    -> cs
 onboard / v1 upgrade  -> cs-onboard
 new capability        -> cs-feat ---------\
-bug / broken behavior -> cs-issue ----------> cs-code-review (high risk or on demand)
+bug / broken behavior -> cs-issue ----------> cs-review (high risk or on demand)
 equivalent refactor   -> cs-refactor ------/
 large initiative      -> cs-epic -> cs-feat / cs-issue / cs-refactor
 lessons and memory    -> cs-keep
@@ -25,7 +25,7 @@ Execution strength follows risk:
 - `cs-refactor` establishes equivalence evidence first and keeps verification green after each step.
 - `cs-epic` maintains one work document for items, dependencies, and acceptance. The owner confirms
   decomposition and boundary changes.
-- `cs-code-review` is an independent read-only review and also handles module or repository audits.
+- `cs-review` is an independent read-only review and also handles module or repository audits.
 - `cs-keep` compresses frequently needed facts into attention and reusable experience into lessons.
 
 Ordinary work creates no stage artifacts. The diff, test output, and delivery report are the evidence.

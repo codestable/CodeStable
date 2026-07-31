@@ -9,7 +9,7 @@ CodeStable v2 是 8 个独立安装的 thin-harness skill，加一个项目记�
 不确定入口       -> cs
 仓库接入 / v1 升级 -> cs-onboard
 新功能           -> cs-feat ---------\
-bug / 行为异常    -> cs-issue ----------> cs-code-review（高风险或按需）
+bug / 行为异常    -> cs-issue ----------> cs-review（高风险或按需）
 行为等价重构      -> cs-refactor ------/
 大需求拆解        -> cs-epic -> cs-feat / cs-issue / cs-refactor
 经验与项目记忆    -> cs-keep
@@ -21,7 +21,7 @@ bug / 行为异常    -> cs-issue ----------> cs-code-review（高风险或按�
 - `cs-issue` 先建立能明确变红的验证，再修复并证明它变绿。
 - `cs-refactor` 先建立等价性证据，分步改动并持续保持验证为绿。
 - `cs-epic` 用一个 work 文档维护子项、依赖和验收；拆解与边界变更由用户确认。
-- `cs-code-review` 是只读独立审查，也承接模块或全仓 audit。
+- `cs-review` 是只读独立审查，也承接模块或全仓 audit。
 - `cs-keep` 把高频事实压进 attention，把可复用经验写成 lesson。
 
 普通任务不生成阶段文档。diff、测试输出和交付说明就是证据；只有跨会话、多人交接或用户

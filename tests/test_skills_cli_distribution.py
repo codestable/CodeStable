@@ -17,7 +17,7 @@ CLI_COMMAND = os.environ.get("CODESTABLE_SKILLS_CLI")
 LEGACY_INVENTORY = ROOT / "tests/fixtures/skills-cli/legacy-cs-inventory.json"
 V2_SKILLS = {
     "cs",
-    "cs-code-review",
+    "cs-review",
     "cs-epic",
     "cs-feat",
     "cs-issue",
@@ -25,6 +25,9 @@ V2_SKILLS = {
     "cs-onboard",
     "cs-refactor",
 }
+
+# 发布契约显式交付的唯一兼容别名（v1 沿用名 -> v2 新名）；随包安装但不算独立能力。
+SHIM_SKILLS = {"cs-code-review"}
 SKILLS_CLI_1_5_17_PRIORITY_PREFIXES = (
     "",
     "skills/",
@@ -138,7 +141,7 @@ def installed_skill_names(home: Path) -> set[str]:
 def test_skills_cli_package_root_contains_exact_v2_skill_family() -> None:
     names = package_skill_names(PACKAGE_ROOT)
 
-    assert names == V2_SKILLS
+    assert names == V2_SKILLS | SHIM_SKILLS
 
 
 def test_repo_root_update_discovery_misses_plugin_but_package_root_is_complete() -> None:
@@ -171,8 +174,8 @@ def test_v1_package_discovery_identifies_exact_retired_set() -> None:
     deleted_from_root = skills_cli_1_5_17_deleted_skills(locked_paths, root_discovery)
     deleted_from_package = skills_cli_1_5_17_deleted_skills(locked_paths, package_discovery)
 
-    assert current_names == V2_SKILLS
-    assert current_names <= legacy_names
+    assert current_names == V2_SKILLS | SHIM_SKILLS
+    assert current_names - {"cs-review"} <= legacy_names
     assert len(legacy_names) == 32
     assert len(retired_names) == 24
     assert deleted_from_root == legacy_names

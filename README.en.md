@@ -169,10 +169,10 @@ CodeStable models real coding work as a set of **entities** and **flows**.
 | **Epic delivery** | `cs-epic` | Maintain one work document and drive confirmed feature / issue / refactor items |
 | **Issue fixing** | `cs-issue` | Establish a failing check first, then fix the issue and prove it turns green |
 | **Refactoring** | `cs-refactor` | Establish equivalence evidence, change structure incrementally, and keep verification green |
-| **Review / audit** | `cs-code-review` | Independently review the current diff or audit a requested scope, read-only |
+| **Review / audit** | `cs-review` | Independently review the current diff or audit a requested scope, read-only |
 | **Knowledge capture** | `cs-keep` | Store evidence-backed frequent facts or reusable lessons in project memory |
 
-High-risk changes, or an explicit owner request, invoke `cs-code-review` for independent review. The development task that owns a change also updates its docs and ADRs; separate stage skills are no longer needed.
+High-risk changes, or an explicit owner request, invoke `cs-review` for independent review. The development task that owns a change also updates its docs and ADRs; separate stage skills are no longer needed.
 
 ---
 
@@ -188,7 +188,7 @@ High-risk changes, or an explicit owner request, invoke `cs-code-review` for ind
 | Feature | `cs-feat` | Implement new capability and scale design confirmation or review with risk |
 | Issue | `cs-issue` | Fix bugs or broken behavior with red-to-green evidence |
 | Refactor | `cs-refactor` | Change structure or performance under behavioral-equivalence evidence |
-| Review | `cs-code-review` | Perform independent read-only diff review or an on-demand audit |
+| Review | `cs-review` | Perform independent read-only diff review or an on-demand audit |
 | Memory | `cs-keep` | Capture evidence-backed frequent facts and reusable lessons |
 
 The other 24 names from v1.0.4 are retired and not shipped with v2; no compatibility shims are installed. See [SKILL_CATALOG.en.md](./SKILL_CATALOG.en.md) for mappings and upgrade boundaries. Call `/cs` when you are unsure which entry fits.
@@ -204,7 +204,7 @@ cs                 # navigation only
 cs-onboard          # project setup / v1 upgrade
 cs-epic             # large initiative -> feature / issue / refactor items
 cs-feat     ---\
-cs-issue    ----> cs-code-review when risk or the owner requires it
+cs-issue    ----> cs-review when risk or the owner requires it
 cs-refactor ---/
 cs-keep             # project memory
 ```

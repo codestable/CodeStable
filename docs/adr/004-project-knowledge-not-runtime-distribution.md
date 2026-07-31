@@ -25,7 +25,8 @@ ownership 会重新引入已经删除的耦合。
 ## Decision
 
 - v2 只交付 `cs`、`cs-onboard`、`cs-feat`、`cs-issue`、`cs-refactor`、
-  `cs-code-review`、`cs-epic`、`cs-keep`。
+  `cs-review`、`cs-epic`、`cs-keep`；另随包交付 `cs-code-review` 作为 `cs-review` 的唯一
+  兼容别名（v1 沿用名，只转发不含规则）——这是"不保留兼容 shim"的唯一显式例外。
 - 新项目的 `.codestable/` 只包含 `attention.md`、`lessons/` 与 `work/`。项目文档和 ADR
   继续由项目自己的目录结构管理。
 - skill 必须独立安装。skill 专属 context 和确定性 helper 分别放在 owning skill 的
