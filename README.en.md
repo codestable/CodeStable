@@ -158,11 +158,11 @@ Thin rules do not mean no boundaries. What remains are **hard gates**, each deci
 
 | Flow | Entry | Hard gate |
 |------|------|--------|
-| **Feature delivery** | `cs-feat` | High-risk designs are persisted to a work doc, pass independent agent review, then user confirmation — never auto-approved; test-first when a setup exists; completion requires verifiable evidence |
+| **Feature delivery** | `cs-feat` | High-risk designs are persisted to a work doc; the outer workflow creates a reviewer before user confirmation — never auto-approved; test-first when a setup exists; completion requires verifiable evidence |
 | **Issue fixing** | `cs-issue` | No root-cause guessing without a check that clearly turns red; the red check must turn green before claiming the fix |
 | **Refactoring** | `cs-refactor` | Equivalence evidence exists before code changes; stop and report the moment behavior would change |
-| **Epic delivery** | `cs-epic` | Decomposition passes independent review and user confirmation; one epic doc keeps the full picture; final acceptance is never done on the user's behalf |
-| **Independent review** | `cs-review` | Read-only, independent subagent perspective; blocking findings must be resolved, fix-and-rereview capped at 3 rounds before human arbitration |
+| **Epic delivery** | `cs-epic` | The outer workflow creates a reviewer for decomposition before user confirmation; one epic doc keeps the full picture; final acceptance remains with the user |
+| **Independent review** | `cs-review` | Read-only leaf executor that returns one review without spawning agents; the outer workflow owns fixes and at most three review rounds |
 
 Engineering judgment does not occupy the always-loaded context: module depth, implementation economy, and debug escalation live in **on-demand references**, read only when the scene calls for them — the thin harness owns reliability, the thick context owns quality.
 
@@ -194,7 +194,7 @@ Completed work docs **graduate before deletion**: the final report must list the
 | Issue | `cs-issue` | Fix bugs or broken behavior with red-to-green evidence |
 | Refactor | `cs-refactor` | Change structure or performance under behavioral-equivalence evidence |
 | Epic | `cs-epic` | Decompose, confirm, and drive multiple items; sub-designs inline-first, standalone only when risk escalates |
-| Review | `cs-review` | Independent review in three modes: diff / design / repo audit |
+| Review | `cs-review` | Leaf executor for one diff / design / repo audit; never delegates again |
 | Memory | `cs-keep` | Capture evidence-backed lessons and project facts with automatic tier selection |
 
 `cs-code-review` is an alias of `cs-review` (forwarding only, no independent rules). See [SKILL_CATALOG.en.md](./SKILL_CATALOG.en.md) for the full catalog. Call `/cs` when you are unsure which entry fits.

@@ -13,7 +13,7 @@ skill files or a centralized onboard runtime.
 | Issue | `cs-issue` | Fix bugs or broken existing behavior with red-to-green evidence |
 | Refactor | `cs-refactor` | Change structure or performance under verifiable behavioral equivalence |
 | Epic | `cs-epic` | Decompose, confirm, and drive multiple deliverable items over time |
-| Review | `cs-review` | Perform independent read-only review or an on-demand module/repository audit |
+| Review | `cs-review` | Read-only leaf executor for one change, design, module, or repository review |
 | Memory | `cs-keep` | Store evidence-backed frequent facts or reusable lessons in project memory |
 
 `cs-code-review` ships as the single compatibility alias of `cs-review` (the carried-over v1 name; forwarding only, no independent rules).

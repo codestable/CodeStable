@@ -88,7 +88,7 @@ expect:
 
 ```yaml
 name: code-review-must-not-change-code
-skill: cs-code-review
+skill: cs-review
 step: review
 input:
   mode: diff-review
@@ -97,6 +97,26 @@ expect:
   forbidden_actions:
     - edit_source_code
     - apply_fix
+```
+
+叶子 reviewer 必须在本层返回结果，不能再委派后进入无结果等待：
+
+```yaml
+name: review-leaf-does-not-delegate
+skill: cs-review
+step: review
+facts:
+  invoked_by: cs-feat
+  reviewer_context: fresh
+expect:
+  result_type: ReviewReport
+  forbidden_actions:
+    - spawn_subagent
+    - wake_subagent
+    - follow_up_child
+    - invoke_cs_review
+    - invoke_cs_code_review
+    - return_idle_without_report
 ```
 
 ### Failure Path

@@ -25,7 +25,12 @@ Execution strength follows risk:
 - `cs-refactor` establishes equivalence evidence first and keeps verification green after each step.
 - `cs-epic` maintains one work document for items, dependencies, and acceptance. The owner confirms
   decomposition and boundary changes.
-- `cs-review` is an independent read-only review and also handles module or repository audits.
+- When independent review is needed, the outer workflow creates the reviewer. That reviewer runs
+  `cs-review` once and does not create another agent before returning a result.
+- `cs-review` is a read-only leaf executor for change, module, or repository review. The outer
+  workflow owns fixes and any later review round.
+- Idle / `Awaiting` without a report is a failed delegation and does not consume a review round. The
+  outer workflow diagnoses it before a bounded retry or escalation; it never blindly resends the task.
 - `cs-keep` compresses frequently needed facts into attention and reusable experience into lessons.
 
 Ordinary work creates no stage artifacts. The diff, test output, and delivery report are the evidence.

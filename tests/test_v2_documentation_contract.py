@@ -149,3 +149,19 @@ def test_authoring_docs_assign_context_and_helpers_to_real_owners() -> None:
     assert "retired v1 CodeStable name also selects `NoActiveSkill`" in build
     assert "retired-v1-entry-remains-absent" in fixtures
     assert "tests/test_skills_cli_distribution.py" in release
+
+
+def test_review_docs_publish_single_level_agent_orchestration() -> None:
+    zh_readme = _read("README.md")
+    en_readme = _read("README.en.md")
+    zh_workflow = _read("WORKFLOW.md")
+    en_workflow = _read("WORKFLOW.en.md")
+
+    assert "叶子执行器" in zh_readme
+    assert "leaf executor" in en_readme
+    assert "外层主流程创建 reviewer" in zh_workflow
+    assert "outer workflow creates the reviewer" in en_workflow
+
+    public = "\n".join(_read(path) for path in PUBLIC_DOCS)
+    assert "独立 subagent 视角" not in public
+    assert "independent subagent perspective" not in public

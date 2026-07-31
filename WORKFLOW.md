@@ -21,7 +21,9 @@ bug / 行为异常    -> cs-issue ----------> cs-review（高风险或按需）
 - `cs-issue` 先建立能明确变红的验证，再修复并证明它变绿。
 - `cs-refactor` 先建立等价性证据，分步改动并持续保持验证为绿。
 - `cs-epic` 用一个 work 文档维护子项、依赖和验收；拆解与边界变更由用户确认。
-- `cs-review` 是只读独立审查，也承接模块或全仓 audit。
+- 需要独立审查时由外层主流程创建 reviewer；reviewer 单轮执行 `cs-review`，返回结果前不再创建子 agent。
+- `cs-review` 是只读叶子执行器，也承接模块或全仓 audit；修复与复审由外层主流程负责。
+- reviewer idle / `Awaiting` 且没有报告时按失败处理、不计审查轮次；外层主流程先诊断再决定有界重试或上交，不盲目重发。
 - `cs-keep` 把高频事实压进 attention，把可复用经验写成 lesson。
 
 普通任务不生成阶段文档。diff、测试输出和交付说明就是证据；只有跨会话、多人交接或用户

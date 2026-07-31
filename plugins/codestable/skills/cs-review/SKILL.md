@@ -1,12 +1,19 @@
 ---
 name: cs-review
-description: 独立审查。默认审当前 diff，也审 design 方案，或按用户要求做 repo 级审计。只读，不改代码。曾名 cs-code-review。
+description: 只读审查叶子执行器。默认审当前 diff，也审 design 方案，或按用户要求做 repo 级审计。单轮返回结果，不创建子 agent。曾名 cs-code-review。
 argument-hint: "[--range <git-range>] [scope 或 audit 目标]"
 ---
 
 # cs-review
 
-独立审查一段变更（默认）或一块代码（审计模式），产出分级发现。
+审查一段变更（默认）或一块代码（审计模式），产出分级发现。本 skill 是叶子执行器，
+只完成一轮审查并返回结果。
+
+## 调用边界
+
+- 用户直接调用时，当前 agent 就是 reviewer，不再派生 reviewer。
+- 来源流程需要隔离实现上下文时，由调用方在进入本 skill 前创建 fresh reviewer，并传入改动意图、审查范围、不审内容与期望返回格式。
+- 独立性由调用方建立；本 skill 不通过再次委派来补建独立视角。
 
 ## 模式
 
@@ -17,10 +24,10 @@ argument-hint: "[--range <git-range>] [scope 或 audit 目标]"
 ## 硬门槛
 
 - **只读**：本 skill 不修代码、不写业务文件；修复由来源流程负责。
-- 审查必须由**独立视角**执行：用独立 subagent reviewer，不受当前对话里实现思路的先入之见影响；subagent 不可用时向用户说明并获准后才降级为当前上下文自审。
-- 派发 reviewer 时给自包含上下文包：改动意图、审查范围与不审内容、期望返回的分级发现清单；整合发现与最终裁决由主流程负责。
+- **叶子执行器**：禁止创建、委派或唤醒任何子 agent；不得再次调用 `cs-review` 或 `cs-code-review`，也不把审查转交给其他流程。
+- 每次调用必须返回一份终态审查结果；上下文不足时返回 `NeedsContext`、缺失项和已检查范围，不得以 `idle`、`Awaiting` 或无结果结束。
 - 每个发现附 `文件:行号`（design 审查附对应小节）、问题说明和理由；不确定的标注为疑问而不是断言。
-- blocking 的修复-复审循环**最多 3 轮**：3 轮后仍未清零或存在分歧，停下把双方理由摆给用户裁决，不继续对轮。
+- blocking 未解决不得给出“通过”结论；本 skill 不修复、不自行复审。
 
 ## 审查标准
 
@@ -32,6 +39,7 @@ argument-hint: "[--range <git-range>] [scope 或 audit 目标]"
 
 ## 收尾
 
-- 对话中输出结论（通过 / 需修改）与发现清单；用户要求留痕或属于 work 文档任务时，把结论摘要写进对应 `.codestable/work/{slug}.md`。
-- 审计模式发现的问题按用户意愿转入 `cs-issue` / `cs-feat` 处理，不当场顺手修。
+- 始终在对话中输出结论（通过 / 需修改）与发现清单。
+- 作为来源流程创建的 reviewer 时只返回报告，不写 work 文档、不路由其他 skill；调用方负责处理 findings、复审与持久化，本 skill 不保存复审轮次或重试状态。
+- 仅用户直接调用且明确要求留痕时，才把结论摘要写进对应 `.codestable/work/{slug}.md`；审计问题只建议后续使用 `cs-issue` / `cs-feat`，不当场转入或顺手修。
 - 审查中发现可复用的坑，推荐用 cs-keep 沉淀；用户拒绝即跳过。

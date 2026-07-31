@@ -145,7 +145,6 @@ conformance。
   条件、schema、invariant、outcome 和 fail-closed 行为。
 
 Tool-backed workflows must not copy the deterministic branch table into `SKILL.md` or a reference.
-
 共同检查四个 surface：
 
 - persisted fields/value 显式映射到 normalized state / contract constructors；
@@ -168,14 +167,15 @@ recovery pointer；接收方自行恢复状态。
 
 ## Collaboration Contract Gate
 
-只有 scope 可独立拥有、并有独立验收证据时才 dispatch：
+先验证 topology：只有责任明确包含编排的 harness 是 `Orchestrator`；被委派完成具体产物
+或审查的 agent 默认是 `LeafExecutor`，不得再 dispatch、follow up child、调用自身或
+兼容别名。只有 scope 可独立拥有、并有独立验收证据时才 dispatch。
 
-- task packet 包含 goal、relevant context、scope ownership、boundaries、evidence 和 return
-  contract；
+- task packet 包含 goal、relevant context、scope ownership、boundaries、evidence 和 return contract；
 - 子 agent 不获得无关的全仓 context，也不被预编排固定实现步骤；
-- 返回包含改动、证据、风险和未决项；
-- 主 agent 持有集成、冲突处理和最终验证；
-- owner decision 不得委托或由 agent 投票替代。
+- 返回包含改动、证据、风险和未决项；idle/silence without return payload 必须按失败处理，
+  不能盲目重复发送原任务；
+- calling `Orchestrator` 持有集成、冲突处理、重试决定和最终验证；owner decision 不得委托或投票替代。
 
 没有独立 scope 或独立验收方式时，保持单 agent。
 

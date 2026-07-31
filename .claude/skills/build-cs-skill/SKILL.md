@@ -36,6 +36,7 @@ data SkillShape = NoActiveSkill | ThinOperator | ContextualWorkflow | ToolBacked
 data ProcessProtocol = WorkflowProtocol | DomainProtocol | LifecycleProtocol
                      | OperationProtocol | AlgorithmProtocol | ShimRoute | ReferenceOnly
 data RulePlacement = Harness | StageContext | ProjectContext | DeterministicGate | Remove
+data DelegationRole = Orchestrator | LeafExecutor
 
 selectSkillShape :: SkillKind -> SkillSource -> SkillShape
 selectSkillShape kind source | not (independentSkillNeeded kind source) = NoActiveSkill
@@ -140,6 +141,10 @@ it helps a fresh agent orient from entry to recoverable exit.
 Delegate only bounded work that has explicit ownership and an independent completion check. Do not
 pre-script provider-specific roles or a fixed agent count.
 
+Classify topology before dispatch. A delegated agent defaults to `LeafExecutor` unless its explicit
+responsibility is orchestration. A `LeafExecutor` must not dispatch another agent, wake or follow up
+a child, or invoke itself or an alias. Only an `Orchestrator` owns further delegation.
+
 Use this packet contract:
 
 ```text
@@ -147,8 +152,10 @@ contextPacket = goal + relevantContext + scopeOwnership + boundaries + evidence 
 mainAgentOwnsIntegration = true
 ```
 
-The delegated agent chooses its route. The main agent owns integration, conflict handling, final
-verification, and durable state. Worktree/branch policy remains host-owned.
+The delegated agent chooses its route. The calling orchestrator owns integration, conflict handling,
+final verification, and durable state. It waits for the return contract; treat idle without a return
+payload as failed delegation, not permission to resend the same task blindly. Worktree/branch policy
+remains host-owned.
 
 ### 7. Preserve hard contracts
 

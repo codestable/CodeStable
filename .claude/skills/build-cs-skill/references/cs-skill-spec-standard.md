@@ -255,15 +255,15 @@ runtime。v1 项目里的旧 tool/gate 可以保留，但不构成新 skill 的�
 
 ## Collaboration Contract
 
-只有工作可以形成边界清楚、可独立验收的 scope 时才 dispatch agent。不要在 harness 中
-预编排固定角色和逐步实现路线。
+先把执行角色分成 `Orchestrator` 与 `LeafExecutor`。只有责任明确包含 agent 编排的 harness
+才是 `Orchestrator`；被委派执行具体产物或审查的 agent 默认是 `LeafExecutor`。
+`LeafExecutor` 不得创建、委派、唤醒或跟进子 agent，也不得再次调用自身或兼容别名。
 
-任务包必须是：
-
-goal + relevant context + scope ownership + boundaries + evidence + return contract
-
-子 agent 自主选择实现；返回改动、证据、风险和未决项。主 agent 持有全局责任、集成、
-冲突处理和最终验证，owner decision 不能下放给子 agent 或用投票代替。
+只有工作可以形成边界清楚、可独立验收的 scope 时才 dispatch。任务包必须包含 goal、
+relevant context、scope ownership、boundaries、evidence 和 return contract。子 agent 自主选择
+实现并返回结果；idle 或 silence 但没有 return payload 是失败，不是重复派发同一任务的许可。
+调用该 `LeafExecutor` 的 `Orchestrator` 持有集成、冲突处理、重试决定和最终验证；owner
+decision 不能下放或用 agent 投票替代。
 
 ## Evolution Admission / Compression
 

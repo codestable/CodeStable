@@ -26,7 +26,10 @@ def test_v2_runtime_ownership_supersedes_v1_distribution() -> None:
     assert _frontmatter(adr1)["status"] == "Superseded"
     assert adr4.is_file()
     assert _frontmatter(adr4)["status"] == "Accepted"
-    assert "supersedes: [\"001\"]" in adr4.read_text(encoding="utf-8")
+    adr4_text = adr4.read_text(encoding="utf-8")
+    assert "supersedes: [\"001\"]" in adr4_text
+    assert "只含 canonical route 与 shim 边界" in adr4_text
+    assert "只转发不含规则" not in adr4_text
     assert "runtime refresh" not in adr2.read_text(encoding="utf-8")
 
     for entry_file in (agents, claude):
