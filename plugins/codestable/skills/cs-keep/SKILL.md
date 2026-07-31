@@ -15,7 +15,7 @@ argument-hint: "[要沉淀的内容]"
 - 难回退的结构性技术取舍 → 建议走项目的 ADR（项目惯例位置），不写进 lessons。
 - 临时状态、本周计划、git 提交已表达的事实 → 不沉淀，向用户说明原因。
 
-`.codestable/` 或 `lessons/` 不存在时直接创建，不要求先跑 cs-onboard。
+`.codestable/`、`attention.md` 或 `lessons/` 不存在时直接创建，不要求先跑 cs-onboard。**项目侧归宿**（ADR 惯例位置、需求文档等）不存在时不擅自新建目录结构：给出建议落点请用户拍板；确属经验类的内容可先沉入 lessons（scope 标"待归位"）保证不丢。
 
 ## lesson 格式
 
