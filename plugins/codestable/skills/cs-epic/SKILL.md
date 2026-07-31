@@ -38,5 +38,5 @@ epic 天然跨会话，全程维护一个 `.codestable/work/epic-{slug}.md`（wo
 
 ## 收尾
 
-- 验收通过后压缩收尾：稳定结论进项目文档 / requirements，经验进 lessons，然后删除 epic work 文档**及其全部子项 work 文档**（按 frontmatter `epic:` 归属收拢；用户要求留档则保留）。
+- 验收通过后压缩收尾：稳定结论进项目文档 / requirements，经验进 lessons，**先在最终报告列毕业清单**（每条结论去了哪；无可毕业内容则明说），再删除 epic work 文档**及其全部子项 work 文档**（按 frontmatter `epic:` 归属收拢）；不列清单不得删，用户要求留档则保留。
 - 本轮若踩坑或被纠偏，推荐用 cs-keep 沉淀一条；用户拒绝即跳过。
