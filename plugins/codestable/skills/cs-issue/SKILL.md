@@ -28,6 +28,7 @@ argument-hint: "[问题描述]"
 
 ## 收尾
 
+- 每次创建 reviewer 前，探测全部可用审查 agent/model：优先与实现者异构且达到审查能力基线的 agent，并显式指定最强稳定 `model`；没有合格异构候选时才回退同构最强模型，记录回退原因，禁止依赖默认模型。
 - 修复完成后默认由当前主流程创建一个 fresh reviewer，让其单轮执行 `cs-review`，reviewer 内不得再创建子 agent；仅单行级微小修复可说明后跳过。主流程处理 findings，需要复审时重新创建 reviewer，累计最多 3 轮；超限仍有 blocking 或分歧时交用户裁决，不得继续对轮或宣称完成。
 - reviewer 未返回报告而进入 idle / `Awaiting` 时，本轮失败且不计轮次；不得盲目重发，先检查 task packet 与 agent 状态，再决定一次有界重试、换 reviewer 或交用户。
 - 报告：根因一句话、改动文件、验证结果。

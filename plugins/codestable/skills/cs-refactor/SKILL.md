@@ -25,6 +25,7 @@ argument-hint: "[重构目标]"
 
 跨模块大范围重构、改公开 interface 内部实现、或影响性能敏感路径时，动手前先给用户一页改动清单（动哪些点、顺序、每步验证方式）确认。完成后默认由当前主流程创建一个 fresh reviewer，让其单轮执行 `cs-review`，reviewer 内不得再创建子 agent；仅微小整理可说明后跳过。主流程处理 findings，需要复审时重新创建 reviewer，累计最多 3 轮；超限仍有 blocking 或分歧时交用户裁决，不得继续对轮或宣称完成。
 
+- 每次创建 reviewer 前，探测全部可用审查 agent/model：优先与实现者异构且达到审查能力基线的 agent，并显式指定最强稳定 `model`；没有合格异构候选时才回退同构最强模型，记录回退原因，禁止依赖默认模型。
 - reviewer 未返回报告而进入 idle / `Awaiting` 时，本轮失败且不计轮次；不得盲目重发，先检查 task packet 与 agent 状态，再决定一次有界重试、换 reviewer 或交用户。
 
 ## 收尾

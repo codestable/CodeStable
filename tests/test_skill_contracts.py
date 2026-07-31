@@ -117,6 +117,26 @@ def test_thin_skills_keep_explicit_safety_invariants() -> None:
     assert "派发独立 subagent reviewer" not in review_prompt
 
 
+def test_review_delegation_is_quality_first_and_explicit() -> None:
+    _, review = _read_skill(SKILLS / "cs-review/SKILL.md")
+    for invariant in (
+        "探测全部已配置的审查 agent/model",
+        "与实现者不同的 agent/provider",
+        "最强稳定模型",
+        "显式传入 `model`",
+        "禁止依赖 adapter 默认模型",
+        "回退原因",
+    ):
+        assert invariant in review, f"cs-review: missing {invariant!r}"
+
+    for skill_name in ("cs-feat", "cs-issue", "cs-refactor", "cs-epic"):
+        _, caller = _read_skill(SKILLS / skill_name / "SKILL.md")
+        assert "探测全部可用审查 agent/model" in caller, skill_name
+        assert "显式指定最强稳定 `model`" in caller, skill_name
+        assert "禁止依赖默认模型" in caller, skill_name
+        assert "记录回退原因" in caller, skill_name
+
+
 def test_build_cs_skill_requires_semantic_and_host_safe_validation() -> None:
     build_root = LOCAL_SKILLS / "build-cs-skill"
     build = (build_root / "SKILL.md").read_text(encoding="utf-8")

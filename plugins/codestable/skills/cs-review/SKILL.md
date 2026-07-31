@@ -12,6 +12,8 @@ argument-hint: "[--range <git-range>] [scope 或 audit 目标]"
 ## 调用边界
 
 - 用户直接调用时，当前 agent 就是 reviewer，不再派生 reviewer。
+- 来源流程创建 reviewer 前，探测全部已配置的审查 agent/model。质量优先：只在满足所需工具、上下文、稳定性与审查能力基线的候选中，优先选择与实现者不同的 agent/provider，再选择其中的最强稳定模型并显式传入 `model`；禁止依赖 adapter 默认模型。
+- 没有合格异构候选时才回退同构最强模型，并把最终 agent/model 与回退原因写入 task packet；异构但明显较弱的候选不优于同构最强模型。
 - 来源流程需要隔离实现上下文时，由调用方在进入本 skill 前创建 fresh reviewer，并传入改动意图、审查范围、不审内容与期望返回格式。
 - 独立性由调用方建立；本 skill 不通过再次委派来补建独立视角。
 
