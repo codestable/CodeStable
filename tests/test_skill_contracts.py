@@ -12,6 +12,19 @@ SKILLS = ROOT / "plugins/codestable/skills"
 # 工具 skill（authoring/eval，不随插件交付）也必须使用标准 frontmatter。
 LOCAL_SKILLS = ROOT / ".claude/skills"
 
+TASK_SKILLS = ("cs-feat", "cs-issue", "cs-refactor", "cs-epic")
+LEGACY_KNOWLEDGE_DIRS = {
+    ".codestable/roadmap/",
+    ".codestable/features/",
+    ".codestable/issues/",
+    ".codestable/refactors/",
+    ".codestable/goals/",
+    ".codestable/compound/",
+    ".codestable/audits/",
+    ".codestable/brainstorms/",
+    ".codestable/feedback/",
+}
+
 THIN_SKILL_SAFETY_INVARIANTS = {
     "cs": ("同轮直转", "只推荐入口", "不写任何文件"),
     "cs-review": (
@@ -48,7 +61,7 @@ THIN_SKILL_SAFETY_INVARIANTS = {
         "本轮失败且不计轮次",
         "不得盲目重发",
     ),
-    "cs-keep": ("没有可追溯证据不写", "先合并"),
+    "cs-keep": ("没有可追溯证据不写", "`.codestable/compound/` 是只读历史知识源"),
     "cs-onboard": ("存量文件一律不动", "不复制"),
     "cs-refactor": (
         "行为等价",
@@ -116,6 +129,51 @@ def test_thin_skills_keep_explicit_safety_invariants() -> None:
     assert "独立" not in review_openai["interface"]["short_description"]
     assert "独立" not in review_prompt
     assert "派发独立 subagent reviewer" not in review_prompt
+
+
+def test_task_skills_retrieve_legacy_knowledge_read_only() -> None:
+    for skill_name in TASK_SKILLS:
+        _, body = _read_skill(SKILLS / skill_name / "SKILL.md")
+        kickoff = body.split("## 开工", 1)[1].split("\n## ", 1)[0]
+        found = {
+            path for path in LEGACY_KNOWLEDGE_DIRS if f"`{path}`" in kickoff
+        }
+        assert found == LEGACY_KNOWLEDGE_DIRS, skill_name
+        assert "关键词" in kickoff, skill_name
+        assert "检索" in kickoff or "grep" in kickoff, skill_name
+        assert "只读" in kickoff, skill_name
+        assert "命中要报告来源路径" in kickoff, skill_name
+        assert "不得继续生成" in kickoff, skill_name
+        assert "原地改写" in kickoff, skill_name
+        assert "批量迁移" in kickoff, skill_name
+
+
+def test_keep_never_writes_v1_compound() -> None:
+    _, keep = _read_skill(SKILLS / "cs-keep/SKILL.md")
+    assert "`.codestable/compound/` 是只读历史知识源" in keep
+    assert "有增量时" in keep
+    assert "`.codestable/lessons/`" in keep
+    assert "能合并就更新旧文件" not in keep
+
+
+def test_onboard_keeps_the_base_skeleton_minimal() -> None:
+    _, onboard = _read_skill(SKILLS / "cs-onboard/SKILL.md")
+    skeleton = onboard.split("```text", 1)[1].split("```", 1)[0]
+    assert "epics/" not in skeleton
+    assert "requirements/" not in skeleton
+    assert "首次 Epic" in onboard
+    assert "`.codestable/epics/` 不属于基础骨架" in onboard
+    assert "按需创建" in onboard
+    for path in LEGACY_KNOWLEDGE_DIRS:
+        assert f"`{path}`" in onboard
+
+
+def test_requirements_only_follow_an_explicit_canonical_owner() -> None:
+    for skill_name in ("cs-feat", "cs-epic"):
+        _, body = _read_skill(SKILLS / skill_name / "SKILL.md")
+        assert "`.codestable/attention.md` 明确记录" in body, skill_name
+        assert "canonical requirement" in body, skill_name
+        assert "不存在时不新建 `.codestable/requirements/`" in body, skill_name
 
 
 def test_review_delegation_discovers_subagent_management_then_selects() -> None:
@@ -212,6 +270,76 @@ def test_review_snapshots_and_milestone_commits_are_not_conflated() -> None:
     assert "每次只推进一个已确认子项" in epic
     assert "不把多个子项堆进同一 diff" in epic
     assert "未获 commit 授权" in epic
+
+
+def test_epic_separates_durable_record_from_execution_cursor() -> None:
+    _, epic = _read_skill(SKILLS / "cs-epic/SKILL.md")
+    assert "项目已有明确 Epic、RFC 或 initiative 归宿时沿用" in epic
+    assert "`.codestable/epics/{slug}.md`" in epic
+    assert "永久 Epic 文档" in epic
+    assert "`.codestable/work/epic-{slug}.md`" in epic
+    assert "执行游标" in epic
+
+    permanent = epic.split("永久文档最小结构", 1)[1].split(
+        "work 游标最小结构", 1
+    )[0]
+    for field in (
+        "起点",
+        "目标",
+        "范围",
+        "非目标",
+        "验收标准",
+        "子项契约",
+        "关键决策",
+        "最终交付索引",
+        "整体验收",
+        "遗留风险",
+    ):
+        assert field in permanent
+
+    cursor_owner = epic.split("- **执行游标**", 1)[1].split(
+        "永久文档最小结构", 1
+    )[0]
+    for field in (
+        "永久文档指针",
+        "approved_revision",
+        "phase",
+        "当前子项",
+        "下一步",
+        "blocked_by",
+        "临时决策",
+        "证据",
+        "commit 指针",
+    ):
+        assert field in cursor_owner
+    assert "不得复制目标、验收、子项定义或最终结论" in epic
+    assert "shasum -a 256 <epic-file>" in epic
+    assert "确认前保持 `pending`" in epic
+    assert "active 期间永久文档冻结" in epic
+    assert "终态 `accepted` / `superseded` / `cancelled`" in epic
+    assert "永久 Epic 文档不得删除" in epic
+
+
+def test_epic_internalizes_goal_semantics_without_v1_runtime() -> None:
+    _, epic = _read_skill(SKILLS / "cs-epic/SKILL.md")
+    assert "拆解方案必须经用户确认" in epic
+    assert "目标、边界、验收、子项契约" in epic
+    assert "重新 review 并征得同意" in epic
+    assert "最新 owner 已批准的验收标准" in epic
+    assert "audit/acceptance review" in epic
+    assert "owner 最终接受" in epic
+    assert "不恢复 `cs-goal` 入口" in epic
+    assert "`state.yaml`" in epic
+    assert "逐轮 iteration 报告" in epic
+
+    assert not (SKILLS / "cs-goal").exists()
+    assert not any(
+        path.name in {"state.yaml", "goal-state.yaml", "goal-plan.md"}
+        for path in (SKILLS / "cs-epic").rglob("*")
+    )
+    assert not any(
+        "iterations" in path.parts for path in (SKILLS / "cs-epic").rglob("*")
+    )
 
 
 def test_build_cs_skill_requires_semantic_and_host_safe_validation() -> None:

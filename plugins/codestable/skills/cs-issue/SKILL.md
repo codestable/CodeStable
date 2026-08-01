@@ -11,7 +11,7 @@ argument-hint: "[问题描述]"
 ## 开工
 
 - 有 `.codestable/attention.md` 就先读。
-- 按错误信息与相关模块关键词 grep `.codestable/lessons/`、`.codestable/compound/` 与项目文档——这个坑可能踩过；命中要报告来源路径。
+- 按错误信息与相关模块关键词检索 `.codestable/lessons/`、项目文档，以及存在的 v1 只读知识目录：`.codestable/roadmap/`、`.codestable/features/`、`.codestable/issues/`、`.codestable/refactors/`、`.codestable/goals/`、`.codestable/compound/`、`.codestable/audits/`、`.codestable/brainstorms/`、`.codestable/feedback/`；这个坑可能踩过，命中要报告来源路径。上述 v1 目录不得继续生成、原地改写或批量迁移，新结论按归属进入 v2 Epic、项目文档、ADR 或 lesson。
 - 对照检查：目标（期望行为）、现场（复现条件与环境）、边界（哪些不能动）、验收（怎么算修好）。缺少会改变修复方向的事实时先问用户，一次最多 3 个问题，形成共识即停。
 - 诉求其实是新增能力而不是坏掉的行为时，转 `cs-feat`，不在 issue 里偷做。
 

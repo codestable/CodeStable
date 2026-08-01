@@ -162,7 +162,7 @@ CodeStable 走的是**另一个方向**：
 | **特性引入** | `cs-feat` | 高风险设计先落盘 work 文档，由外层主流程创建 reviewer 做独立 review 后再交人确认，不 auto-approve；测试设施可用时测试先行；完成必须附可核验证据 |
 | **问题修复** | `cs-issue` | 没有能明确变红的验证不许猜根因；修复完成时变红的验证必须变绿 |
 | **代码重构** | `cs-refactor` | 先有能自证行为等价的验证再动代码；发现要改行为立即停下转向 |
-| **大需求** | `cs-epic` | 外层主流程创建 reviewer 审查拆解方案，再交用户确认；一个 epic 文档维护全景；不代替用户做整体验收 |
+| **大需求** | `cs-epic` | 永久 Epic 文档保存全景，临时 work 游标保存执行状态；拆解、范围性变化、fresh reviewer 整体验收后最终接受分别经过三道 owner gate |
 | **独立审查** | `cs-review` | 只读叶子执行器，单轮返回发现，不创建子 agent；blocking 未解决不得通过，修复与最多 3 轮复审由外层主流程负责 |
 
 工程判断力不占常驻上下文：模块深度、实现经济性、debug 升级路径这些"怎么做好"的判据放在**按需加载的 references** 里，进入对应场景才读——thin harness 管可靠，thick context 管质量。
@@ -176,10 +176,19 @@ CodeStable 走的是**另一个方向**：
 | `attention.md` | 每次会话必读的项目事实，≤25 条 |
 | `lessons/` | 一条一文件的坑、技巧、调研结论；写入必须有可追溯证据，先查重合并 |
 | 项目文档 / ADR | 当前事实与结构性决策的 canonical owner——CodeStable 不建平行真相 |
-| `work/` | 进行中的跨会话任务，文件名带类型前缀 feat-/issue-/refactor-/epic-；普通任务不创建 |
+| 永久 Epic 文档 | 长期保存目标、范围、已批准子项、关键决策、交付索引与整体验收 |
+| `work/` | 进行中的跨会话任务；Epic work 只作指向永久文档、批准 revision 与执行进度的临时游标 |
 | git / PR | 执行历史 |
 
-work 文档完成后**先毕业再删除**：最终报告必须列出毕业清单——哪条结论进了哪个项目文档、沉了哪条 lesson，无可毕业则明说——不列清单不得删；毕业目标位置不存在时给出建议落点等用户拍板，拍板前文档保留。
+Epic 优先沿用项目已有的 Epic、RFC 或 initiative 归宿，否则首次需要时才创建 `.codestable/epics/`；`cs-onboard` 不预建空目录。拆解经独立 design review 后由 owner 确认；目标、范围、非目标、验收、子项或重大风险变化时 owner 重新确认；全部子项完成后，由 fresh reviewer 按最新 owner 已批准的标准做终态整体验收，再由 owner 最终接受。终态先补齐永久档案并完成毕业，再删除 Epic work 游标，永久 Epic 文档不删除。
+
+v1 的 `roadmap/`、`features/`、`issues/`、`refactors/`、`goals/`、`compound/`、`audits/`、`brainstorms/` 与 `feedback/` 九个历史知识目录只按任务关键词只读检索并引用来源；不生成、不原地改写、不批量迁移，也不写回。新结论进入永久 Epic、项目文档、ADR 或 `lessons/`。
+
+既有 `.codestable/requirements/` 只有在 `.codestable/attention.md` 明确登记为 canonical requirement 位置时才可维护，否则同样只读。新项目沿用自身文档结构，不默认创建该目录；没有 canonical 归宿时先请 owner 选择并登记到 `attention.md`。
+
+`cs-epic` 承担有价值的目标契约、恢复游标、owner gate 与终态验收；不会恢复 `cs-goal` 入口、goal package、`state.yaml`、逐轮 iteration 报告或 runtime gate。
+
+普通 work 文档完成后**先毕业再删除**：最终报告必须列出毕业清单——哪条结论进了哪个项目文档、沉了哪条 lesson，无可毕业则明说——不列清单不得删；毕业目标位置不存在时给出建议落点等用户拍板，拍板前文档保留。
 
 ---
 
@@ -207,7 +216,7 @@ work 文档完成后**先毕业再删除**：最终报告必须列出毕业清�
 
 所有入口共用一条执行主线：**理解相关事实 → 行动 → 相称的验证 → 交付结果**。风险每次按当前事实重判，没有持久 lane、没有阶段状态机；普通任务零 CodeStable 产物——diff、测试输出和交付说明就是证据。
 
-沉淀的价值在被读到：每个 skill 动手前按任务关键词 grep `lessons/` 与项目文档，命中必须报告来源路径。
+沉淀的价值在被读到：负责具体任务的 `cs-feat`、`cs-issue`、`cs-refactor` 与 `cs-epic` 开工前按任务关键词检索 `lessons/`、项目文档与上述 v1 历史目录，命中必须报告来源路径；历史目录只读，不写回。
 
 `cs-onboard` 在项目根生成最小 `.codestable/`：
 
@@ -218,7 +227,7 @@ work 文档完成后**先毕业再删除**：最终报告必须列出毕业清�
 └── work/
 ```
 
-skill 专属 context/helper 归 owning skill；项目需求、领域模型与 ADR 继续使用项目自己的文档结构——CodeStable 不建平行真相。
+`.codestable/epics/` 仅在没有现成 Epic 归宿且首次创建 Epic 时按需出现；`.codestable/requirements/` 不属于默认骨架。skill 专属 context/helper 归 owning skill；项目需求、领域模型与 ADR 继续使用项目自己的文档结构，requirements 位置只有经 `attention.md` 显式登记才是可维护的 canonical owner——CodeStable 不建平行真相。
 
 完整工作流与持久化约定见 [WORKFLOW.md](./WORKFLOW.md)。
 

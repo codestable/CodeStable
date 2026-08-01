@@ -11,7 +11,9 @@ argument-hint: "[功能描述]"
 ## 开工
 
 - 有 `.codestable/attention.md` 就先读。
-- 按功能关键词 grep `.codestable/lessons/`、`.codestable/compound/`、`.codestable/requirements/` 与项目文档，命中要报告来源路径；写代码前先看相邻实现，写得像这个项目原本的代码。
+- 按功能关键词检索 `.codestable/lessons/`、项目文档，以及存在的 v1 只读知识目录：`.codestable/roadmap/`、`.codestable/features/`、`.codestable/issues/`、`.codestable/refactors/`、`.codestable/goals/`、`.codestable/compound/`、`.codestable/audits/`、`.codestable/brainstorms/`、`.codestable/feedback/`；命中要报告来源路径。上述 v1 目录不得继续生成、原地改写或批量迁移，新结论按归属进入 v2 Epic、项目文档、ADR 或 lesson。
+- 既有 `.codestable/requirements/` 只有在 `.codestable/attention.md` 明确记录其为 canonical requirement 位置时才可维护；owner 在当前任务首次指定时，先把该项目事实写入 attention。没有显式记录时只读检索，不存在时不新建 `.codestable/requirements/`。
+- 写代码前先看相邻实现，写得像这个项目原本的代码。
 - 动手前先定归属：这能力属于哪里、沿用现有词汇叫什么——不丢进最近的文件、不起新同义词。结构与取舍拿不准时读 `references/code-design.md` 与 `references/economy.md`（最小充分 ≠ 最小 diff；有界简化必须记上限、触发与方向）。
 - 对照检查：目标、现场上下文、边界与取舍、证据要求、验收标准。缺少会改变实现方向的事实时先问，一次最多 3 个问题，形成可执行共识即停；不问不影响方向的细节。
 
@@ -46,5 +48,5 @@ argument-hint: "[功能描述]"
 
 - 报告：做了什么、改动文件、验证结果、遗留事项。
 - 高风险任务的 work 文档在设计对齐时已建立；其余任务需要跨会话继续、多人交接或用户要求留痕时补建 `.codestable/work/feat-{slug}.md`（work 文档一律带类型前缀 feat- / issue- / refactor- / epic-，整理时按前缀分流去向）。work 文档含目标 / 现场 / 边界 / 证据 / 验收 / 状态与未决六节，随进展更新（"状态与未决"记录进度与待用户确认项，供跨会话恢复）；完成后先在最终报告列**毕业清单**——哪条结论进了哪个项目文档、沉了哪条 lesson，无可毕业内容则明说——然后才删除 work 文档；不列清单不得删。毕业目标位置不存在时不擅自发明目录：清单中给出建议落点请用户拍板，**拍板前 work 文档保留不删**。用户要求留档则保留。
-- 属于某个 epic 的子功能时：work 文档 frontmatter 标 `epic: {epic-slug}` 并在 epic 文档的子项行回链；完成后回报 `cs-epic` 更新其子项状态。
+- 属于某个 Epic 的子功能时：独立子功能 work 文档的 frontmatter 标 `epic: {epic-slug}`；日常进展和完成状态只更新 Epic work 游标中对应稳定 ID 的进度与证据指针。永久 Epic 文档在 `active` 期间保持冻结，不因日常进度或子功能 work 回链而修改；需要改变子项定义、依赖或验收时交 `cs-epic` 走边界重确认。
 - 本轮若踩坑或被纠偏，推荐用 cs-keep 沉淀一条；用户拒绝即跳过。

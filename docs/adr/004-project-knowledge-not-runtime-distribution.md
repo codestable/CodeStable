@@ -1,7 +1,8 @@
 ---
 adr: "004"
 title: "CodeStable v2 项目目录只承载项目知识"
-status: Accepted
+status: Superseded
+superseded-by: "005"
 date: 2026-07-30
 supersedes: ["001"]
 applies-to:
@@ -14,6 +15,9 @@ lint: "python3 -m pytest tests/test_v2_architecture_contract.py tests/test_skill
 ---
 
 # ADR-004: CodeStable v2 项目目录只承载项目知识
+
+> 本决策已被 [ADR-005](005-project-knowledge-and-epic-lifecycle.md) 取代。ADR-005 保留 skill
+> 独立安装与 legacy runtime 隔离边界，并补充永久 Epic 上下文和只读历史知识迁移规则。
 
 ## Context
 

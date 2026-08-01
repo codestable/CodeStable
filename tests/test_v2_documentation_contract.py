@@ -184,3 +184,79 @@ def test_review_docs_publish_single_level_agent_orchestration() -> None:
     public = "\n".join(_read(path) for path in PUBLIC_DOCS)
     assert "独立 subagent 视角" not in public
     assert "independent subagent perspective" not in public
+
+
+def test_epic_and_legacy_knowledge_contracts_are_bilingual() -> None:
+    zh_workflow = " ".join(_read("WORKFLOW.md").split())
+    en_workflow = " ".join(_read("WORKFLOW.en.md").split())
+
+    legacy_dirs = (
+        "roadmap/",
+        "features/",
+        "issues/",
+        "refactors/",
+        "goals/",
+        "compound/",
+        "audits/",
+        "brainstorms/",
+        "feedback/",
+    )
+    for directory in legacy_dirs:
+        assert directory in zh_workflow
+        assert directory in en_workflow
+
+    for anchor in (
+        "只读历史知识源",
+        "owning task skills",
+        "按任务关键词覆盖",
+        "其他 skill 只检索自身契约明确点名的历史源",
+        "不得继续生成",
+        "原地改写",
+        "批量迁移",
+        "永久 Epic 文档",
+        "临时执行游标",
+        "按需建立 `.codestable/epics/{slug}.md`",
+        "`cs-onboard` 不预建 `.codestable/epics/`",
+        "Epic 保留三道 owner gate",
+        "最新 owner 已批准的验收标准",
+        "owner 最终接受",
+        "不恢复 `cs-goal` 入口",
+    ):
+        assert anchor in zh_workflow
+
+    for anchor in (
+        "read-only historical knowledge sources",
+        "cover all nine by task keyword",
+        "Other skills retrieve only historical sources explicitly named by their own contracts",
+        "No skill may generate",
+        "rewrite in place",
+        "bulk-migrate",
+        "permanent Epic document",
+        "temporary execution cursor",
+        "create `.codestable/epics/{slug}.md` on demand",
+        "`cs-onboard` does not precreate `.codestable/epics/`",
+        "An Epic retains three owner gates",
+        "latest owner-approved criteria",
+        "owner's final acceptance",
+        "Do not restore the `cs-goal` entry",
+    ):
+        assert anchor in en_workflow
+
+    for workflow in (zh_workflow, en_workflow):
+        assert ".codestable/requirements/" in workflow
+        assert ".codestable/attention.md" in workflow
+        assert "canonical requirement" in workflow
+
+    zh_readme = _read("README.md")
+    en_readme = _read("README.en.md")
+    zh_catalog = _read("SKILL_CATALOG.md")
+    en_catalog = _read("SKILL_CATALOG.en.md")
+    assert "九个历史知识目录" in zh_readme
+    assert "nine v1 historical knowledge directories" in en_readme
+    assert "每个 skill 动手前按任务关键词检索" not in zh_readme
+    assert "every skill searches" not in en_readme
+    for task_skill in ("cs-feat", "cs-issue", "cs-refactor", "cs-epic"):
+        assert task_skill in zh_readme
+        assert task_skill in en_readme
+    assert "永久 Epic 文档" in zh_catalog
+    assert "permanent Epic doc" in en_catalog

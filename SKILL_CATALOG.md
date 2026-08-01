@@ -12,11 +12,21 @@ runtime。
 | 功能 | `cs-feat` | 实现新功能；按风险决定是否先确认设计或做独立 review |
 | 问题 | `cs-issue` | 用红到绿的验证修复 bug 或既有行为异常 |
 | 重构 | `cs-refactor` | 在可核验的行为等价约束下调整结构或性能 |
-| 大需求 | `cs-epic` | 拆解、确认并长程推进多个可交付子项 |
+| 大需求 | `cs-epic` | 用永久 Epic 文档与临时 work 执行游标拆解、确认并长程推进多个可交付子项 |
 | 审查 | `cs-review` | 只读叶子执行器；单轮审查，不创建子 agent |
 | 记忆 | `cs-keep` | 将有证据的高频事实或可复用经验写入项目记忆 |
 
 `cs-code-review` 作为 `cs-review` 的唯一兼容别名随包交付（v1 沿用名，只转发、不含独立规则）。
+
+## 项目知识与 Epic 边界
+
+新项目仍只预建 `.codestable/attention.md`、`lessons/` 与 `work/`。Epic 优先沿用项目已有归宿，否则首次需要时才创建 `.codestable/epics/`：永久文档保存目标、范围、已批准子项、决策、交付索引与终态验收，`work/epic-{slug}.md` 只作批准 revision 与执行进度的临时游标，终态删除游标但保留永久档案。
+
+Epic 保留三道 owner gate：独立 design review 后确认拆解；目标、范围、非目标、验收、子项或重大风险变化时重新确认；全部子项完成并由 fresh reviewer 按最新 owner 已批准标准做终态整体验收后，由 owner 最终接受。
+
+v1 的 `roadmap/`、`features/`、`issues/`、`refactors/`、`goals/`、`compound/`、`audits/`、`brainstorms/` 与 `feedback/` 九个历史知识目录只按任务关键词只读检索和引用，不生成、不原地改写、不批量迁移，也不写回。
+
+既有 `.codestable/requirements/` 只有经 `.codestable/attention.md` 显式登记为 canonical requirement 位置才可维护，否则只读；新项目不默认创建该目录。`cs-epic` 承接有价值的 goal 契约、恢复游标与验收，但不恢复 `cs-goal` runtime、goal package、`state.yaml`、逐轮 iteration 报告或 runtime gate。
 
 ## v1.0.4 退役入口
 
@@ -29,7 +39,7 @@ runtime。
 | `cs-issue-report`, `cs-issue-analyze`, `cs-issue-fix` | 统一进入 `cs-issue` |
 | `cs-refactor-ff` | 进入 `cs-refactor` |
 | `cs-audit` | 使用 `cs-review` 的 audit 模式 |
-| `cs-goal`, `cs-roadmap`, `cs-roadmap-review`, `cs-roadmap-impl-goal` | 大需求进入 `cs-epic`；普通跨会话任务使用一个 work 文档 |
+| `cs-goal`, `cs-roadmap`, `cs-roadmap-review`, `cs-roadmap-impl-goal` | 大需求进入 `cs-epic`；不恢复 goal package、`state.yaml`、逐轮报告或 runtime gate |
 | `cs-brainstorm`, `cs-domain`, `cs-req` | 功能或大需求在 `cs-feat` / `cs-epic` 内澄清；项目事实直接更新到项目文档或 ADR |
 | `cs-docs`, `cs-docs-neat`, `cs-doc-api`, `cs-doc-tutorial` | 在对应开发任务中同步文档，或直接提出独立文档请求 |
 | `cs-note` | 进入 `cs-keep` |

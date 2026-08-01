@@ -161,7 +161,7 @@ Thin rules do not mean no boundaries. What remains are **hard gates**, each deci
 | **Feature delivery** | `cs-feat` | High-risk designs are persisted to a work doc; the outer workflow creates a reviewer before user confirmation — never auto-approved; test-first when a setup exists; completion requires verifiable evidence |
 | **Issue fixing** | `cs-issue` | No root-cause guessing without a check that clearly turns red; the red check must turn green before claiming the fix |
 | **Refactoring** | `cs-refactor` | Equivalence evidence exists before code changes; stop and report the moment behavior would change |
-| **Epic delivery** | `cs-epic` | The outer workflow creates a reviewer for decomposition before user confirmation; one epic doc keeps the full picture; final acceptance remains with the user |
+| **Epic delivery** | `cs-epic` | A permanent Epic doc keeps the full picture and a temporary work cursor keeps execution state; decomposition, scope changes, and final acceptance after fresh-reviewer validation pass three owner gates |
 | **Independent review** | `cs-review` | Read-only leaf executor that returns one review without spawning agents; the outer workflow owns fixes and at most three review rounds |
 
 Engineering judgment does not occupy the always-loaded context: module depth, implementation economy, and debug escalation live in **on-demand references**, read only when the scene calls for them — the thin harness owns reliability, the thick context owns quality.
@@ -175,10 +175,19 @@ The capture principle: **everything in its place, no archive hall**:
 | `attention.md` | Project facts read every session, ≤25 entries |
 | `lessons/` | One file per pitfall, technique, or research result; traceable evidence required, dedupe-and-merge first |
 | Project docs / ADRs | The canonical owner of current facts and structural decisions — CodeStable builds no parallel truth |
-| `work/` | Active cross-session tasks, filenames type-prefixed feat-/issue-/refactor-/epic-; ordinary tasks create none |
+| Permanent Epic docs | Long-lived goals, scope, approved items, key decisions, delivery index, and holistic acceptance |
+| `work/` | Active cross-session tasks; Epic work is only a temporary cursor to the permanent doc, approved revision, and execution progress |
 | git / PR | Execution history |
 
-Completed work docs **graduate before deletion**: the final report must list the graduation destinations — which conclusion went into which project doc, which lesson was distilled, or an explicit "nothing to graduate" — no list, no deletion. When a destination does not exist, the agent proposes one and keeps the doc until the owner decides.
+An Epic reuses an existing Epic, RFC, or initiative home when one exists; otherwise `.codestable/epics/` is created only on first need, and `cs-onboard` does not precreate it. The owner confirms decomposition after independent design review; changes to goals, scope, non-goals, acceptance, items, or major risks require owner reconfirmation; after all items complete, a fresh reviewer performs holistic terminal acceptance against the latest owner-approved criteria before the owner accepts. Terminal handling completes and graduates the permanent archive before deleting the Epic work cursor; the permanent Epic doc is never deleted as temporary output.
+
+The nine v1 historical knowledge directories — `roadmap/`, `features/`, `issues/`, `refactors/`, `goals/`, `compound/`, `audits/`, `brainstorms/`, and `feedback/` — are searched read-only by task keywords with source citations. Do not generate into, rewrite in place, bulk-migrate, or write back to them. New conclusions go to permanent Epics, project docs, ADRs, or `lessons/`.
+
+An existing `.codestable/requirements/` may be maintained only when `.codestable/attention.md` explicitly registers it as the canonical requirement location; otherwise it is also read-only. New projects keep their own documentation structure and do not create this directory by default; when no canonical home exists, ask the owner to choose one and record it in `attention.md`.
+
+`cs-epic` carries forward the useful goal contract, recovery cursor, owner gates, and terminal acceptance; it does not restore the `cs-goal` entry, goal package, `state.yaml`, per-iteration reports, or runtime gates.
+
+Ordinary completed work docs **graduate before deletion**: the final report must list the graduation destinations — which conclusion went into which project doc, which lesson was distilled, or an explicit "nothing to graduate" — no list, no deletion. When a destination does not exist, the agent proposes one and keeps the doc until the owner decides.
 
 ---
 
@@ -205,7 +214,7 @@ Completed work docs **graduate before deletion**: the final report must list the
 
 Every entry shares one execution mainline: **understand the relevant facts → act → run proportionate verification → deliver**. Risk is re-judged per request — no persistent lanes, no stage state machines; ordinary tasks produce zero CodeStable artifacts — the diff, test output, and delivery summary are the evidence.
 
-Captured knowledge only has value when it gets read: before acting, every skill greps `lessons/` and project docs by task keywords, and reports the sources of any hits.
+Captured knowledge only has value when it gets read: before acting, `cs-feat`, `cs-issue`, `cs-refactor`, and `cs-epic` search `lessons/`, project docs, and the v1 historical directories above by task keywords, and report the sources of any hits; historical directories stay read-only with no writeback.
 
 After `/cs-onboard`, a new project has only this CodeStable-owned memory:
 
@@ -216,7 +225,7 @@ After `/cs-onboard`, a new project has only this CodeStable-owned memory:
 └── work/
 ```
 
-Skill-specific context and helpers belong to the owning skill. Requirements, domain models, and ADRs stay in the project's own documentation structure — CodeStable builds no parallel truth. See [WORKFLOW.en.md](./WORKFLOW.en.md) for the full boundary.
+`.codestable/epics/` appears on demand only when the project has no existing Epic home and creates its first Epic; `.codestable/requirements/` is not part of the default skeleton. Skill-specific context and helpers belong to the owning skill. Requirements, domain models, and ADRs stay in the project's own documentation structure, and a requirements location is a maintainable canonical owner only when explicitly registered in `attention.md` — CodeStable builds no parallel truth. See [WORKFLOW.en.md](./WORKFLOW.en.md) for the full boundary.
 
 ---
 

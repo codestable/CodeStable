@@ -34,12 +34,13 @@ date: YYYY-MM-DD
 ## 写入纪律（硬门槛）
 
 - 没有可追溯证据不写；不编造，不从模型记忆里泛化。
-- 写前先 grep `.codestable/lessons/` 与 v1 存量 `.codestable/compound/` 查同域旧条目：能合并就更新旧文件，不新增重复；lessons 超过约 50 条时必须先合并再新增。
+- 写前先检索 `.codestable/lessons/` 与 v1 存量 `.codestable/compound/` 查同域旧条目。命中 lesson 时能合并就更新原 lesson，不新增重复；lessons 超过约 50 条时必须先合并再新增。
+- `.codestable/compound/` 是只读历史知识源：命中且结论完整时只引用来源、不新建；有增量时只合并进现有 lesson 或新建 lesson，并引用旧 compound 来源，绝不更新 compound。
 - 一次只写用户拍板过的内容，不顺手多写。
 
 ## 检索约定
 
-日后找回：`grep -ri "关键词" .codestable/lessons/ .codestable/compound/`。命中引用时必须报告来源路径。
+日后找回：`grep -ri "关键词" .codestable/lessons/ .codestable/compound/`。命中引用时必须报告来源路径；`compound/` 命中仍按只读规则处理。
 
 ## 完成
 

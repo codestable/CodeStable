@@ -11,7 +11,7 @@ argument-hint: "[重构目标]"
 ## 开工
 
 - 有 `.codestable/attention.md` 就先读。
-- 按目标模块关键词 grep `.codestable/lessons/`、`.codestable/compound/` 与项目文档，命中要报告来源路径。
+- 按目标模块关键词检索 `.codestable/lessons/`、项目文档，以及存在的 v1 只读知识目录：`.codestable/roadmap/`、`.codestable/features/`、`.codestable/issues/`、`.codestable/refactors/`、`.codestable/goals/`、`.codestable/compound/`、`.codestable/audits/`、`.codestable/brainstorms/`、`.codestable/feedback/`；命中要报告来源路径。上述 v1 目录不得继续生成、原地改写或批量迁移，新结论按归属进入 v2 Epic、项目文档、ADR 或 lesson。
 - 先确认诉求真是行为不变：一旦包含"顺便支持 X / 改成 Y"，把那部分拆出去转 `cs-feat` 或 `cs-issue`，不夹带。
 - 结构好坏用**深度**衡量：小接口承载大行为是深，接口和实现一样复杂是浅；重构应让调用方用更少认知换更多能力，不为"看起来干净"搬家，不把模块越拆越碎。
 

@@ -33,6 +33,10 @@ argument-hint: "[诉求]"
 
 ## 体系速读
 
-CodeStable 是一层薄研发纪律加一个项目记忆闭环。项目记忆在 `.codestable/`：attention.md（每次必读）、lessons/（grep 检索的经验）、work/（活动中的跨会话任务）。普通任务零产物，证据是 diff 与测试。v1 的 24 个旧入口（cs-feat-design、cs-goal、cs-audit、cs-note、cs-feedback、cs-roadmap 系等）已并入上表：设计与需求澄清是 cs-feat / cs-epic 的内置步骤，审计是 cs-review 的模式，沉淀统一走 cs-keep。
+CodeStable 是一层薄研发纪律加一个项目记忆闭环。项目记忆在 `.codestable/`：attention.md（每次必读）、lessons/（按关键词检索的经验）、work/（活动中的跨会话任务）。普通任务零产物，证据是 diff 与测试。
+
+Epic 采用职责互斥的双层文档：永久 Epic 上下文优先沿用项目已有 Epic / RFC / initiative 归宿，否则首次使用时按需创建 `.codestable/epics/`；临时 `.codestable/work/epic-{slug}.md` 只保存执行游标，完成后清理。`cs-goal` 中有价值的目标契约、恢复、人工门槛和终态验收已并入 `cs-epic`，但不恢复 `cs-goal` 入口、goal package、`state.yaml`、逐轮 iteration 报告或 runtime gate。
+
+v1 的 24 个旧入口（cs-feat-design、cs-goal、cs-audit、cs-note、cs-feedback、cs-roadmap 系等）已并入上表：设计与需求澄清是 cs-feat / cs-epic 的内置步骤，审计是 cs-review 的模式，沉淀统一走 cs-keep。
 
 导览与推荐本身不写任何文件。

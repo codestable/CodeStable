@@ -20,16 +20,30 @@ def test_v2_runtime_ownership_supersedes_v1_distribution() -> None:
     adr1 = ROOT / "docs/adr/001-skill-global-tool-runtime.md"
     adr2 = ROOT / "docs/adr/002-codestable-does-not-own-worktree-strategy.md"
     adr4 = ROOT / "docs/adr/004-project-knowledge-not-runtime-distribution.md"
+    adr5 = ROOT / "docs/adr/005-project-knowledge-and-epic-lifecycle.md"
     agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
     claude = (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
 
     assert _frontmatter(adr1)["status"] == "Superseded"
     assert adr4.is_file()
-    assert _frontmatter(adr4)["status"] == "Accepted"
+    assert _frontmatter(adr4)["status"] == "Superseded"
+    assert _frontmatter(adr4)["superseded-by"] == "005"
+    assert adr5.is_file()
+    assert _frontmatter(adr5)["status"] == "Accepted"
     adr4_text = adr4.read_text(encoding="utf-8")
+    adr5_text = adr5.read_text(encoding="utf-8")
     assert "supersedes: [\"001\"]" in adr4_text
-    assert "只含 canonical route 与 shim 边界" in adr4_text
-    assert "只转发不含规则" not in adr4_text
+    assert "supersedes: [\"004\"]" in adr5_text
+    assert "八个主 skill" in adr5_text
+    assert "否则按需创建 `.codestable/epics/`" in adr5_text
+    assert "`cs-onboard` 不预建空目录" in adr5_text
+    assert "只读历史知识源" in adr5_text
+    assert "不得继续生成、原地改写、批量迁移" in adr5_text
+    assert "`.codestable/attention.md` 明确记录其为 canonical" in adr5_text
+    assert "不默认创建 `.codestable/requirements/`" in adr5_text
+    assert "不恢复 `cs-goal` 入口" in adr5_text
+    assert "`state.yaml`" in adr5_text
+    assert "逐轮 iteration 报告" in adr5_text
     assert "runtime refresh" not in adr2.read_text(encoding="utf-8")
 
     for entry_file in (agents, claude):
@@ -37,7 +51,10 @@ def test_v2_runtime_ownership_supersedes_v1_distribution() -> None:
         assert "<cs-onboard skill 目录>/tools/" not in entry_file
         assert "codestable-runtime-sync.py --check --json" not in entry_file
         assert "owning skill" in entry_file
-        assert "attention.md`、`lessons/`、`work/" in entry_file
+        for anchor in ("attention.md", "lessons/", "work/", "epics/"):
+            assert anchor in entry_file
+        assert "只读" in entry_file
+        assert "legacy" in entry_file
 
 
 def test_active_adrs_do_not_enforce_deleted_v1_tests_or_assets() -> None:

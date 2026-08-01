@@ -23,8 +23,8 @@ Execution strength follows risk:
   authorization, concurrency, or real design tradeoffs require owner confirmation first.
 - `cs-issue` establishes a reliably failing check before changing code, then proves it turns green.
 - `cs-refactor` establishes equivalence evidence first and keeps verification green after each step.
-- `cs-epic` maintains one work document for items, dependencies, and acceptance. The owner confirms
-  decomposition and boundary changes.
+- `cs-epic` keeps approved delivery contracts in a permanent Epic document and active execution in
+  a temporary work cursor. Decomposition, contract changes, and overall acceptance each cross an owner gate.
 - When independent review is needed, the outer workflow creates the reviewer. That reviewer runs
   `cs-review` once and does not create another agent before returning a result.
 - Before creating a reviewer, the current workflow discovers the subagent creation and management
@@ -61,6 +61,40 @@ Ordinary work creates no stage artifacts. The diff, test output, and delivery re
 Create one work document only for cross-session work, multi-agent handoff, or an explicit request for
 a durable record; remove it when complete unless the owner asks to retain it.
 
+## Epic Lifecycle
+
+An Epic separates durable product intent from temporary execution state and keeps one fact owner:
+
+- The **permanent Epic document** reuses an existing Epic, RFC, or initiative home when the project
+  has one. Otherwise, create `.codestable/epics/{slug}.md` on demand for the first Epic;
+  `cs-onboard` does not precreate `.codestable/epics/`. This document alone owns the starting point,
+  goals, scope, non-goals, acceptance criteria, approved items with stable IDs/dependencies/acceptance
+  points, key decisions, final delivery index, overall acceptance, residual risks, and durable `status`.
+- The **temporary execution cursor** at `.codestable/work/epic-{slug}.md` stores only the permanent
+  document pointer, `approved_revision`, execution `phase`, current item ID, per-ID progress, next action,
+  `blocked_by`, temporary decisions, and evidence/commit pointers. It must not duplicate goals,
+  acceptance criteria, item definitions, or final conclusions. After owner confirmation, the full
+  permanent-document SHA-256 fixes the approved revision. The active permanent document stays frozen;
+  routine progress changes only the cursor.
+
+An Epic retains three owner gates:
+
+1. The current outer workflow first creates a fresh reviewer for design review of the proposed
+   decomposition. After findings are handled, the owner confirms goals, boundaries, acceptance, and
+   item contracts before execution starts.
+2. Changes to goals, scope, non-goals, acceptance, item membership/definitions, or major risks update
+   the permanent document and require a fresh review plus owner reconfirmation. In-boundary technical
+   choices and ordering adjustments that do not change dependencies or acceptance add no gate.
+3. After every item and integration verification complete, the cursor enters acceptance. The current
+   outer workflow creates a fresh reviewer for a final acceptance review against the latest owner-approved
+   criteria. Passing that gate does not replace the owner's final acceptance.
+
+After owner acceptance, complete the permanent Epic's final scope, key decisions, delivery index,
+acceptance evidence, and residual risks; then set `accepted`, remove its work pointer, and delete the Epic
+and child-item cursors. Never delete the permanent Epic document. Finish `superseded` and `cancelled`
+states idempotently without resuming execution or creating a duplicate Epic. Do not restore the `cs-goal`
+entry, goal package, `state.yaml`, per-iteration reports, or legacy runtime gates.
+
 ## Project Memory
 
 `/cs-onboard` creates this minimal skeleton for a new project:
@@ -73,16 +107,28 @@ a durable record; remove it when complete unless the owner asks to retain it.
 ```
 
 Skill-specific context and helpers belong to the owning skill's `references/` and `scripts/`.
-Project facts belong in the structure above or the project's existing docs and ADRs. A skill does not
-read sibling skill files or depend on a centralized onboard runtime. Worktree, branch, and agent
-backend policy remain host- or owner-controlled.
+Project facts belong in the structure above, an on-demand permanent Epic home, or the project's existing
+docs and ADRs. A skill does not read sibling skill files or depend on a centralized onboard runtime.
+Worktree, branch, and agent backend policy remain host- or owner-controlled.
 
 ## v1 Upgrade Boundary
 
-v2 does not migrate or clean historical v1 project directories. Existing requirements, roadmap,
-features, issues, compound knowledge, tools, gates, hooks, and manifests remain untouched. New skills
-may search those artifacts for project knowledge, but they do not execute the old runtime or produce
-new v1 stage artifacts.
+v2 does not migrate or clean historical v1 project directories. `.codestable/roadmap/`,
+`.codestable/features/`, `.codestable/issues/`, `.codestable/refactors/`, `.codestable/goals/`,
+`.codestable/compound/`, `.codestable/audits/`, `.codestable/brainstorms/`, and
+`.codestable/feedback/` are read-only historical knowledge sources. The four owning task skills
+(`cs-feat`, `cs-issue`, `cs-refactor`, and `cs-epic`) cover all nine by task keyword and cite matching
+source paths. Other skills retrieve only historical sources explicitly named by their own contracts;
+for example, `cs-keep` reads `compound/` for deduplication. No skill may generate into, rewrite in place,
+or bulk-migrate these v1 sources.
+
+An existing `.codestable/requirements/` may be maintained only when `.codestable/attention.md` explicitly
+records it as the canonical requirement location. When the owner first selects it, record that project fact
+in attention before maintenance. Without that explicit record it remains read-only historical knowledge,
+and v2 does not create the directory by default. New projects keep requirements in their own documentation
+structure; when no canonical home exists, ask the owner to choose one and record it in attention. Until then,
+keep stable contracts in the permanent Epic. `reference/`, `tools/`, `gates/`, `hooks/`, and
+`runtime-manifest.json` remain only for legacy compatibility; v2 does not execute the old runtime.
 
 The 32 skills in v1.0.4 converge to eight in v2. The other 24 entries are retired and are not installed
 with v2. See [SKILL_CATALOG.en.md](./SKILL_CATALOG.en.md) for the complete mapping.
