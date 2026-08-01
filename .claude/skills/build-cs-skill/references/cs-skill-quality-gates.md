@@ -167,17 +167,15 @@ recovery pointer；接收方自行恢复状态。
 
 ## Collaboration Contract Gate
 
-先验证 topology：只有责任明确包含编排的 harness 是 `Orchestrator`；被委派完成具体产物
-或审查的 agent 默认是 `LeafExecutor`，不得再 dispatch、follow up child、调用自身或
-兼容别名。只有 scope 可独立拥有、并有独立验收证据时才 dispatch。
-
-- task packet 包含 goal、relevant context、scope ownership、boundaries、evidence 和 return contract；
-- 子 agent 不获得无关的全仓 context，也不被预编排固定实现步骤；
-- 返回包含改动、证据、风险和未决项；idle/silence without return payload 必须按失败处理，
-  不能盲目重复发送原任务；
-- calling `Orchestrator` 持有集成、冲突处理、重试决定和最终验证；owner decision 不得委托或投票替代。
-
-没有独立 scope 或独立验收方式时，保持单 agent。
+先验证 topology：只有责任明确包含编排的 harness 是 `Orchestrator`；被委派完成具体产物或
+审查的 agent 默认是 `LeafExecutor`，不得再 dispatch、follow up child、调用自身或兼容别名。
+- shipped harness 只描述 subagent 创建与管理能力，具体后端/model pin 在项目上下文；创建 reviewer 前发现当前会话可调用的能力，不以 PATH 列表冒充；
+- 创建方式依次选受管理结构化委派、宿主 subagent、有界一次性 agent CLI 回退，再按质量基线、异构偏好和最强稳定 model 选人并写入 task packet；
+- 子 agent 不获无关 context 或固定实现步骤；返回含改动、证据、风险与未决项；
+- 健康运行的 delegation 绑定原 run/target；活动 `Awaiting` 带同一可查询 run identity 时继续等待，不因更优创建方式取消或重复 dispatch；
+- terminal failure 无报告，或 idle/silence without return payload 且无可恢复 run identity，或能力不匹配、target 失效时，才失败并允许有界切换；
+- calling `Orchestrator` 持有集成、冲突、重试和最终验证；owner decision 不得委托或投票替代。
+只有 scope 可独立拥有并有独立验收证据时才 dispatch，否则保持单 agent。
 
 ## Static Evidence Gate
 

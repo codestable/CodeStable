@@ -140,37 +140,46 @@ failure fixture 应断言当前 artifact 与安全下一步，而不只是结果
 
 ### Awaiting Run Identity
 
-本节只适用于确实拥有外部异步工作的未来 `ContextualWorkflow` / `ToolBackedWorkflow`；当前
-v2 活动 skill 不因历史 goal driver 示例而获得这项机制。外部工作已启动时，正例必须携带
-真实 run identity：
+本节适用于管理外部异步工作的 owning `Orchestrator`，包括等待 reviewer 的 cs-feat / cs-issue /
+cs-refactor / cs-epic；叶子 cs-review 仍须直接返回终态报告。先覆盖 subagent 创建与管理能力发现及回退：
 
 ```yaml
-name: active-external-job-is-awaiting
-step: restoreExternalJob
-state:
-  job_state: active
-  run_id: job-20260730-01
+name: review-prefers-managed-subagent-creation
+skill: cs-feat
+step: selectReviewCreationMethod
+facts: {session_creation_methods: [managed_structured_delegation, host_subagent, local_agent_cli], all_meet_review_baseline: true}
+expect:
+  selected_creation_method: managed_structured_delegation
+  forbidden_actions: [path_only_discovery, launch_local_agent_cli]
+---
+name: review-cli-is-bounded-fallback
+skill: cs-feat
+step: selectReviewCreationMethod
+facts: {managed_structured_delegation: unavailable, host_subagent: below_baseline, local_agent_cli: qualified}
+expect: {selected_creation_method: local_agent_cli, bounded_one_shot: true}
+```
+
+外部 reviewer 已启动时，健康 run 必须保留真实 identity；缺失 id 的 companion case fail closed：
+
+```yaml
+name: healthy-review-run-stays-bound
+skill: cs-feat
+step: monitorReviewRun
+state: {reviewer_state: Awaiting, run_id: review-20260731-01, target_valid: true}
+facts: {better_creation_method_discovered: true}
 expect:
   result_type: Awaiting
-  run_id: job-20260730-01
-  must_not_result_type: HumanCheckpoint
+  run_id: review-20260731-01
+  forbidden_actions: [cancel_reviewer, spawn_duplicate_reviewer]
+---
+name: reviewer-awaiting-without-id-is-invalid
+skill: cs-feat
+step: monitorReviewRun
+state: {reviewer_state: Awaiting, run_id: null}
+expect: {result_type_any: [Blocked, NeedsHuman], must_not_result_type: Awaiting}
 ```
 
-缺失 id 的 companion case 必须 fail closed：
-
-```yaml
-name: active-external-job-without-id-is-invalid
-step: restoreExternalJob
-state:
-  job_state: active
-  run_id: null
-expect:
-  result_type_any: [Blocked, NeedsHuman]
-  must_not_result_type: Awaiting
-```
-
-对含混旧 `blocked` state 也增加拒绝恢复的 case。terminal case 带 stale run metadata，
-验证 terminal precedence。
+对含混旧 `blocked` state 增加拒绝恢复 case；terminal case 带 stale run metadata 并验证 terminal precedence。
 
 ### 完整生命周期
 

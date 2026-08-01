@@ -66,6 +66,7 @@ THIN_SKILL_FORBIDDEN_TEXT = {
         "read all references",
         "用独立 subagent reviewer",
         "派发 reviewer 时",
+        "探测全部已配置的审查 agent/model",
         "累计最多 3 轮",
     ),
     "cs-code-review": ("按 `cs-review` 的 SKILL.md 执行",),
@@ -117,24 +118,100 @@ def test_thin_skills_keep_explicit_safety_invariants() -> None:
     assert "派发独立 subagent reviewer" not in review_prompt
 
 
-def test_review_delegation_is_quality_first_and_explicit() -> None:
+def test_review_delegation_discovers_subagent_management_then_selects() -> None:
+    for skill_name in ("cs-feat", "cs-issue", "cs-refactor", "cs-epic"):
+        _, caller = _read_skill(SKILLS / skill_name / "SKILL.md")
+        assert "当前主流程创建 reviewer 前" in caller, skill_name
+        assert "当前会话可调用的 subagent 创建与管理能力" in caller, skill_name
+        assert "项目上下文有显式创建方式/model 约束时先遵守" in caller, skill_name
+        assert "达到审查质量基线后" in caller, skill_name
+        assert "优先选择与实现者异构的 agent" in caller, skill_name
+        assert "受管理的结构化委派能力" in caller, skill_name
+        assert "宿主 subagent" in caller, skill_name
+        assert "本机有界 agent CLI 回退" in caller, skill_name
+        assert "不得只扫 PATH" in caller, skill_name
+        assert "显式指定最强稳定 `model`" in caller, skill_name
+        assert "禁止依赖默认模型" in caller, skill_name
+        assert "最终创建方式、agent/model 与回退原因写入 task packet" in caller, skill_name
+        assert "通道" not in caller, skill_name
+        anchors = (
+            "当前主流程创建 reviewer 前",
+            "当前会话可调用的 subagent 创建与管理能力",
+            "项目上下文有显式创建方式/model 约束时先遵守",
+            "达到审查质量基线后",
+            "优先选择与实现者异构的 agent",
+            "受管理的结构化委派能力",
+            "宿主 subagent",
+            "本机有界 agent CLI 回退",
+            "最终创建方式、agent/model 与回退原因写入 task packet",
+        )
+        positions = [caller.index(anchor) for anchor in anchors]
+        assert positions == sorted(positions), skill_name
+
+
+def test_review_delegation_keeps_a_healthy_run_bound() -> None:
+    for skill_name in ("cs-feat", "cs-issue", "cs-refactor", "cs-epic"):
+        _, caller = _read_skill(SKILLS / skill_name / "SKILL.md")
+        assert "reviewer 创建后绑定该运行" in caller, skill_name
+        assert "状态健康时等待终态报告" in caller, skill_name
+        assert "`Awaiting` 携带可查询的同一 run identity" in caller, skill_name
+        assert "后来发现更优创建方式" in caller, skill_name
+        assert "取消、重复创建或并行补发" in caller, skill_name
+        assert "能力不满足或目标失效" in caller, skill_name
+
+
+def test_shipped_skills_do_not_bind_review_backend_products() -> None:
+    forbidden = (
+        "cs-agent-mcp",
+        "cs_agent",
+        "paseo",
+        "claude",
+        "codex",
+        "anthropic",
+        "openai",
+        "gpt-",
+    )
+    paths = [path for path in sorted(SKILLS.rglob("*")) if path.is_file()]
+    assert paths
+    # Host registration filenames are packaging surfaces, not runtime backend selection.
+    allowed_product_named_paths = {Path("cs-review/agents/openai.yaml")}
+    product_named_paths = {
+        path.relative_to(SKILLS)
+        for path in paths
+        if any(name in path.relative_to(SKILLS).as_posix().lower() for name in forbidden)
+    }
+    assert product_named_paths == allowed_product_named_paths
+    for path in paths:
+        text = path.read_text(encoding="utf-8").lower()
+        for product_name in forbidden:
+            assert product_name not in text, f"{path}: bound to {product_name!r}"
+
+
+def test_review_snapshots_and_milestone_commits_are_not_conflated() -> None:
     _, review = _read_skill(SKILLS / "cs-review/SKILL.md")
-    for invariant in (
-        "探测全部已配置的审查 agent/model",
-        "与实现者不同的 agent/provider",
-        "最强稳定模型",
-        "显式传入 `model`",
-        "禁止依赖 adapter 默认模型",
-        "回退原因",
-    ):
-        assert invariant in review, f"cs-review: missing {invariant!r}"
+    assert "冻结一个明确的审查目标" in review
+    assert "审查目标标识" in review
+    assert "reviewer 返回前不得移动该目标" in review
+    assert "diff review 优先 staged diff" in review
+    assert "design review 冻结对应文档版本" in review
+    assert "audit 冻结 commit + 范围标识" in review
 
     for skill_name in ("cs-feat", "cs-issue", "cs-refactor", "cs-epic"):
         _, caller = _read_skill(SKILLS / skill_name / "SKILL.md")
-        assert "探测全部可用审查 agent/model" in caller, skill_name
-        assert "显式指定最强稳定 `model`" in caller, skill_name
-        assert "禁止依赖默认模型" in caller, skill_name
-        assert "记录回退原因" in caller, skill_name
+        assert "diff review 优先 staged diff" in caller, skill_name
+        assert "design review 冻结对应文档版本" in caller, skill_name
+        assert "audit 冻结 commit + 范围标识" in caller, skill_name
+        assert "目标标识写入 task packet" in caller, skill_name
+        assert "重新冻结审查目标" in caller, skill_name
+        assert "有 blocking 或未被用户明确接受的 important 时不提交当前候选" in caller, skill_name
+        assert "正式里程碑 commit" in caller, skill_name
+        assert "WIP/checkpoint commit" in caller, skill_name
+        assert "不代表 review 通过" in caller, skill_name
+
+    _, epic = _read_skill(SKILLS / "cs-epic/SKILL.md")
+    assert "每次只推进一个已确认子项" in epic
+    assert "不把多个子项堆进同一 diff" in epic
+    assert "未获 commit 授权" in epic
 
 
 def test_build_cs_skill_requires_semantic_and_host_safe_validation() -> None:
@@ -165,6 +242,18 @@ def test_build_cs_skill_requires_semantic_and_host_safe_validation() -> None:
     assert "CompatibilityShim -> ShimSkill" in build
     assert "ContextPlan" in build
     assert "buildContextPlan" in build
+    assert "discover subagent creation and management capabilities callable in the current session" in build
+    assert "Reviewer creation methods prefer" in build
+    assert "Do not substitute a `PATH` executable scan for capability discovery" in build
+    assert "A healthy running delegation stays bound" in build
+    assert "idle without a return payload and no recoverable run identity" in " ".join(
+        build.split()
+    )
+    assert "subagent 创建与管理能力契约" in spec
+    assert "健康运行的 delegation" in gates
+    assert "无可恢复 run identity" in gates
+    assert "能力不匹配" in gates
+    assert "target 失效" in gates
     assert "Haskell Contract Gate" in build
     assert "CompatibilityShim -> ShimRoute" in build
     assert "lifecycleDriven source -> LifecycleProtocol" in build
@@ -227,4 +316,15 @@ def test_build_cs_skill_requires_semantic_and_host_safe_validation() -> None:
     assert "follow_up_child" in fixtures
     assert "invoke_cs_code_review" in fixtures
     assert "return_idle_without_report" in fixtures
+    assert "review-prefers-managed-subagent-creation" in fixtures
+    assert "review-cli-is-bounded-fallback" in fixtures
+    assert "healthy-review-run-stays-bound" in fixtures
+    assert fixtures.count("step: selectReviewCreationMethod") >= 2
+    assert fixtures.count("step: monitorReviewRun") >= 2
+    assert "path_only_discovery" in fixtures
+    assert "selected_creation_method" in fixtures
+    assert "selected_channel" not in fixtures
+    assert "cancel_reviewer" in fixtures
+    assert "spawn_duplicate_reviewer" in fixtures
+    assert "当前 v2 活动 skill 不因历史 goal driver" not in fixtures
     assert "read `.codestable/attention.md` just to author" not in build

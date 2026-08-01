@@ -12,9 +12,8 @@ argument-hint: "[--range <git-range>] [scope 或 audit 目标]"
 ## 调用边界
 
 - 用户直接调用时，当前 agent 就是 reviewer，不再派生 reviewer。
-- 来源流程创建 reviewer 前，探测全部已配置的审查 agent/model。质量优先：只在满足所需工具、上下文、稳定性与审查能力基线的候选中，优先选择与实现者不同的 agent/provider，再选择其中的最强稳定模型并显式传入 `model`；禁止依赖 adapter 默认模型。
-- 没有合格异构候选时才回退同构最强模型，并把最终 agent/model 与回退原因写入 task packet；异构但明显较弱的候选不优于同构最强模型。
-- 来源流程需要隔离实现上下文时，由调用方在进入本 skill 前创建 fresh reviewer，并传入改动意图、审查范围、不审内容与期望返回格式。
+- 来源流程派发前冻结一个明确的审查目标（diff review 优先 staged diff，也可用明确的 `--range` 或 patch；design review 冻结对应文档版本；audit 冻结 commit + 范围标识），把审查目标标识写入 task packet；reviewer 返回前不得移动该目标或对应工作树。目标变化则本轮失效，由调用方重新冻结后创建 fresh reviewer。
+- 来源流程负责在进入本 skill 前完成 reviewer 创建方式与 agent/model 选择并创建 fresh reviewer；task packet 传入改动意图、审查目标、不审内容、期望返回格式，以及最终创建方式、agent/model 与回退原因。
 - 独立性由调用方建立；本 skill 不通过再次委派来补建独立视角。
 
 ## 模式
@@ -41,7 +40,7 @@ argument-hint: "[--range <git-range>] [scope 或 audit 目标]"
 
 ## 收尾
 
-- 始终在对话中输出结论（通过 / 需修改）与发现清单。
+- 始终在对话中输出审查目标标识、结论（通过 / 需修改）与发现清单。
 - 作为来源流程创建的 reviewer 时只返回报告，不写 work 文档、不路由其他 skill；调用方负责处理 findings、复审与持久化，本 skill 不保存复审轮次或重试状态。
 - 仅用户直接调用且明确要求留痕时，才把结论摘要写进对应 `.codestable/work/{slug}.md`；审计问题只建议后续使用 `cs-issue` / `cs-feat`，不当场转入或顺手修。
 - 审查中发现可复用的坑，推荐用 cs-keep 沉淀；用户拒绝即跳过。

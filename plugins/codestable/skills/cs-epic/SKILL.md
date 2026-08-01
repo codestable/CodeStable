@@ -33,8 +33,13 @@ epic 天然跨会话，全程维护一个 `.codestable/work/epic-{slug}.md`（wo
 ## 硬门槛
 
 - **拆解方案必须经用户确认**（子项清单、顺序、边界）后才开始执行；交确认前由当前主流程创建一个 fresh reviewer，让其单轮执行 `cs-review` 的 design review，reviewer 内不得再创建子 agent。主流程处理 findings 并按需重新创建 reviewer，累计最多 3 轮，超限连分歧一起上交。执行中要增删子项或改边界，先更新文档并征得同意。
-- 每次创建 reviewer 前，探测全部可用审查 agent/model：优先与实现者异构且达到审查能力基线的 agent，并显式指定最强稳定 `model`；没有合格异构候选时才回退同构最强模型，记录回退原因，禁止依赖默认模型。
-- reviewer 未返回报告而进入 idle / `Awaiting` 时，本轮失败且不计轮次；不得盲目重发，先检查 task packet 与 agent 状态，再决定一次有界重试、换 reviewer 或交用户。
+- 当前主流程创建 reviewer 前，先发现当前会话可调用的 subagent 创建与管理能力。项目上下文有显式创建方式/model 约束时先遵守。达到审查质量基线后，优先选择与实现者异构的 agent，并显式指定最强稳定 `model`；创建方式依次使用受管理的结构化委派能力、宿主 subagent、本机有界 agent CLI 回退，不得只扫 PATH。
+- 没有合格异构候选时回退同构最强模型。把最终创建方式、agent/model 与回退原因写入 task packet，禁止依赖默认模型。
+- 审查前冻结一个明确目标（diff review 优先 staged diff，也可用明确 range/patch；design review 冻结对应文档版本；audit 冻结 commit + 范围标识），把目标标识写入 task packet；reviewer 返回前不改目标或对应工作树。有 blocking 或未被用户明确接受的 important 时不提交当前候选，也不得创建正式里程碑 commit；处理后重跑验证、重新冻结审查目标并创建 fresh reviewer。
+- 仅在跨会话恢复、agent 交接或隔离 reviewer 需要不可变基线时，且已有 commit 授权，才可在私有工作分支创建明确标记的 WIP/checkpoint commit；它不代表 review 通过或任务完成，交付前按仓库策略 fixup/squash。
+- 本 skill 的确认与验证门槛均满足、blocking 清零且其余 important 已处理或被用户明确接受后，已有 commit 授权时才创建语义原子的正式里程碑 commit；未获授权则只报告可提交状态，不自行提交。
+- 每次只推进一个已确认子项。子项通过其 owning skill 的验证与审查后，已获 commit 授权时把代码、证据和 epic 状态更新收成一个语义原子里程碑，再进入下一子项；未获 commit 授权时先向用户交付可提交 checkpoint，不把多个子项堆进同一 diff。
+- reviewer 创建后绑定该运行并记录 run identity：目标有效、能力仍满足，且 reviewer 状态为 running，或 `Awaiting` 携带可查询的同一 run identity 且查询仍为活动态时为健康；状态健康时等待终态报告，不因后来发现更优创建方式而取消、重复创建或并行补发。仅在运行明确失败或终止无报告、idle / `Awaiting` 且无可恢复 run identity、能力不满足或目标失效时，本轮失败且不计轮次；不得盲目重发，先检查 task packet 与 agent 状态，再决定一次有界重试、更换创建方式或交用户。
 - 每个子项按其类型的纪律执行（cs-feat / cs-issue / cs-refactor 的门槛照常生效），完成即更新 epic 文档状态——文档与事实不一致时以仓库事实为准并修正文档。
 - 全部子项完成后**不代替用户做整体验收**：给出汇总（各子项结果、验证证据、遗留项）并停下等用户确认。
 

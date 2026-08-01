@@ -249,21 +249,20 @@ persisted artifact fields -> normalized Spec state -> runtime outcome
 - typed resume、external run id 和 stale metadata 的处理；
 - fixture 字段与真实 runtime schema。
 
-存在 runtime 时必须用真实 router 做 conformance；手写一份测试 router 不是 alignment
-evidence。确定性 helper 由 owning skill 的 `scripts/` 提供；v2 不新增或调用 repo-local
-runtime。v1 项目里的旧 tool/gate 可以保留，但不构成新 skill 的依赖。
+存在 runtime 时必须用真实 router 做 conformance；手写测试 router 不是 alignment evidence。
+确定性 helper 由 owning skill 的 `scripts/` 提供；v2 不新增或调用 repo-local runtime。v1 旧 tool/gate 可保留，但不构成新 skill 的依赖。
 
 ## Collaboration Contract
 
-先把执行角色分成 `Orchestrator` 与 `LeafExecutor`。只有责任明确包含 agent 编排的 harness
-才是 `Orchestrator`；被委派执行具体产物或审查的 agent 默认是 `LeafExecutor`。
-`LeafExecutor` 不得创建、委派、唤醒或跟进子 agent，也不得再次调用自身或兼容别名。
-
-只有工作可以形成边界清楚、可独立验收的 scope 时才 dispatch。任务包必须包含 goal、
-relevant context、scope ownership、boundaries、evidence 和 return contract。子 agent 自主选择
-实现并返回结果；idle 或 silence 但没有 return payload 是失败，不是重复派发同一任务的许可。
-调用该 `LeafExecutor` 的 `Orchestrator` 持有集成、冲突处理、重试决定和最终验证；owner
-decision 不能下放或用 agent 投票替代。
+先分 `Orchestrator` 与 `LeafExecutor`：仅责任含 agent 编排的 harness 是前者；被委派产物或审查的 agent 默认是后者。
+`LeafExecutor` 不得创建、委派、唤醒或跟进子 agent，也不得调用自身/别名；scope 不可独立验收时不 dispatch。
+发布 skill 只写 subagent 创建与管理能力契约，不写产品名；精确后端/model pin 属于 `ProjectContext`。
+`Orchestrator` 创建 reviewer 前发现当前会话可调用的 subagent 创建与管理能力，不用 PATH 探测代替能力发现。
+创建方式按受管理结构化委派、宿主 subagent、有界 agent CLI 回退排序，再按质量基线、异构偏好与最强稳定 model 选人并记录原因。
+任务包含 goal、relevant context、scope ownership、boundaries、evidence、return contract；子 agent 自主实现并返回。
+dispatch 后绑定 run/target；running 或带同一可查询 run identity 的活动 `Awaiting` 继续等待，不因更优创建方式取消或重复派发。
+终止无报告、identity 不可恢复、能力不匹配或 target 失效时才有界切换；idle/silence 无 payload 不是盲目重发许可。
+调用该 `LeafExecutor` 的 `Orchestrator` 持有集成、冲突、重试与最终验证；owner decision 不下放或投票替代。
 
 ## Evolution Admission / Compression
 

@@ -141,6 +141,13 @@ it helps a fresh agent orient from entry to recoverable exit.
 Delegate only bounded work that has explicit ownership and an independent completion check. Do not
 pre-script provider-specific roles or a fixed agent count.
 
+Keep shipped harnesses backend-agnostic: describe capabilities, never product names; exact backend/model pins belong to `ProjectContext`.
+Before creating a reviewer, discover subagent creation and management capabilities callable in the current session. Do not substitute a `PATH` executable scan for capability discovery.
+Reviewer creation methods prefer managed structured delegation with fresh context, explicit model selection, workspace access, lifecycle control, and a terminal report; then a host subagent; use a bounded one-shot agent CLI only as fallback. Explicitly select the strongest stable qualified model, preferring heterogeneity only after the quality floor is met.
+
+A healthy running delegation stays bound to its run and target; a queryable active `Awaiting` run remains healthy, and a better creation method found later does not justify cancellation or duplicate dispatch.
+Switch only after terminal failure without a report, loss of recoverable run identity, a capability mismatch, or target invalidation.
+
 Classify topology before dispatch. A delegated agent defaults to `LeafExecutor` unless its explicit
 responsibility is orchestration. A `LeafExecutor` must not dispatch another agent, wake or follow up
 a child, or invoke itself or an alias. Only an `Orchestrator` owns further delegation.
@@ -154,8 +161,8 @@ mainAgentOwnsIntegration = true
 
 The delegated agent chooses its route. The calling orchestrator owns integration, conflict handling,
 final verification, and durable state. It waits for the return contract; treat idle without a return
-payload as failed delegation, not permission to resend the same task blindly. Worktree/branch policy
-remains host-owned.
+payload and no recoverable run identity as failed delegation, not permission to resend the task blindly.
+Worktree/branch policy remains host-owned.
 
 ### 7. Preserve hard contracts
 

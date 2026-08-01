@@ -156,11 +156,30 @@ def test_review_docs_publish_single_level_agent_orchestration() -> None:
     en_readme = _read("README.en.md")
     zh_workflow = _read("WORKFLOW.md")
     en_workflow = _read("WORKFLOW.en.md")
+    en_workflow_compact = " ".join(en_workflow.split())
 
     assert "叶子执行器" in zh_readme
     assert "leaf executor" in en_readme
     assert "外层主流程创建 reviewer" in zh_workflow
     assert "outer workflow creates the reviewer" in en_workflow
+    assert "冻结一个明确的审查目标" in zh_workflow
+    assert "当前主流程创建 reviewer 前" in zh_workflow
+    assert "当前会话可调用的 subagent 创建与管理能力" in zh_workflow
+    assert "本机有界 agent CLI 回退" in zh_workflow
+    assert "具体后端与 model 约束属于项目上下文" in zh_workflow
+    assert "健康运行中的 reviewer" in zh_workflow
+    assert "Awaiting 携带同一可查询 run identity" in zh_workflow
+    assert "有 blocking 或未被用户明确接受的 important 时" in zh_workflow
+    assert "freeze an explicit review target" in en_workflow_compact
+    assert "discovers the subagent creation and management capabilities callable in the current session" in en_workflow_compact
+    assert "A bounded local agent CLI is only a fallback" in en_workflow_compact
+    assert "Exact backend and model constraints belong to project context" in en_workflow_compact
+    assert "When no qualified heterogeneous candidate exists" in en_workflow_compact
+    assert "never rely on a default model" in en_workflow_compact
+    assert "healthy running reviewer" in en_workflow_compact
+    assert "Awaiting carries the same queryable run identity" in en_workflow_compact
+    assert "does not consume a review round" in en_workflow_compact
+    assert "blocking findings or important findings not explicitly accepted by the user" in en_workflow_compact
 
     public = "\n".join(_read(path) for path in PUBLIC_DOCS)
     assert "独立 subagent 视角" not in public
