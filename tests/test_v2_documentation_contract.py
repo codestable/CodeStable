@@ -186,6 +186,51 @@ def test_review_docs_publish_single_level_agent_orchestration() -> None:
     assert "independent subagent perspective" not in public
 
 
+def test_cs_session_discussion_and_handoff_contract_is_bilingual() -> None:
+    zh_workflow = " ".join(_read("WORKFLOW.md").split())
+    en_workflow = " ".join(_read("WORKFLOW.en.md").split())
+
+    for anchor in (
+        "明确行动默认优先同轮直转",
+        "用户显式要求先讨论",
+        "讨论只存在于当前会话",
+        "不创建 discussion work 游标",
+        "未收敛讨论不跨会话恢复",
+        "已有执行授权时同轮移交",
+        "不再询问“是否继续”",
+        "handoff 不扩大授权",
+        "原始问答、未决讨论和候选分支不落盘",
+        "三个已确认出口之外",
+    ):
+        assert anchor in zh_workflow
+
+    for anchor in (
+        "Explicit action dispatches in the same turn by default",
+        "the user explicitly asks to discuss first",
+        "Discussion exists only in the current session",
+        "does not create a discussion work cursor",
+        "Unresolved discussion is not recoverable across sessions",
+        "existing execution authorization",
+        "must not ask whether to continue",
+        "The handoff does not expand authorization",
+        "Raw questions, answers, unresolved discussion, and candidate branches are not persisted",
+        "When no canonical home exists, ask the owner to choose one",
+        "Outside the three confirmed handoff targets",
+    ):
+        assert anchor in en_workflow
+
+    zh_readme = _read("README.md")
+    en_readme = _read("README.en.md")
+    zh_catalog = _read("SKILL_CATALOG.md")
+    en_catalog = _read("SKILL_CATALOG.en.md")
+    assert "先讨论的请求在当前会话收敛后同轮移交" in zh_readme
+    assert "先讨论的请求在当前会话收敛后同轮移交" in zh_catalog
+    assert "Requests to discuss first converge in the current session and hand off in the same turn" in en_readme
+    assert "Requests to discuss first converge in the current session and hand off in the same turn" in en_catalog
+    assert "稳定资产由 owning skill 按 canonical 归宿毕业" in zh_catalog
+    assert "stable assets graduate through the owning skill into their canonical homes" in en_catalog
+
+
 def test_epic_and_legacy_knowledge_contracts_are_bilingual() -> None:
     zh_workflow = " ".join(_read("WORKFLOW.md").split())
     en_workflow = " ".join(_read("WORKFLOW.en.md").split())
@@ -220,6 +265,10 @@ def test_epic_and_legacy_knowledge_contracts_are_bilingual() -> None:
         "Epic 保留三道 owner gate",
         "最新 owner 已批准的验收标准",
         "owner 最终接受",
+        "串行约束，不是每个子项的人工 gate",
+        "不得询问“是否继续下一项”",
+        "不得把它作为终态返回",
+        "`item_progression`",
         "不恢复 `cs-goal` 入口",
     ):
         assert anchor in zh_workflow
@@ -238,6 +287,10 @@ def test_epic_and_legacy_knowledge_contracts_are_bilingual() -> None:
         "An Epic retains three owner gates",
         "latest owner-approved criteria",
         "owner's final acceptance",
+        "serialization constraint, not a per-item owner gate",
+        "must not ask whether to continue to the next item",
+        "return that completion as terminal",
+        "`item_progression`",
         "Do not restore the `cs-goal` entry",
     ):
         assert anchor in en_workflow
@@ -255,8 +308,14 @@ def test_epic_and_legacy_knowledge_contracts_are_bilingual() -> None:
     assert "nine v1 historical knowledge directories" in en_readme
     assert "每个 skill 动手前按任务关键词检索" not in zh_readme
     assert "every skill searches" not in en_readme
+    assert "默认连续策略" not in zh_workflow
+    assert "默认连续策略" not in zh_readme
     for task_skill in ("cs-feat", "cs-issue", "cs-refactor", "cs-epic"):
         assert task_skill in zh_readme
         assert task_skill in en_readme
     assert "永久 Epic 文档" in zh_catalog
     assert "permanent Epic doc" in en_catalog
+    for document in (zh_readme, zh_catalog):
+        assert "串行连续推进" in document
+    for document in (en_readme, en_catalog):
+        assert "serially and continuously" in document

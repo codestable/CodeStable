@@ -3,12 +3,14 @@
 ## Workflow
 
 CodeStable v2 consists of eight independently installed thin-harness skills and a project-memory
-loop. `cs` classifies what the user wants right now: clear action requests dispatch to the target
-skill in the same turn and continue executing; advice requests get a recommendation only; with no
-request it presents the overview.
+loop. `cs` classifies whether the user wants execution, discussion first, advice, or an overview.
+Explicit action dispatches in the same turn by default; a discussion-first request converges in the
+current session and hands off under existing authorization; advice only recommends, and a request
+without a task gets an overview.
 
 ```text
 unsure which entry    -> cs
+discuss / align first -> cs -> cs-feat / cs-issue / cs-epic
 onboard / v1 upgrade  -> cs-onboard
 new capability        -> cs-feat ---------\
 bug / broken behavior -> cs-issue ----------> cs-review (high risk or on demand)
@@ -16,6 +18,29 @@ equivalent refactor   -> cs-refactor ------/
 large initiative      -> cs-epic -> cs-feat / cs-issue / cs-refactor
 lessons and memory    -> cs-keep
 ```
+
+### In-session discussion and handoff
+
+- Explicit action dispatches in the same turn by default. Only when the user explicitly asks to discuss first
+  does that request override the default. Discuss may also start when repository facts still cannot identify the
+  action type or owning skill and a product decision would materially change whether the flow documents or edits
+  code. Once the owning skill is known, its own intake refines goals, boundaries, and acceptance.
+- Discussion exists only in the current session. The agent investigates facts available from the repository,
+  asks one real owner decision at a time, and tests shared language with concrete scenarios and boundaries.
+  It does not create a discussion work cursor or transcript. Unresolved discussion is not recoverable across sessions.
+- When handoff-ready, the in-memory packet carries the target entry, original request, goal or expected behavior,
+  scope, non-goals, acceptance, verified repository facts and sources, owner decisions, unresolved risks, and
+  asset pointers. With existing execution authorization, it hands off in the same turn to `cs-feat`, `cs-issue`,
+  or `cs-epic` and must not ask whether to continue. Discussion itself creates no authorization. The handoff does
+  not expand authorization or replace the owning skill's review, verification, or owner gates.
+- Raw questions, answers, unresolved discussion, and candidate branches are not persisted. Stable terms graduate
+  to the project's existing canonical terminology home. A structural choice becomes an ADR only when it is hard
+  to reverse, surprising without context, and the result of a real trade-off. The owning skill graduates task
+  contracts, permanent Epics, attention, and lessons under existing rules; no parallel truth is invented. When no
+  canonical home exists, ask the owner to choose one.
+- Outside the three confirmed handoff targets, outcomes use `cs`'s existing Execute / Advise rules and receive no
+  duplicate-confirmation privilege. When only discussion is authorized, `cs` returns the confirmed conclusions
+  and recommends `cs-keep` or the owning skill for asset graduation.
 
 Execution strength follows risk:
 
@@ -46,9 +71,10 @@ Execution strength follows risk:
   current candidate or create a formal milestone. After fixes, verify, freeze a new target, and use a
   fresh reviewer. A formal semantic milestone requires the review gate plus existing commit authorization;
   a WIP/checkpoint exists only for recovery or an isolated baseline and does not mean approval.
-- An Epic advances one confirmed item at a time. Start the next item only after the current one reaches
-  its milestone. Without commit authorization, deliver the checkpoint for an owner decision instead
-  of accumulating multiple items in one diff.
+- An Epic allows only one `current_item` at a time. This is a serialization constraint, not a per-item owner gate.
+  Under the continuous policy, an ordinary item milestone advances automatically; it must not ask whether
+  to continue to the next item or return as a terminal result. Per-item pauses require an explicit owner policy
+  or a real gate.
 - A healthy running reviewer remains bound to its run and target.
   When Awaiting carries the same queryable run identity and remains active, keep waiting;
   discovering a better creation method later does not justify cancellation, duplicate creation, or parallel
@@ -72,10 +98,10 @@ An Epic separates durable product intent from temporary execution state and keep
   points, key decisions, final delivery index, overall acceptance, residual risks, and durable `status`.
 - The **temporary execution cursor** at `.codestable/work/epic-{slug}.md` stores only the permanent
   document pointer, `approved_revision`, execution `phase`, current item ID, per-ID progress, next action,
-  `blocked_by`, temporary decisions, and evidence/commit pointers. It must not duplicate goals,
-  acceptance criteria, item definitions, or final conclusions. After owner confirmation, the full
-  permanent-document SHA-256 fixes the approved revision. The active permanent document stays frozen;
-  routine progress changes only the cursor.
+  `blocked_by`, `item_progression`, `milestone_commit`, `remote_publish`, temporary decisions, and
+  evidence/commit pointers. It must not duplicate goals, acceptance criteria, item definitions, or final
+  conclusions. After owner confirmation, the full permanent-document SHA-256 fixes the approved revision.
+  The active permanent document stays frozen; routine progress and execution policies change only the cursor.
 
 An Epic retains three owner gates:
 
@@ -88,6 +114,26 @@ An Epic retains three owner gates:
 3. After every item and integration verification complete, the cursor enters acceptance. The current
    outer workflow creates a fresh reviewer for a final acceptance review against the latest owner-approved
    criteria. Passing that gate does not replace the owner's final acceptance.
+
+The first gate determines item progression, milestone commit, and remote publication policies once. Approving
+the decomposition does not itself grant version-control authorization. Store those policies in the work cursor
+and reuse them on recovery; only missing or invalid values pause once for repair. An owner-explicit policy change
+updates only the cursor, not the approved hash. `milestone_commit: manual` requires
+`item_progression: per-item` and `remote_publish: manual`; `remote_publish: each-milestone` requires
+`milestone_commit: authorized`.
+
+With `item_progression: continuous`, after a non-final item completes, choose the first incomplete item in
+permanent-document order whose dependencies are satisfied and continue in the same entrusted workflow. An
+ordinary item completion is not an owner gate; the workflow must not ask whether to continue to the next item
+or return that completion as terminal. With `per-item`, pause under the recorded per-item checkpoint policy.
+Owning-skill gates, important findings requiring owner acceptance, real blockers, new authorization, and the
+final owner gate may still pause execution.
+
+With `remote_publish: each-milestone`, publish after every semantic commit using the branch/remote policy
+already selected by the project, host, or owner. With `final`, publish once after integration verification and
+the final acceptance review pass, before requesting the owner's final acceptance. With `manual`, the agent does
+not publish remotely. An unspecified branch/remote or a publication failure records a blocker and pauses; the
+agent neither chooses a policy nor continues silently.
 
 After owner acceptance, complete the permanent Epic's final scope, key decisions, delivery index,
 acceptance evidence, and residual risks; then set `accepted`, remove its work pointer, and delete the Epic

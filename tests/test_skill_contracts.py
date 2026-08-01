@@ -26,7 +26,13 @@ LEGACY_KNOWLEDGE_DIRS = {
 }
 
 THIN_SKILL_SAFETY_INVARIANTS = {
-    "cs": ("同轮直转", "只推荐入口", "不写任何文件"),
+    "cs": (
+        "同轮直转",
+        "只推荐入口",
+        "导览与推荐本身不写任何文件",
+        "讨论只存在于当前会话",
+        "不创建 `.codestable/work/discussion-*`",
+    ),
     "cs-review": (
         "只读",
         "叶子执行器",
@@ -129,6 +135,65 @@ def test_thin_skills_keep_explicit_safety_invariants() -> None:
     assert "独立" not in review_openai["interface"]["short_description"]
     assert "独立" not in review_prompt
     assert "派发独立 subagent reviewer" not in review_prompt
+
+
+def test_cs_discusses_in_session_then_hands_off_same_turn() -> None:
+    _, cs = _read_skill(SKILLS / "cs/SKILL.md")
+    for anchor in (
+        "用户显式要求先讨论",
+        "默认优先级最高",
+        "产品决策会实质改变建档或改代码路径",
+        "讨论只存在于当前会话",
+        "仓库可核实的事实由 agent 自行调查",
+        "一次只问一个真正需要 owner 决定的问题",
+        "目标入口、原始诉求、目标或期望行为、范围、非目标、验收口径",
+        "已核实仓库事实及来源",
+        "owner 已确认的术语与决策",
+        "已有执行授权时同轮移交",
+        "不再询问“是否继续”",
+        "讨论过程本身不产生授权",
+        "不创建 `.codestable/work/discussion-*`",
+        "未收敛讨论不跨会话恢复",
+        "三个已确认出口",
+        "不附带 handoff 的不重复确认契约",
+        "原始问答、未决讨论和候选分支不落盘",
+        "canonical 术语归宿",
+        "难逆转、缺少上下文会令人意外且源于真实取舍",
+        "永久 Epic 文档",
+        "`attention.md`",
+        "`lessons/`",
+    ):
+        assert anchor in cs
+
+    work = ROOT / ".codestable/work"
+    assert not any(path.name.startswith("discussion-") for path in work.glob("*.md"))
+    assert not (SKILLS / "cs-align").exists()
+
+
+def test_confirmed_cs_handoff_avoids_duplicate_intake_without_expanding_authority() -> None:
+    handoff_owners = ("cs-feat", "cs-issue", "cs-epic")
+    for skill_name in handoff_owners:
+        _, owner = _read_skill(SKILLS / skill_name / "SKILL.md")
+        for anchor in (
+            "同一会话由 `cs` 交入且带已确认 handoff",
+            "packet 精确范围内已确认的事项不重复询问",
+            "owner 已确认的术语与决策",
+            "canonical 资产指针或资产候选",
+            "仓库事实冲突",
+            "会改变结果的新风险",
+            "缺少会改变方向的事实",
+            "超出已确认边界",
+            "不扩大实现、commit、发布或写入授权",
+            "不替代本 skill 的 review、验证与确认门槛",
+        ):
+            assert anchor in owner, skill_name
+
+    _, epic = _read_skill(SKILLS / "cs-epic/SKILL.md")
+    assert "handoff 只用于起草 proposed 永久 Epic 文档" in epic
+    assert "不替代 fresh design review、批准 hash 或第一道 owner gate" in epic
+
+    _, refactor = _read_skill(SKILLS / "cs-refactor/SKILL.md")
+    assert "同一会话由 `cs` 交入且带已确认 handoff" not in refactor
 
 
 def test_task_skills_retrieve_legacy_knowledge_read_only() -> None:
@@ -267,9 +332,41 @@ def test_review_snapshots_and_milestone_commits_are_not_conflated() -> None:
         assert "不代表 review 通过" in caller, skill_name
 
     _, epic = _read_skill(SKILLS / "cs-epic/SKILL.md")
-    assert "每次只推进一个已确认子项" in epic
+    assert "同一时间只允许一个 `current_item`" in epic
     assert "不把多个子项堆进同一 diff" in epic
-    assert "未获 commit 授权" in epic
+    assert "milestone_commit" in epic
+
+
+def test_epic_continues_without_a_per_item_owner_gate() -> None:
+    _, epic = _read_skill(SKILLS / "cs-epic/SKILL.md")
+    for anchor in (
+        "串行约束，不是每个子项的人工 gate",
+        "永久文档顺序中第一个依赖已满足的未完成子项",
+        "在同一受托主流程中继续执行",
+        "不得询问“是否继续下一项”",
+        "不得把普通子项完成当作终态返回",
+        "拆解确认本身不等于版本控制授权",
+        "按已记录的逐项 checkpoint 策略暂停",
+        "需要 owner 明确接受的 important findings",
+        "子项 owning skill 自身的确认门槛",
+        "进入 executing 前不得保留 `pending` 或非法组合",
+        "恢复后沿用游标策略，不重新询问是否继续",
+        "旧游标缺字段或组合非法时暂停一次补记/修正",
+        "每个语义原子 commit 后按项目、宿主或 owner 已确定的 branch/remote 策略发布",
+        "在集成验证与 final acceptance review 通过后、请求 owner 最终接受前发布一次",
+        "agent 不执行远端发布",
+        "发布失败时写入 `blocked_by` 并暂停",
+        "Epic 内的已有 commit 授权只指 `milestone_commit: authorized`",
+    ):
+        assert anchor in epic
+
+    for field in ("item_progression", "milestone_commit", "remote_publish"):
+        assert field in epic
+    assert "`milestone_commit: manual` 只能搭配 `item_progression: per-item`" in epic
+    assert "`milestone_commit: manual` 只能搭配 `remote_publish: manual`" in epic
+    assert "`remote_publish: each-milestone` 只能搭配 `milestone_commit: authorized`" in epic
+    assert "`authorized + per-item` 是合法的显式逐项暂停策略" in epic
+    assert "每次只推进一个已确认子项" not in epic
 
 
 def test_epic_separates_durable_record_from_execution_cursor() -> None:
@@ -307,6 +404,9 @@ def test_epic_separates_durable_record_from_execution_cursor() -> None:
         "当前子项",
         "下一步",
         "blocked_by",
+        "item_progression",
+        "milestone_commit",
+        "remote_publish",
         "临时决策",
         "证据",
         "commit 指针",

@@ -101,7 +101,7 @@ npx skills@latest add codestable/CodeStable/plugins/codestable --skill '*' -g
 /cs
 ```
 
-`cs` 会先判断你要执行、咨询还是了解体系：行动请求同轮直转，咨询请求只给建议；信息不足时只问一个聚焦问题。
+`cs` 会先判断你要执行、先讨论、咨询还是了解体系：行动请求同轮直转；先讨论的请求在当前会话收敛后同轮移交；咨询请求只给建议。讨论不创建 work 游标或跨会话状态，稳定结论由 owning skill 进入项目已有文档、ADR、永久 Epic、attention 或 lessons。
 
 ---
 
@@ -162,7 +162,7 @@ CodeStable 走的是**另一个方向**：
 | **特性引入** | `cs-feat` | 高风险设计先落盘 work 文档，由外层主流程创建 reviewer 做独立 review 后再交人确认，不 auto-approve；测试设施可用时测试先行；完成必须附可核验证据 |
 | **问题修复** | `cs-issue` | 没有能明确变红的验证不许猜根因；修复完成时变红的验证必须变绿 |
 | **代码重构** | `cs-refactor` | 先有能自证行为等价的验证再动代码；发现要改行为立即停下转向 |
-| **大需求** | `cs-epic` | 永久 Epic 文档保存全景，临时 work 游标保存执行状态；拆解、范围性变化、fresh reviewer 整体验收后最终接受分别经过三道 owner gate |
+| **大需求** | `cs-epic` | 永久 Epic 文档保存全景，临时 work 游标保存执行状态；三道 owner gate 之间串行连续推进已确认子项，不逐项询问是否继续 |
 | **独立审查** | `cs-review` | 只读叶子执行器，单轮返回发现，不创建子 agent；blocking 未解决不得通过，修复与最多 3 轮复审由外层主流程负责 |
 
 工程判断力不占常驻上下文：模块深度、实现经济性、debug 升级路径这些"怎么做好"的判据放在**按需加载的 references** 里，进入对应场景才读——thin harness 管可靠，thick context 管质量。
@@ -177,10 +177,10 @@ CodeStable 走的是**另一个方向**：
 | `lessons/` | 一条一文件的坑、技巧、调研结论；写入必须有可追溯证据，先查重合并 |
 | 项目文档 / ADR | 当前事实与结构性决策的 canonical owner——CodeStable 不建平行真相 |
 | 永久 Epic 文档 | 长期保存目标、范围、已批准子项、关键决策、交付索引与整体验收 |
-| `work/` | 进行中的跨会话任务；Epic work 只作指向永久文档、批准 revision 与执行进度的临时游标 |
+| `work/` | 进行中的跨会话任务；Epic work 只作指向永久文档、批准 revision、执行进度与推进/提交/远端同步策略的临时游标 |
 | git / PR | 执行历史 |
 
-Epic 优先沿用项目已有的 Epic、RFC 或 initiative 归宿，否则首次需要时才创建 `.codestable/epics/`；`cs-onboard` 不预建空目录。拆解经独立 design review 后由 owner 确认；目标、范围、非目标、验收、子项或重大风险变化时 owner 重新确认；全部子项完成后，由 fresh reviewer 按最新 owner 已批准的标准做终态整体验收，再由 owner 最终接受。终态先补齐永久档案并完成毕业，再删除 Epic work 游标，永久 Epic 文档不删除。
+Epic 优先沿用项目已有的 Epic、RFC 或 initiative 归宿，否则首次需要时才创建 `.codestable/epics/`；`cs-onboard` 不预建空目录。拆解经独立 design review 后由 owner 确认；目标、范围、非目标、验收、子项或重大风险变化时 owner 重新确认；全部子项完成后，由 fresh reviewer 按最新 owner 已批准的标准做终态整体验收，再由 owner 最终接受。首次确认同时记录推进、里程碑 commit 与远端同步策略；连续策略在普通子项完成后串行连续推进，只有显式逐项策略或真实门槛才暂停。终态先补齐永久档案并完成毕业，再删除 Epic work 游标，永久 Epic 文档不删除。
 
 v1 的 `roadmap/`、`features/`、`issues/`、`refactors/`、`goals/`、`compound/`、`audits/`、`brainstorms/` 与 `feedback/` 九个历史知识目录只按任务关键词只读检索并引用来源；不生成、不原地改写、不批量迁移，也不写回。新结论进入永久 Epic、项目文档、ADR 或 `lessons/`。
 
@@ -198,7 +198,7 @@ v1 的 `roadmap/`、`features/`、`issues/`、`refactors/`、`goals/`、`compoun
 
 | 分组 | 技能 | 用途 |
 |---|---|---|
-| 导航 | `cs` | 明确行动诉求同轮直转对应入口；咨询只推荐；导览不写文件 |
+| 导航 | `cs` | 明确行动同轮直转；先讨论的请求在当前会话收敛后同轮移交；咨询只推荐；导览不写文件 |
 | 接入 | `cs-onboard` | 为仓库创建最小项目记忆骨架 |
 | 功能 | `cs-feat` | 实现新功能或功能改造，流程强度与风险相称 |
 | 问题 | `cs-issue` | 用红到绿证据修复 bug 或既有行为异常 |

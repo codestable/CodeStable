@@ -3,10 +3,12 @@
 ## 工作流
 
 CodeStable v2 是 8 个独立安装的 thin-harness skill，加一个项目记忆闭环。`cs` 判别用户
-此刻要什么：明确行动诉求**同轮直转**对应 skill 并继续执行；咨询只给推荐；无诉求时介绍体系。
+此刻要执行、先讨论、咨询还是了解体系：明确行动默认优先同轮直转；先讨论的请求在当前会话
+收敛并按授权移交；咨询只给推荐；无诉求时介绍体系。
 
 ```text
 不确定入口       -> cs
+先讨论 / 对齐     -> cs -> cs-feat / cs-issue / cs-epic
 仓库接入 / v1 升级 -> cs-onboard
 新功能           -> cs-feat ---------\
 bug / 行为异常    -> cs-issue ----------> cs-review（高风险或按需）
@@ -14,6 +16,24 @@ bug / 行为异常    -> cs-issue ----------> cs-review（高风险或按需）
 大需求拆解        -> cs-epic -> cs-feat / cs-issue / cs-refactor
 经验与项目记忆    -> cs-keep
 ```
+
+### 会话内讨论与 handoff
+
+- 明确行动默认优先同轮直转；用户显式要求先讨论时才覆盖该默认。调查仓库事实后仍无法安全判断
+  行动类型或 owning skill，且产品决策会实质改变建档或改代码路径时，也可进入 Discuss；owning
+  skill 已可判定时，目标、边界与验收细化交给该 skill，不在入口层增加 gate。
+- 讨论只存在于当前会话：仓库可核实的事实由 agent 自行调查，一次只问一个真正需要 owner 决定的
+  问题，并用精确术语、具体场景和边界案例检验理解。它不创建 discussion work 游标或 transcript；
+  未收敛讨论不跨会话恢复。
+- handoff-ready 时，packet 保存目标入口、原始诉求、目标或期望行为、范围、非目标、验收、已核实
+  仓库事实及来源、owner 决策、未决风险与资产指针。已有执行授权时同轮移交给 `cs-feat`、
+  `cs-issue` 或 `cs-epic`，不再询问“是否继续”；讨论过程本身不产生授权，handoff 不扩大授权，
+  也不替代 owning skill 的 review、验证或 owner gate。
+- 原始问答、未决讨论和候选分支不落盘。稳定术语进入项目已有 canonical 术语归宿，结构性取舍仅在
+  难逆转、缺少上下文会令人意外且存在真实取舍时进入 ADR；任务契约、永久 Epic、attention 与
+  lessons 由 owning skill 按既有规则毕业。没有 canonical 归宿时请 owner 选择，不新建平行真相。
+- 三个已确认出口之外的结果按 `cs` 既有 Execute / Advise 规则同轮直转或推荐，不获得 handoff 的
+  不重复确认特权。只授权讨论时，`cs` 返回已确认结论并推荐由 `cs-keep` 或 owning skill 完成毕业。
 
 执行强度与风险相称：
 
@@ -26,7 +46,7 @@ bug / 行为异常    -> cs-issue ----------> cs-review（高风险或按需）
 - 外层主流程派发前冻结一个明确的审查目标（diff review 优先 staged diff，也可用明确 range/patch；design review 冻结对应文档版本；audit 冻结 commit + 范围标识），reviewer 返回前不移动目标或对应工作树；目标变化则本轮失效。
 - `cs-review` 是只读叶子执行器，也承接模块或全仓 audit；修复与复审由外层主流程负责。
 - 有 blocking 或未被用户明确接受的 important 时不提交当前候选，也不创建正式里程碑；修复后重新验证、冻结目标并创建 fresh reviewer。只有审查门槛通过且已有 commit 授权时才形成语义原子里程碑；WIP/checkpoint 只作恢复或隔离基线，不代表通过。
-- Epic 每次只推进一个已确认子项；子项达到里程碑后再进入下一个。未获 commit 授权时先交付 checkpoint 等用户决定，不把多个子项堆进同一 diff。
+- Epic 同一时间只允许一个 `current_item`；这是串行约束，不是每个子项的人工 gate。连续策略下，普通子项达到语义原子里程碑后自动进入下一项，不得询问“是否继续下一项”或终态返回；逐项暂停必须是 owner 明示策略或真实门槛。
 - 健康运行中的 reviewer 与原 run/target 绑定；running，或 Awaiting 携带同一可查询 run identity 且仍为活动态时继续等待，不因后来发现更优创建方式而取消、重复创建或并行补发。只有终止无报告、run identity 不可恢复、能力不满足或目标失效时，本轮才失败且不计审查轮次；外层主流程先诊断再决定有界重试、更换创建方式或上交，不盲目重发。
 - `cs-keep` 把高频事实压进 attention，把可复用经验写成 lesson。
 
@@ -43,8 +63,9 @@ Epic 把长期产品意图与短期执行状态分成两层，并且只保留一
   关键决策、最终交付索引、整体验收、遗留风险和长期 `status`。
 - **临时执行游标** `.codestable/work/epic-{slug}.md` 只保存永久文档指针、
   `approved_revision`、执行 `phase`、当前子项 ID、各 ID 进度、下一步、`blocked_by`、临时
-  决策以及证据/commit 指针；不得复制目标、验收、子项定义或最终结论。owner 确认后以永久
-  文档完整 SHA-256 固定批准 revision；active 期间永久文档冻结，日常进度只更新游标。
+  决策、`item_progression`、`milestone_commit`、`remote_publish` 以及证据/commit 指针；不得复制
+  目标、验收、子项定义或最终结论。owner 确认后以永久文档完整 SHA-256 固定批准 revision；
+  active 期间永久文档冻结，日常进度与执行策略只更新游标。
 
 Epic 保留三道 owner gate：
 
@@ -54,6 +75,22 @@ Epic 保留三道 owner gate：
    并由 owner 确认；边界内技术选择和不改变依赖/验收的顺序微调不增加 gate。
 3. 全部子项完成并通过集成验证后，游标进入 acceptance；当前主流程创建 fresh reviewer，
    对最新 owner 已批准的验收标准做 final acceptance review，门槛通过后仍由 owner 最终接受。
+
+首次 gate 一次性确定子项推进、里程碑 commit 与远端同步策略；拆解确认本身不等于版本控制授权。
+策略写入 work 游标并在恢复时直接沿用，缺失或非法才暂停一次补记；owner 显式改变策略只更新游标，
+不改变批准 hash。`milestone_commit: manual` 只能搭配 `item_progression: per-item`，
+且只能搭配 `remote_publish: manual`；`remote_publish: each-milestone` 只能搭配
+`milestone_commit: authorized`。
+
+`item_progression: continuous` 时，非最终子项完成后按永久文档顺序选择第一个依赖已满足的未完成
+子项，并在同一受托主流程继续。普通子项完成不是 owner gate；不得询问“是否继续下一项”，也
+不得把它作为终态返回。`per-item` 时按已记录的逐项 checkpoint 策略暂停。子项 owning skill 自身的
+门槛、需要 owner 明确接受的 important findings、真实阻塞、新增权限与最终 owner gate 仍可暂停。
+
+`remote_publish: each-milestone` 在每个语义原子 commit 后按项目、宿主或 owner 已确定的
+branch/remote 策略发布；`final` 在集成验证与 final acceptance review 通过后、请求 owner 最终接受前
+发布一次；`manual` 时 agent 不执行远端发布。branch/remote 未明确或发布失败时写入阻塞并暂停，
+agent 不自行选择或静默继续。
 
 owner 接受后，先补齐永久 Epic 的最终范围、关键决策、交付索引、验收证据和遗留风险，再置为
 `accepted`，移除 work 指针并删除 Epic/所属子项游标；永久 Epic 文档不得删除。`superseded` 或

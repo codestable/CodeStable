@@ -13,7 +13,9 @@ argument-hint: "[大需求描述]"
 - 有 `.codestable/attention.md` 就先读。
 - 按任务关键词在存在的 `.codestable/lessons/`、项目文档以及 v1 只读知识目录 `.codestable/roadmap/`、`.codestable/features/`、`.codestable/issues/`、`.codestable/refactors/`、`.codestable/goals/`、`.codestable/compound/`、`.codestable/audits/`、`.codestable/brainstorms/`、`.codestable/feedback/` 中 grep；命中要报告来源路径。上述 v1 目录只读，不得继续生成、原地改写或批量迁移；新结论毕业到永久 Epic、项目文档、ADR 或 lesson。
 - `.codestable/requirements/` 仅在 `.codestable/attention.md` 明确记录为 canonical requirement 位置时才可维护；owner 首次指定时先把该项目事实写入 attention。未记录时只读，不存在时不新建 `.codestable/requirements/`；新项目沿用项目自身文档结构，归宿未定的稳定契约先留在永久 Epic。
-- 有匹配的 `.codestable/work/epic-{slug}.md` 时先恢复：读取其永久 Epic 指针、`phase` 和 `approved_revision`，核对 active 永久文档的当前 SHA-256。仓库事实优先于聊天历史；不一致时先修复或请求上下文，不创建重复 Epic。
+- 有匹配的 `.codestable/work/epic-{slug}.md` 时先恢复：读取其永久 Epic 指针、`phase`、`approved_revision`、`item_progression`、`milestone_commit` 与 `remote_publish`，核对 active 永久文档的当前 SHA-256。仓库事实优先于聊天历史；hash、策略字段或仓库事实不一致时先修复或请求上下文，不创建重复 Epic。
+- 同一会话由 `cs` 交入且带已确认 handoff 时，直接消费目标入口、原始诉求、目标或期望行为、范围/非目标、验收、已核实仓库事实及来源、owner 已确认的术语与决策、未决风险、canonical 资产指针或资产候选；packet 精确范围内已确认的事项不重复询问。handoff 只证明当前会话共识，不扩大实现、commit、发布或写入授权，也不替代本 skill 的 review、验证与确认门槛；字段缺失、仓库事实冲突、出现会改变结果的新风险、缺少会改变方向的事实或超出已确认边界时再按本 skill 规则确认。
+- handoff 只用于起草 proposed 永久 Epic 文档，不替代 fresh design review、批准 hash 或第一道 owner gate。
 - 澄清需求：只问会改变拆解方向的问题（目标边界、优先级、验收口径），一次最多 3 个，形成共识即停。
 
 ## 双层 Epic 文档
@@ -21,7 +23,7 @@ argument-hint: "[大需求描述]"
 Epic 天然跨会话，但稳定上下文和活动状态不得混写：
 
 - **永久 Epic 文档**：项目已有明确 Epic、RFC 或 initiative 归宿时沿用；否则首次创建时按需建立 `.codestable/epics/{slug}.md`，`cs-onboard` 不预建该目录。它是起点、目标、范围、非目标、验收标准、带稳定 ID/依赖/验收要点的子项契约、关键决策、最终交付索引、整体验收、遗留风险与长期 `status` 的唯一 owner。
-- **执行游标**：`.codestable/work/epic-{slug}.md` 只保存永久文档指针、`approved_revision`、执行 `phase`、当前子项 ID、各 ID 进度、下一步、`blocked_by`、临时决策及证据/commit 指针；不得复制目标、验收、子项定义或最终结论。
+- **执行游标**：`.codestable/work/epic-{slug}.md` 只保存永久文档指针、`approved_revision`、执行 `phase`、当前子项 ID、各 ID 进度、下一步、`blocked_by`、`item_progression`、`milestone_commit`、`remote_publish`、临时决策及证据/commit 指针；不得复制目标、验收、子项定义或最终结论。
 
 永久文档最小结构：
 
@@ -51,13 +53,18 @@ approved_revision: pending
 current_item: ITEM-1
 next_action: review and confirm the proposed Epic
 blocked_by: null
+item_progression: pending
+milestone_commit: pending
+remote_publish: pending
 ---
 ## 子项进度
 - [ ] ITEM-1
 ## 临时决策与证据
 ```
 
-永久 `status` 只允许 `proposed -> active -> accepted`，owner 放弃或用后继 Epic 取代时转 `cancelled` / `superseded`；work `phase` 只允许 `planning -> executing -> acceptance`，阻塞只写 `blocked_by`。owner 确认 proposed 文档后，主流程机械置 `active`，用 `shasum -a 256 <epic-file>` 计算完整文件 SHA-256，只写入 work 的 `approved_revision` 并进入 executing；确认前保持 `pending`。active 期间永久文档冻结，日常进度与临时决策只写 work；目标、范围、非目标、验收、子项定义或重大风险变化时，按相同规则更新永久文档、重新 review/确认并替换 hash。
+永久 `status` 只允许 `proposed -> active -> accepted`，owner 放弃或用后继 Epic 取代时转 `cancelled` / `superseded`；work `phase` 只允许 `planning -> executing -> acceptance`，阻塞只写 `blocked_by`。拆解确认本身不等于版本控制授权；首次 owner gate 同时一次性确定 `item_progression: continuous | per-item`、`milestone_commit: authorized | manual` 与 `remote_publish: each-milestone | final | manual`，说明选择 `manual` commit 会逐项暂停，并写入 work 游标。`milestone_commit: manual` 只能搭配 `item_progression: per-item`；`milestone_commit: manual` 只能搭配 `remote_publish: manual`；`remote_publish: each-milestone` 只能搭配 `milestone_commit: authorized`。`authorized + per-item` 是合法的显式逐项暂停策略。进入 executing 前不得保留 `pending` 或非法组合。
+
+owner 确认 proposed 文档与上述策略后，主流程机械置 `active`，用 `shasum -a 256 <epic-file>` 计算完整文件 SHA-256，只写入 work 的 `approved_revision` 并进入 executing；确认前保持 `pending`。active 期间永久文档冻结，日常进度与临时决策只写 work；目标、范围、非目标、验收、子项定义或重大风险变化时，按相同规则更新永久文档、重新 review/确认并替换 hash。版本控制策略变化只按 owner 的显式表达更新游标字段，不修改永久文档或批准 hash，也不得从历史操作推断授权。Epic 内的已有 commit 授权只指 `milestone_commit: authorized`；其他值或仅有会话历史均不算。旧游标缺字段或组合非法时暂停一次补记/修正。
 
 子项设计就近优先：简要设计属于永久文档的子项契约；高风险细节可独立落 `work/feat-{slug}.md`，frontmatter 标 `epic: {epic-slug}`，work 游标只记录路径和进度。子项增删、依赖或验收变化属于契约变化；不改变依赖/验收的顺序微调只更新游标。
 
@@ -69,7 +76,11 @@ blocked_by: null
 - 审查前冻结一个明确目标（diff review 优先 staged diff，也可用明确 range/patch；design review 冻结对应文档版本；audit 冻结 commit + 范围标识），把目标标识写入 task packet；reviewer 返回前不改目标或对应工作树。有 blocking 或未被用户明确接受的 important 时不提交当前候选，也不得创建正式里程碑 commit；处理后重跑验证、重新冻结审查目标并创建 fresh reviewer。
 - 仅在跨会话恢复、agent 交接或隔离 reviewer 需要不可变基线时，且已有 commit 授权，才可在私有工作分支创建明确标记的 WIP/checkpoint commit；它不代表 review 通过或任务完成，交付前按仓库策略 fixup/squash。
 - 本 skill 的确认与验证门槛均满足、blocking 清零且其余 important 已处理或被用户明确接受后，已有 commit 授权时才创建语义原子的正式里程碑 commit；未获授权则只报告可提交状态，不自行提交。
-- 每次只推进一个已确认子项。子项通过其 owning skill 的验证与审查后，已获 commit 授权时把代码、证据和 work 游标更新收成一个语义原子里程碑，再进入下一子项；未获 commit 授权时先向用户交付可提交 checkpoint，不把多个子项堆进同一 diff。
+- 同一时间只允许一个 `current_item`；这是串行约束，不是每个子项的人工 gate。`active` 且批准 hash 有效表示可执行已批准子项，恢复后沿用游标策略，不重新询问是否继续。
+- 子项通过其 owning skill 的验证与审查后，按 `milestone_commit` 把代码、证据和 work 游标更新收成一个语义原子里程碑，不把多个子项堆进同一 diff。`item_progression: continuous` 时，非最终子项完成后自动选择永久文档顺序中第一个依赖已满足的未完成子项，更新 `current_item` / `next_action`，并在同一受托主流程中继续执行；仍有未完成子项但无可运行候选时按阻塞暂停。不得询问“是否继续下一项”，不得把普通子项完成当作终态返回。
+- `item_progression: per-item` 时，完成当前里程碑后按已记录的逐项 checkpoint 策略暂停；它是 owner 在首次 gate 或后续显式变更中选择的行为，不得伪装成默认连续模式。`milestone_commit: manual` 时只交付可提交 checkpoint，不自行 commit。
+- `remote_publish: each-milestone` 时，每个语义原子 commit 后按项目、宿主或 owner 已确定的 branch/remote 策略发布；`final` 时，在集成验证与 final acceptance review 通过后、请求 owner 最终接受前发布一次；`manual` 时 agent 不执行远端发布。branch/remote 未明确时暂停请求上下文，不自行选择；发布失败时写入 `blocked_by` 并暂停，不静默继续。
+- Epic 编排只在以下情况新增暂停：契约或重大风险变化、无法自行解除的阻塞/产品决策、新增权限、需要 owner 明确接受的 important findings、review 超限仍有分歧、旧游标策略缺失或非法、用户明确要求暂停，以及全部子项完成后的最终 owner gate。子项 owning skill 自身的确认门槛照常生效；已批准子项契约覆盖同一决策时不得重复确认，新出现且会改变结果的风险仍按 owning skill 或 Epic 重确认处理。
 - reviewer 创建后绑定该运行并记录 run identity：目标有效、能力仍满足，且 reviewer 状态为 running，或 `Awaiting` 携带可查询的同一 run identity 且查询仍为活动态时为健康；状态健康时等待终态报告，不因后来发现更优创建方式而取消、重复创建或并行补发。仅在运行明确失败或终止无报告、idle / `Awaiting` 且无可恢复 run identity、能力不满足或目标失效时，本轮失败且不计轮次；不得盲目重发，先检查 task packet 与 agent 状态，再决定一次有界重试、更换创建方式或交用户。
 - 每个子项按其类型的纪律执行（cs-feat / cs-issue / cs-refactor 的门槛照常生效），完成即更新 work 游标的 ID 进度、证据和 commit 指针；文档与事实不一致时以仓库事实为准并修正文档。
 - 全部子项完成后把 phase 置为 acceptance，运行集成验证，并由当前主流程创建 fresh reviewer，对最新 owner 已批准的验收标准做 `cs-review` audit/acceptance review。主流程处理 findings，门槛通过后给出各子项结果、验证证据与遗留项，**不代替用户做整体验收**，停下等 owner 最终接受。

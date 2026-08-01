@@ -38,24 +38,40 @@ Epic 同时需要长期可读的产品意图和短期可变的执行状态。把
 - 每个 Epic 分成两层且只保留一个事实 owner：永久 Epic 文档承载起点、目标、范围、非目标、
   验收标准、带稳定 ID/依赖/验收要点的已批准子项、关键决策、最终交付索引、整体验收、遗留
   风险和长期 `status`；`work/epic-{slug}.md` 只保存永久文档指针、`approved_revision`、执行
-  `phase`、当前子项 ID、各 ID 的进度、下一步、阻塞、临时决策记录以及证据或 commit 指针，
-  不复制子项定义、目标、验收或最终结论。
+  `phase`、当前子项 ID、各 ID 的进度、下一步、阻塞、`item_progression`、`milestone_commit`、
+  `remote_publish`、临时决策记录以及证据或 commit 指针，不复制子项定义、目标、验收或最终结论。
 - 永久文档 `status` 只允许 `proposed -> active -> accepted`；owner 放弃时可从任一非终态转为
   `cancelled`，被后继 Epic 取代时可转为 `superseded`。work 的 `phase` 只允许
   `planning -> executing -> acceptance`；阻塞只写 `blocked_by`，解除后仍处于原 phase，不另造状态。
-- `approved_revision` 在 planning 时为 `pending`。owner 确认 proposed 文档后，主流程机械地把
-  永久文档置为 `active`，以 `shasum -a 256 <epic-file>` 得到完整文件 SHA-256，只写入 work
-  游标并把 phase 推进为 executing；确认前不得写入候选 hash。active 期间永久文档保持冻结，
+- `approved_revision` 在 planning 时为 `pending`。拆解确认本身不等于版本控制授权；首次 owner
+  gate 同时一次性确定 `item_progression: continuous | per-item`、
+  `milestone_commit: authorized | manual` 与 `remote_publish: each-milestone | final | manual`。
+  `milestone_commit: manual` 只能搭配 `item_progression: per-item` 和 `remote_publish: manual`，
+  `remote_publish: each-milestone` 只能搭配 `milestone_commit: authorized`；进入 executing 前不得保留
+  `pending` 或非法组合。
+  owner 确认 proposed 文档和策略后，主流程机械地把永久文档置为 `active`，以
+  `shasum -a 256 <epic-file>` 得到完整文件 SHA-256，只写入 work 游标并把 phase 推进为 executing；
+  确认前不得写入候选 hash。active 期间永久文档保持冻结，
   日常进度和临时决策只写 work；目标、范围、非目标、验收、子项定义或重大风险变化时更新
   永久文档，按与首次激活相同的 review、owner 确认和中断规则替换该 hash。确认前不得写候选
   hash；任一激活步骤中断且无法恢复 owner 确认证据时重新确认，不把 `pending` 或候选值当批准。
 - 恢复执行以仓库事实为准：先定位 work 游标，读取其 Epic 指针、phase 与批准 hash，并核对
-  active 永久文档的当前 SHA-256；游标、永久文档或仓库事实不一致时先修复或请求上下文，
-  不从聊天历史猜状态。
+  active 永久文档的当前 SHA-256 和三个执行策略字段；有效字段直接沿用，不重新询问是否继续。
+  旧游标缺字段或组合非法时暂停一次请 owner 补记/修正；owner 中途改变策略只更新 work 游标，
+  不改变永久文档或批准 hash，agent 不得从历史操作推断授权。
 - Epic 保留三个 owner gate：拆解经独立 design review 后确认目标、边界、验收与子项；目标、
   范围、非目标、验收、子项增删/定义或重大风险变化时重新确认；全部子项完成并由 fresh
   reviewer 对最新 owner 已批准的验收标准做整体验收后，由 owner 最终接受。边界内的日常技术
   选择和不改变依赖/验收的子项顺序微调不新增人工 gate。
+- 本 ADR 经实际 Epic 执行反馈补充连续推进语义：同一时间只有一个 `current_item` 是
+  串行约束，不是每个子项的人工 gate。`item_progression: continuous` 时，非最终子项成为语义原子里程碑后，
+  按永久文档顺序自动选择第一个依赖已满足的未完成子项并在同一受托主流程继续；普通子项完成
+  不得成为终态返回或“是否继续下一项”的人工 checkpoint。逐项暂停只来自 owner 明示的
+  `per-item` 策略、既有 owner/owning-skill gate、真实阻塞、新增权限或需 owner 接受的 findings。
+- 远端发布不接管项目的 branch/remote 策略：`each-milestone` 在每个语义原子 commit 后按项目、
+  宿主或 owner 已确定的策略发布，`final` 在集成验证与 final acceptance review 通过后、请求 owner
+  最终接受前发布一次，`manual` 由 owner 自行处理。branch/remote 未明确或发布失败时写入阻塞并暂停，
+  agent 不自行选择或静默继续。
 - Epic 被接受后先写齐最终范围、关键决策、交付索引、验收证据、遗留风险与毕业清单，再用一次
   终态更新把永久文档置为 `accepted` 并移除临时 `work` 指针。稳定产品契约、结构性决策和经验
   分别毕业到 requirement、ADR 与 lesson；随后删除 Epic work 游标和所属子项 work，永久 Epic

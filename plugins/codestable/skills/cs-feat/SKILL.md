@@ -13,6 +13,7 @@ argument-hint: "[功能描述]"
 - 有 `.codestable/attention.md` 就先读。
 - 按功能关键词检索 `.codestable/lessons/`、项目文档，以及存在的 v1 只读知识目录：`.codestable/roadmap/`、`.codestable/features/`、`.codestable/issues/`、`.codestable/refactors/`、`.codestable/goals/`、`.codestable/compound/`、`.codestable/audits/`、`.codestable/brainstorms/`、`.codestable/feedback/`；命中要报告来源路径。上述 v1 目录不得继续生成、原地改写或批量迁移，新结论按归属进入 v2 Epic、项目文档、ADR 或 lesson。
 - 既有 `.codestable/requirements/` 只有在 `.codestable/attention.md` 明确记录其为 canonical requirement 位置时才可维护；owner 在当前任务首次指定时，先把该项目事实写入 attention。没有显式记录时只读检索，不存在时不新建 `.codestable/requirements/`。
+- 同一会话由 `cs` 交入且带已确认 handoff 时，直接消费目标入口、原始诉求、目标或期望行为、范围/非目标、验收、已核实仓库事实及来源、owner 已确认的术语与决策、未决风险、canonical 资产指针或资产候选；packet 精确范围内已确认的事项不重复询问。handoff 只证明当前会话共识，不扩大实现、commit、发布或写入授权，也不替代本 skill 的 review、验证与确认门槛；字段缺失、仓库事实冲突、出现会改变结果的新风险、缺少会改变方向的事实或超出已确认边界时再按本 skill 规则确认。
 - 写代码前先看相邻实现，写得像这个项目原本的代码。
 - 动手前先定归属：这能力属于哪里、沿用现有词汇叫什么——不丢进最近的文件、不起新同义词。结构与取舍拿不准时读 `references/code-design.md` 与 `references/economy.md`（最小充分 ≠ 最小 diff；有界简化必须记上限、触发与方向）。
 - 对照检查：目标、现场上下文、边界与取舍、证据要求、验收标准。缺少会改变实现方向的事实时先问，一次最多 3 个问题，形成可执行共识即停；不问不影响方向的细节。

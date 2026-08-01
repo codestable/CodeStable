@@ -32,6 +32,7 @@ def test_v2_runtime_ownership_supersedes_v1_distribution() -> None:
     assert _frontmatter(adr5)["status"] == "Accepted"
     adr4_text = adr4.read_text(encoding="utf-8")
     adr5_text = adr5.read_text(encoding="utf-8")
+    adr5_flat = " ".join(adr5_text.split())
     assert "supersedes: [\"001\"]" in adr4_text
     assert "supersedes: [\"004\"]" in adr5_text
     assert "八个主 skill" in adr5_text
@@ -41,6 +42,9 @@ def test_v2_runtime_ownership_supersedes_v1_distribution() -> None:
     assert "不得继续生成、原地改写、批量迁移" in adr5_text
     assert "`.codestable/attention.md` 明确记录其为 canonical" in adr5_text
     assert "不默认创建 `.codestable/requirements/`" in adr5_text
+    assert "串行约束，不是每个子项的人工 gate" in adr5_flat
+    for field in ("item_progression", "milestone_commit", "remote_publish"):
+        assert field in adr5_text
     assert "不恢复 `cs-goal` 入口" in adr5_text
     assert "`state.yaml`" in adr5_text
     assert "逐轮 iteration 报告" in adr5_text
@@ -55,6 +59,7 @@ def test_v2_runtime_ownership_supersedes_v1_distribution() -> None:
             assert anchor in entry_file
         assert "只读" in entry_file
         assert "legacy" in entry_file
+        assert "普通子项完成不是 owner gate" in entry_file
 
 
 def test_active_adrs_do_not_enforce_deleted_v1_tests_or_assets() -> None:

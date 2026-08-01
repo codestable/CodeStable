@@ -101,7 +101,7 @@ For daily use, when you don't know which skill fits, call the root entry:
 /cs
 ```
 
-`cs` classifies whether you want execution, advice, or an overview. Action requests dispatch to the target skill in the current run; advice requests only recommend. Ambiguous requests get one focused question.
+`cs` classifies whether you want execution, discussion first, advice, or an overview. Action requests dispatch in the current turn. Requests to discuss first converge in the current session and hand off in the same turn. Discussion creates no work cursor or cross-session state; the owning skill graduates stable conclusions into existing project docs, ADRs, permanent Epics, attention, or lessons.
 
 ---
 
@@ -161,7 +161,7 @@ Thin rules do not mean no boundaries. What remains are **hard gates**, each deci
 | **Feature delivery** | `cs-feat` | High-risk designs are persisted to a work doc; the outer workflow creates a reviewer before user confirmation — never auto-approved; test-first when a setup exists; completion requires verifiable evidence |
 | **Issue fixing** | `cs-issue` | No root-cause guessing without a check that clearly turns red; the red check must turn green before claiming the fix |
 | **Refactoring** | `cs-refactor` | Equivalence evidence exists before code changes; stop and report the moment behavior would change |
-| **Epic delivery** | `cs-epic` | A permanent Epic doc keeps the full picture and a temporary work cursor keeps execution state; decomposition, scope changes, and final acceptance after fresh-reviewer validation pass three owner gates |
+| **Epic delivery** | `cs-epic` | A permanent Epic doc keeps the full picture and a temporary work cursor keeps execution state; confirmed items advance serially and continuously between the three owner gates |
 | **Independent review** | `cs-review` | Read-only leaf executor that returns one review without spawning agents; the outer workflow owns fixes and at most three review rounds |
 
 Engineering judgment does not occupy the always-loaded context: module depth, implementation economy, and debug escalation live in **on-demand references**, read only when the scene calls for them — the thin harness owns reliability, the thick context owns quality.
@@ -176,10 +176,10 @@ The capture principle: **everything in its place, no archive hall**:
 | `lessons/` | One file per pitfall, technique, or research result; traceable evidence required, dedupe-and-merge first |
 | Project docs / ADRs | The canonical owner of current facts and structural decisions — CodeStable builds no parallel truth |
 | Permanent Epic docs | Long-lived goals, scope, approved items, key decisions, delivery index, and holistic acceptance |
-| `work/` | Active cross-session tasks; Epic work is only a temporary cursor to the permanent doc, approved revision, and execution progress |
+| `work/` | Active cross-session tasks; Epic work is only a temporary cursor to the permanent doc, approved revision, execution progress, and progression/commit/remote-publication policies |
 | git / PR | Execution history |
 
-An Epic reuses an existing Epic, RFC, or initiative home when one exists; otherwise `.codestable/epics/` is created only on first need, and `cs-onboard` does not precreate it. The owner confirms decomposition after independent design review; changes to goals, scope, non-goals, acceptance, items, or major risks require owner reconfirmation; after all items complete, a fresh reviewer performs holistic terminal acceptance against the latest owner-approved criteria before the owner accepts. Terminal handling completes and graduates the permanent archive before deleting the Epic work cursor; the permanent Epic doc is never deleted as temporary output.
+An Epic reuses an existing Epic, RFC, or initiative home when one exists; otherwise `.codestable/epics/` is created only on first need, and `cs-onboard` does not precreate it. The owner confirms decomposition after independent design review; changes to goals, scope, non-goals, acceptance, items, or major risks require owner reconfirmation; after all items complete, a fresh reviewer performs holistic terminal acceptance against the latest owner-approved criteria before the owner accepts. The first confirmation also records progression, milestone-commit, and remote-publication policies. Under the continuous policy, ordinary items advance serially and continuously; only an explicit per-item policy or a real gate pauses execution. Terminal handling completes and graduates the permanent archive before deleting the Epic work cursor; the permanent Epic doc is never deleted as temporary output.
 
 The nine v1 historical knowledge directories — `roadmap/`, `features/`, `issues/`, `refactors/`, `goals/`, `compound/`, `audits/`, `brainstorms/`, and `feedback/` — are searched read-only by task keywords with source citations. Do not generate into, rewrite in place, bulk-migrate, or write back to them. New conclusions go to permanent Epics, project docs, ADRs, or `lessons/`.
 
@@ -197,7 +197,7 @@ Ordinary completed work docs **graduate before deletion**: the final report must
 
 | Group | Skill | Purpose |
 |---|---|---|
-| Navigation | `cs` | Clear action requests dispatch to the target skill in the same turn; advice gets a recommendation only; the overview writes no files |
+| Navigation | `cs` | Clear action requests dispatch in the same turn; requests to discuss first converge in the current session and hand off in the same turn; advice only recommends; the overview writes no files |
 | Onboard | `cs-onboard` | Create the minimal project-memory skeleton for a repository |
 | Feature | `cs-feat` | Implement new capability with process strength proportional to risk |
 | Issue | `cs-issue` | Fix bugs or broken behavior with red-to-green evidence |
