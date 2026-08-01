@@ -18,6 +18,35 @@ argument-hint: "[大需求描述]"
 - handoff 只用于起草 proposed 永久 Epic 文档，不替代 fresh design review、批准 hash 或第一道 owner gate。
 - 澄清需求：只问会改变拆解方向的问题（目标边界、优先级、验收口径），一次最多 3 个，形成共识即停。
 
+## 持续学习
+
+检索到 lesson 后先做 read-repair。只有 scope 符合、未退役、经当前代码/测试/canonical 文档核实，
+并真实改变计划或验证的条目才算有效命中；按
+`经验命中：{path}（{status}）；核验：{fact}；影响：{plan_or_check}` 报告。`retired` 不应用；
+`observed` / `validated` 先核实再用；旧 lesson 缺 `status` 按 `observed` 读取，不批量迁移。只是相关
+但没有改变行为时不制造复用证据；当前事实明确反证时立即停止应用，证据不足时不猜。
+
+任务内只在内存保留最多 3 条候选，按新证据替换低价值项，不暂停或询问。强信号只包括：owner
+纠正实际改变方案/代码/术语/验证；可复现证据推翻根因；同一路径失败两次后更换假设；
+blocking/important finding 暴露未编码不变量；新 red -> green 捕获可复发失败；lesson 真实改变本次行为
+或被反证；重复 workaround；方法显著降低重试、成本或风险。
+
+候选还必须同时有可追溯证据、能写成未来动作、适用于本次精确 diff 之外、且没有现成 canonical
+owner。网络波动、拼写、泛化口号、活动记录，以及已被机械 owner 完整覆盖的事实直接丢弃。
+
+创建、改写规则/scope、晋升、删除与跨项目反馈仍须用户显式授权。为不中断 read-repair，仅对已有且
+有效命中的 lesson 开放两种窄维护：`observed -> validated` 仅在独立后续任务确实采用并验证成功时
+发生，只补一次代表性证据；`observed|validated -> retired` 仅在当前仓库事实直接反证或发现已有
+canonical owner 时发生，只写原因与替代/反证指针。窄维护不新建事实、不改规则、不扩 scope、不新增
+gate，随当次代码、证据和
+游标进入同一语义原子 milestone；稳定 validated 命中不写文件。需要改写结论或证据不足时只给
+候选，新结论不得通过复活 retired 条目获得 validated 身份；窄维护必须在最终报告列出文件变化。
+
+当前任务范围内能直接落成 red -> green 测试/checker 的约束优先机械化，不另写重复 lesson；会扩大
+范围时只给候选。用户已明确说“记住 / 更新 / 退役”时，同轮按 `cs-keep` 处理，不重复确认。Epic
+子项不展示、不询问；每个子项至多把一条去重候选写入既有游标证据区，使用 `晶化候选：{rule}`
+marker，最终毕业清单一次处理并复用最终 owner gate。
+
 ## 双层 Epic 文档
 
 Epic 天然跨会话，但稳定上下文和活动状态不得混写：
@@ -90,4 +119,3 @@ owner 确认 proposed 文档与上述策略后，主流程机械置 `active`，�
 - owner 接受后先把最终范围、关键决策、交付索引、整体验收、遗留风险与毕业清单写入永久 Epic，再用终态更新置 `accepted` 并移除 `work` 指针。稳定产品契约进 canonical requirement/项目文档，结构性决策进 ADR，经验进 lessons；目标位置不存在时请 owner 选择，确定前结论留在永久 Epic。
 - 终态 `accepted` / `superseded` / `cancelled` 是不可恢复执行的持久信号。无论中断时还剩 work 指针、游标或所属子项 work，都从仓库事实幂等续做：补齐终态记录与毕业清单、移除指针、删除 Epic 游标，再按 frontmatter `epic:` 清理全部子项 work；不得恢复执行或创建重复 Epic，永久 Epic 文档不得删除。
 - 不恢复 `cs-goal` 入口、goal package、`state.yaml`、逐轮 iteration 报告或 legacy runtime gate；目标契约、恢复游标、owner gate 和终态验收都由上述双层文档承担。
-- 本轮若踩坑或被纠偏，推荐用 cs-keep 沉淀一条；用户拒绝即跳过。

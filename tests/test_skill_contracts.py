@@ -13,6 +13,7 @@ SKILLS = ROOT / "plugins/codestable/skills"
 LOCAL_SKILLS = ROOT / ".claude/skills"
 
 TASK_SKILLS = ("cs-feat", "cs-issue", "cs-refactor", "cs-epic")
+ORDINARY_TASK_SKILLS = ("cs-feat", "cs-issue", "cs-refactor")
 LEGACY_KNOWLEDGE_DIRS = {
     ".codestable/roadmap/",
     ".codestable/features/",
@@ -23,6 +24,54 @@ LEGACY_KNOWLEDGE_DIRS = {
     ".codestable/audits/",
     ".codestable/brainstorms/",
     ".codestable/feedback/",
+}
+
+LESSON_READ_REPAIR_CONTRACT = {
+    "经验命中：{path}（{status}）；核验：{fact}；影响：{plan_or_check}",
+    "旧 lesson 缺 `status` 按 `observed` 读取",
+    "`retired` 不应用",
+    "`observed` / `validated` 先核实再用",
+    "只是相关但没有改变行为时不制造复用证据",
+    "当前事实明确反证时立即停止应用",
+    "证据不足时不猜",
+}
+
+CRYSTALLIZATION_SIGNAL_CONTRACT = {
+    "任务内只在内存保留最多 3 条候选",
+    "不暂停或询问",
+    "owner 纠正实际改变方案/代码/术语/验证",
+    "可复现证据推翻根因",
+    "同一路径失败两次后更换假设",
+    "blocking/important finding 暴露未编码不变量",
+    "新 red -> green 捕获可复发失败",
+    "lesson 真实改变本次行为或被反证",
+    "重复 workaround",
+    "方法显著降低重试、成本或风险",
+    "可追溯证据",
+    "能写成未来动作",
+    "本次精确 diff 之外",
+    "没有现成 canonical owner",
+    "网络波动、拼写、泛化口号、活动记录",
+    "已被机械 owner 完整覆盖",
+}
+
+NARROW_LESSON_MAINTENANCE_CONTRACT = {
+    "仅对已有且有效命中的 lesson",
+    "`observed -> validated`",
+    "独立后续任务确实采用并验证成功",
+    "只补一次代表性证据",
+    "`observed|validated -> retired`",
+    "当前仓库事实直接反证",
+    "发现已有 canonical owner",
+    "只写原因与替代/反证指针",
+    "不新建事实",
+    "不改规则",
+    "不扩 scope",
+    "不新增 gate",
+    "稳定 validated 命中不写文件",
+    "需要改写结论或证据不足时只给候选",
+    "新结论不得通过复活 retired 条目",
+    "最终报告列出文件变化",
 }
 
 THIN_SKILL_SAFETY_INVARIANTS = {
@@ -101,6 +150,10 @@ def _read_skill(path: Path) -> tuple[dict[str, object], str]:
     assert text.startswith("---\n"), path
     _, frontmatter, body = text.split("---\n", 2)
     return yaml.safe_load(frontmatter), body
+
+
+def _contains_contract(text: str, anchor: str) -> bool:
+    return "".join(anchor.split()) in "".join(text.split())
 
 
 def test_active_skills_do_not_use_legacy_frontmatter_contracts() -> None:
@@ -211,6 +264,96 @@ def test_task_skills_retrieve_legacy_knowledge_read_only() -> None:
         assert "不得继续生成" in kickoff, skill_name
         assert "原地改写" in kickoff, skill_name
         assert "批量迁移" in kickoff, skill_name
+
+
+def test_task_skills_share_the_complete_lesson_read_repair_contract() -> None:
+    signatures = {}
+    for skill_name in TASK_SKILLS:
+        _, body = _read_skill(SKILLS / skill_name / "SKILL.md")
+        signatures[skill_name] = {
+            anchor
+            for anchor in LESSON_READ_REPAIR_CONTRACT
+            if _contains_contract(body, anchor)
+        }
+
+    assert len({frozenset(signature) for signature in signatures.values()}) == 1
+    for skill_name, signature in signatures.items():
+        assert signature == LESSON_READ_REPAIR_CONTRACT, skill_name
+
+
+def test_task_skills_share_the_bounded_strong_signal_contract() -> None:
+    signatures = {}
+    for skill_name in TASK_SKILLS:
+        _, body = _read_skill(SKILLS / skill_name / "SKILL.md")
+        signatures[skill_name] = {
+            anchor
+            for anchor in CRYSTALLIZATION_SIGNAL_CONTRACT
+            if _contains_contract(body, anchor)
+        }
+
+    assert len({frozenset(signature) for signature in signatures.values()}) == 1
+    for skill_name, signature in signatures.items():
+        assert signature == CRYSTALLIZATION_SIGNAL_CONTRACT, skill_name
+
+
+def test_crystallization_closing_is_quiet_and_prefers_mechanical_guards() -> None:
+    for skill_name in TASK_SKILLS:
+        _, body = _read_skill(SKILLS / skill_name / "SKILL.md")
+        for anchor in (
+            "当前任务范围内能直接落成 red -> green 测试/checker",
+            "优先机械化",
+            "不另写重复 lesson",
+            "会扩大范围时只给候选",
+        ):
+            assert _contains_contract(body, anchor), skill_name
+
+    for skill_name in ORDINARY_TASK_SKILLS:
+        _, body = _read_skill(SKILLS / skill_name / "SKILL.md")
+        for anchor in (
+            "普通任务只在强信号成立时展示最高价值一条",
+            "`晶化候选：{rule}`",
+            "证据、范围和建议归宿",
+            "无强信号完全不显示模板",
+            "没有记忆写入授权时不落盘",
+        ):
+            assert _contains_contract(body, anchor), skill_name
+
+    for skill_name in TASK_SKILLS:
+        _, body = _read_skill(SKILLS / skill_name / "SKILL.md")
+        for anchor in (
+            "用户已明确说“记住 / 更新 / 退役”",
+            "同轮按 `cs-keep` 处理",
+            "不重复确认",
+        ):
+            assert _contains_contract(body, anchor), skill_name
+
+    _, epic = _read_skill(SKILLS / "cs-epic/SKILL.md")
+    for anchor in (
+        "Epic 子项不展示、不询问",
+        "每个子项至多把一条去重候选写入既有游标证据区",
+        "最终毕业清单一次处理",
+        "复用最终 owner gate",
+        "不得询问“是否继续下一项”",
+        "不得把普通子项完成当作终态返回",
+    ):
+        assert _contains_contract(epic, anchor)
+
+
+def test_task_skills_allow_only_two_narrow_lesson_maintenance_paths() -> None:
+    signatures = {}
+    for skill_name in TASK_SKILLS:
+        _, body = _read_skill(SKILLS / skill_name / "SKILL.md")
+        signatures[skill_name] = {
+            anchor
+            for anchor in NARROW_LESSON_MAINTENANCE_CONTRACT
+            if _contains_contract(body, anchor)
+        }
+        assert _contains_contract(body, "创建、改写规则/scope、晋升、删除与跨项目反馈仍须")
+        assert _contains_contract(body, "随当次代码、证据和游标进入同一语义原子 milestone")
+
+    assert len({frozenset(signature) for signature in signatures.values()}) == 1
+    for skill_name, signature in signatures.items():
+        assert signature == NARROW_LESSON_MAINTENANCE_CONTRACT, skill_name
 
 
 def test_keep_never_writes_v1_compound() -> None:

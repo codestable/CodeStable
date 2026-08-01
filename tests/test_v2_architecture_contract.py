@@ -8,6 +8,7 @@ import yaml
 
 
 ROOT = Path(__file__).resolve().parents[1]
+SHIPPED_SKILLS = ROOT / "plugins/codestable/skills"
 
 
 def _frontmatter(path: Path) -> dict[str, object]:
@@ -94,3 +95,61 @@ def test_v1_feedback_promoter_is_explicitly_legacy_only() -> None:
     assert "not a CodeStable v2 production-feedback entry" in promoter
     assert "仅用于显式导入冻结的 v1" in eval_skill
     assert "新反馈如何进入 regression 不在当前协议中定义" in eval_skill
+
+
+def test_project_learning_lifecycle_is_an_accepted_narrow_staging_contract() -> None:
+    adr6 = ROOT / "docs/adr/006-project-learning-lifecycle.md"
+
+    assert adr6.is_file()
+    assert _frontmatter(adr6)["status"] == "Accepted"
+    text = adr6.read_text(encoding="utf-8")
+    for anchor in (
+        "在任务中静默观察",
+        "最多保留 3 条候选",
+        "read-repair",
+        "必须优先机械化",
+        "`observed -> validated`",
+        "`observed|validated -> retired`",
+        "显式授权",
+        "feedback runtime",
+        "transcript",
+        "全局 lessons",
+        "集中 runtime",
+        "第九个 skill",
+        "不新增逐项暂停或确认",
+    ):
+        assert anchor in text
+
+
+def test_project_learning_does_not_restore_feedback_or_global_runtime_state() -> None:
+    active_skills = {
+        path.parent.name for path in SHIPPED_SKILLS.glob("*/SKILL.md")
+    }
+    assert active_skills == {
+        "cs",
+        "cs-code-review",
+        "cs-epic",
+        "cs-feat",
+        "cs-issue",
+        "cs-keep",
+        "cs-onboard",
+        "cs-refactor",
+        "cs-review",
+    }
+
+    for path in (
+        SHIPPED_SKILLS / "cs-feedback",
+        ROOT / ".codestable/learning",
+        ROOT / ".codestable/global-lessons",
+        ROOT / ".codestable/state.yaml",
+        ROOT / ".codestable/session-state.yaml",
+    ):
+        assert not path.exists(), path
+
+    runtime_artifacts = {
+        path.relative_to(SHIPPED_SKILLS).as_posix().lower()
+        for path in SHIPPED_SKILLS.rglob("*")
+        if path.is_file()
+        and ("transcript" in path.name.lower() or path.name == "state.yaml")
+    }
+    assert runtime_artifacts == set()
