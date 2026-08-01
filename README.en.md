@@ -2,27 +2,39 @@
 
 # CodeStable
 
-![](./asset/PromotionalImage.png)
-
 **English** · [中文](./README.md)
 
-**An AI coding workflow for serious software engineering**
+**Keep boundaries, evidence, and memory intact as AI coding projects evolve.**
 
-Tired of OpenSpec's flimsiness, Oh-My-OpenAgent's over-engineering, and Superpowers' fragmentation — I built a lightweight, **human-in-the-loop** AI harness from scratch.
-
-The methodology in one line: **thin harness, thick context** — write responsibilities for strong models, not step-by-step scripts; retrieve context on demand, never preload it.
-
-<p>
-  <img src="https://img.shields.io/badge/status-beta-F59E0B?style=flat-square" alt="Status"/>
-  <img src="https://img.shields.io/badge/cs--skills-8-6366F1?style=flat-square" alt="CodeStable Skills"/>
-  <img src="https://img.shields.io/badge/license-MIT-10B981?style=flat-square" alt="License"/>
-</p>
-
+<p><img src="https://img.shields.io/badge/status-beta-F59E0B?style=flat-square" alt="Status"/> <img src="https://img.shields.io/badge/cs--skills-8-6366F1?style=flat-square" alt="CodeStable Skills"/> <img src="https://img.shields.io/badge/license-MIT-10B981?style=flat-square" alt="License"/></p>
 </div>
 
----
+CodeStable offers lightweight skill contracts for serious software. It does not orchestrate agent teams and does not create a second documentation system. Models act within boundaries, prove results, and return knowledge to existing homes.
 
-## Install
+## 30-Second Model
+
+```text
+User intent
+   ↓
+cs: execute directly / discuss in this session / advise
+   ↓
+feat · issue · refactor · epic
+   ↓
+proportionate verification + necessary review / owner gates
+   ↓ code results + the project's canonical knowledge
+```
+
+Explicit actions dispatch in the same turn by default; they do not acquire a discussion gate first.
+
+Requests to discuss first converge in the current session and hand off in the same turn.
+
+`cs` aligns facts, language, and boundaries; with existing execution authorization it enters `cs-feat`, `cs-issue`, or `cs-epic`. Discussion itself grants no authorization.
+
+Discussion creates no work cursor or transcript. Unresolved discussion is not recoverable across sessions. Advice requests only advise, and an overview writes no files.
+
+## Start in 5 Minutes
+
+### Install
 
 Codex plugin marketplace:
 
@@ -38,185 +50,58 @@ Claude plugin marketplace:
 /plugin install codestable@codestable
 ```
 
-`skills` CLI:
+`skills` CLI (v1 users must first follow the [upgrade guide](./UPGRADE.en.md#upgrade-from-v104-to-v2) to remove the 24 retired entries, then install v2):
 
 ```bash
 npx skills@latest add codestable/CodeStable/plugins/codestable
 ```
 
-If your `skills` CLI does not discover the plugin entity through the marketplace catalog, use the deep-scan fallback:
+If the catalog misses the plugin entity, use `npx skills@latest add codestable/CodeStable/plugins/codestable --full-depth` as the deep-scan fallback.
 
-```bash
-npx skills@latest add codestable/CodeStable/plugins/codestable --full-depth
-```
+### Onboard a Project
 
-The CodeStable plugin only packages `cs` / `cs-*` skills under `plugins/codestable/skills/`; the repository root no longer keeps standalone skill directories.
+Run `/cs-onboard` from the repository root. It creates only the minimal project-memory skeleton and does not take over documentation, worktree, or branch policy.
 
-## Upgrade
+### Start Working
 
-After a new release, check `CHANGELOG.md` for the version changes, then refresh through the entry point you used to install.
+When you are unsure which entry fits, call `/cs`; you can also call the owning skill directly. v2 ships 8 skills:
 
-Codex plugin marketplace:
+| Skill | Purpose |
+|---|---|
+| `cs` | Route explicit actions, in-session discussion, advice, and system overview |
+| `cs-onboard` | Create the minimal project-memory skeleton |
+| `cs-feat` | Implement new capability or change existing behavior |
+| `cs-issue` | Fix bugs or broken behavior with red-to-green evidence |
+| `cs-refactor` | Change structure or performance under equivalence evidence |
+| `cs-epic` | Decompose and advance multiple deliverable items under confirmed policies |
+| `cs-review` | Read-only leaf executor; one review, with no child agent |
+| `cs-keep` | Capture evidence-backed project facts and reusable lessons |
 
-```bash
-codex plugin marketplace upgrade codestable
-codex plugin add codestable@codestable
-```
+`cs-code-review` is a compatibility alias of `cs-review`. It only forwards and contains no independent rules.
 
-The current Codex CLI has no separate `plugin update` subcommand; `marketplace upgrade` refreshes the Git marketplace snapshot, and `plugin add` installs the current version from that refreshed snapshot.
+## Three Principles
 
-Claude plugin marketplace:
+### 1. thin harness, thick context
 
-```text
-/plugin marketplace update
-/plugin update codestable@codestable
-```
+CodeStable writes responsibilities for strong models, not step-by-step scripts. Skills constrain goals, hard boundaries, and evidence; models choose paths from repository facts and load guidance on demand.
 
-Restart Claude Code after updating so the new plugin version is applied.
+Thin means no permanent state machine or stage-artifact micromanagement, not no gates.
 
-`skills` CLI:
+### 2. Evidence before conclusions
 
-```bash
-npx skills@latest remove \
-  cs-audit cs-brainstorm cs-doc-api cs-doc-tutorial cs-docs cs-docs-neat \
-  cs-domain cs-feat-accept cs-feat-design cs-feat-design-review cs-feat-ff \
-  cs-feat-impl cs-feat-qa cs-feedback cs-goal cs-issue-analyze cs-issue-fix \
-  cs-issue-report cs-note cs-refactor-ff cs-req cs-roadmap \
-  cs-roadmap-impl-goal cs-roadmap-review \
-  -g -y
-npx skills@latest add codestable/CodeStable/plugins/codestable --skill '*' -g
-```
+Feature work gets design and verification proportionate to risk; bug fixes go red to green; refactors establish equivalence first. The outer flow creates read-only reviewers.
 
-The current `skills` CLI does not automatically remove skills that disappeared from a newer package during `add` or `update`. For a v1.0.4-to-v2.0.0 upgrade, the first command therefore removes the exact 24 retired CodeStable names, then the second installs all 8 v2 skills. Removal is name-based and does not verify the installation source: other names are untouched, but if you maintain a custom or third-party skill under one of these same names, back it up and remove that name from the command first. Future upgrades within the same major need only rerun `add`. For a project-scoped installation, omit `-g` from both commands and run them in that project. Historical v1 project assets (`compound/`, `features/`, and other directories plus old tools) remain untouched, need no per-repository runtime refresh, and stay covered by v2's kickoff retrieval — accumulated knowledge keeps getting read after the upgrade.
+Humans enter for product-contract changes, major risk, and overall acceptance, not every mechanical step.
 
-One command to start working:
+### 3. One fact, one canonical owner
 
-```bash
-/cs-onboard
-```
+Project docs, ADRs, code, and domain documents keep their facts. CodeStable adds only a few session facts, lessons, and active cursors, never a parallel archive.
 
-For daily use, when you don't know which skill fits, call the root entry:
+The owning skill returns conclusions to one home; if none exists, it asks the owner to choose.
 
-```bash
-/cs
-```
+## Project Memory
 
-`cs` classifies whether you want execution, discussion first, advice, or an overview. Action requests dispatch in the current turn. Requests to discuss first converge in the current session and hand off in the same turn. Discussion creates no work cursor or cross-session state; the owning skill graduates stable conclusions into existing project docs, ADRs, permanent Epics, attention, or lessons.
-
----
-
-## Why
-
-I was building a new harness agent ([MA](https://github.com/liuzhengdongfortest/MA)) — vibe-coding at first, just writing designs and requirements while AI wrote the code. It carried most features, until Codex repeatedly failed on a problem I thought was simple, making the same mistake in the same place. That's when I knew the project needed a workflow to keep moving.
-
-I surveyed OpenSpec, SuperPowers, Oh-My-OpenAgent — none felt right:
-
-- **OpenSpec** — too thin, no compounding, specs too abstract for humans to read
-- **SuperPowers** — no process discipline, you never know which one to use
-- **Oh-My-OpenAgent** — too heavy, philosophically treats "human intervention = failure"
-
-CodeStable's goal is **to solve real software implementation and coding problems for serious engineering** — not to coin a new term or chase trends.
-
----
-
-## The core difference: what gets orchestrated
-
-Mainstream AI coding frameworks — Superpowers, CCW, Oh-My-OpenAgent — are all doing **the same thing**:
-
-> **Orchestrating agents better.** Get them to team up, collaborate, brainstorm, run pipelines, hand off automatically. The entity at the center is always the **Agent**.
-
-CodeStable goes the **other way**:
-
-> **What gets orchestrated isn't agents — it's the lifecycle of the software itself.** The entities at the center are **the elements that make up software**: every requirement, every architectural decision, every feature, every bug, every constraint left in history.
-
-<table>
-<tr><th></th><th>Agent-orchestration camp</th><th>CodeStable</th></tr>
-<tr><td><b>Core entity</b></td><td>Agent / Role / Team</td><td>Requirement / Architecture / Feature / Issue / Decision</td></tr>
-<tr><td><b>Main question</b></td><td>How do agents divide work, hand off, coordinate?</td><td>How do requirements, constraints, decisions get recorded, retrieved, reused?</td></tr>
-<tr><td><b>Where state lives</b></td><td>Agent sessions / message buses / queues</td><td>Project docs plus <code>.codestable/</code> project memory (readable by humans and AI)</td></tr>
-<tr><td><b>Pain it solves</b></td><td>One agent isn't enough; need coordination to scale</td><td>Software complexity overflows context; tacit knowledge gets lost; requirements drift</td></tr>
-<tr><td><b>Role of humans</b></td><td>The less the better — full automation is the ideal</td><td>Human-in-the-loop — the programmer owns the whole; AI is an efficient executor</td></tr>
-</table>
-
-![](./asset/CodeStableVSAgent.png)
-
-**Neither direction is wrong.**
-
-If your task is "run an end-to-end automated pipeline with AI" or "have multiple agents debate a plan," the agent-orchestration camp fits better.
-
-If your task is "maintain serious software that iterates over years" or "make sure a requirement written today can still be accurately recalled three months later" — then CodeStable's software-element-centric model fits better.
-
-I built CodeStable because I believe **the chaos of software engineering isn't really about agents not being strong enough — it's about elements not being organized**. No matter how strong the agent, it can't save a project that's lost its requirements, architecture, and history.
-
----
-
-## Design: thin harness, thick context
-
-The core judgment: **the stronger the model, the more you should write responsibilities instead of steps.** CodeStable does not guard the model with state machines, process gates, or stage artifacts — it ships 8 **thin responsibility contracts** of 30–60 lines each — every skill states exactly three things: what must be achieved, what must not be crossed, and how completion is proven. The route belongs to the model.
-
-Thin rules do not mean no boundaries. What remains are **hard gates**, each decidable in one sentence:
-
-| Flow | Entry | Hard gate |
-|------|------|--------|
-| **Feature delivery** | `cs-feat` | High-risk designs are persisted to a work doc; the outer workflow creates a reviewer before user confirmation — never auto-approved; test-first when a setup exists; completion requires verifiable evidence |
-| **Issue fixing** | `cs-issue` | No root-cause guessing without a check that clearly turns red; the red check must turn green before claiming the fix |
-| **Refactoring** | `cs-refactor` | Equivalence evidence exists before code changes; stop and report the moment behavior would change |
-| **Epic delivery** | `cs-epic` | A permanent Epic doc keeps the full picture and a temporary work cursor keeps execution state; confirmed items advance serially and continuously between the three owner gates |
-| **Independent review** | `cs-review` | Read-only leaf executor that returns one review without spawning agents; the outer workflow owns fixes and at most three review rounds |
-
-Engineering judgment does not occupy the always-loaded context: module depth, implementation economy, and debug escalation live in **on-demand references**, read only when the scene calls for them — the thin harness owns reliability, the thick context owns quality.
-
-### The six homes of knowledge
-
-The capture principle: **everything in its place, no archive hall**:
-
-| Home | What it carries |
-|------|--------|
-| `attention.md` | Project facts read every session, ≤25 entries |
-| `lessons/` | One file per pitfall, technique, or research result; traceable evidence required, dedupe-and-merge first |
-| Project docs / ADRs | The canonical owner of current facts and structural decisions — CodeStable builds no parallel truth |
-| Permanent Epic docs | Long-lived goals, scope, approved items, key decisions, delivery index, and holistic acceptance |
-| `work/` | Active cross-session tasks; Epic work is only a temporary cursor to the permanent doc, approved revision, execution progress, and progression/commit/remote-publication policies |
-| git / PR | Execution history |
-
-An Epic reuses an existing Epic, RFC, or initiative home when one exists; otherwise `.codestable/epics/` is created only on first need, and `cs-onboard` does not precreate it. The owner confirms decomposition after independent design review; changes to goals, scope, non-goals, acceptance, items, or major risks require owner reconfirmation; after all items complete, a fresh reviewer performs holistic terminal acceptance against the latest owner-approved criteria before the owner accepts. The first confirmation also records progression, milestone-commit, and remote-publication policies. Under the continuous policy, ordinary items advance serially and continuously; only an explicit per-item policy or a real gate pauses execution. Terminal handling completes and graduates the permanent archive before deleting the Epic work cursor; the permanent Epic doc is never deleted as temporary output.
-
-The nine v1 historical knowledge directories — `roadmap/`, `features/`, `issues/`, `refactors/`, `goals/`, `compound/`, `audits/`, `brainstorms/`, and `feedback/` — are searched read-only by task keywords with source citations. Do not generate into, rewrite in place, bulk-migrate, or write back to them. New conclusions go to permanent Epics, project docs, ADRs, or `lessons/`.
-
-An existing `.codestable/requirements/` may be maintained only when `.codestable/attention.md` explicitly registers it as the canonical requirement location; otherwise it is also read-only. New projects keep their own documentation structure and do not create this directory by default; when no canonical home exists, ask the owner to choose one and record it in `attention.md`.
-
-`cs-epic` carries forward the useful goal contract, recovery cursor, owner gates, and terminal acceptance; it does not restore the `cs-goal` entry, goal package, `state.yaml`, per-iteration reports, or runtime gates.
-
-Ordinary completed work docs **graduate before deletion**: the final report must list the graduation destinations — which conclusion went into which project doc, which lesson was distilled, or an explicit "nothing to graduate" — no list, no deletion. When a destination does not exist, the agent proposes one and keeps the doc until the owner decides.
-
----
-
-## Skill catalog
-
-### Current 8 skills
-
-| Group | Skill | Purpose |
-|---|---|---|
-| Navigation | `cs` | Clear action requests dispatch in the same turn; requests to discuss first converge in the current session and hand off in the same turn; advice only recommends; the overview writes no files |
-| Onboard | `cs-onboard` | Create the minimal project-memory skeleton for a repository |
-| Feature | `cs-feat` | Implement new capability with process strength proportional to risk |
-| Issue | `cs-issue` | Fix bugs or broken behavior with red-to-green evidence |
-| Refactor | `cs-refactor` | Change structure or performance under behavioral-equivalence evidence |
-| Epic | `cs-epic` | Decompose, confirm, and drive multiple items; sub-designs inline-first, standalone only when risk escalates |
-| Review | `cs-review` | Leaf executor for one diff / design / repo audit; never delegates again |
-| Memory | `cs-keep` | Capture evidence-backed lessons and project facts with automatic tier selection |
-
-`cs-code-review` is an alias of `cs-review` (forwarding only, no independent rules). See [SKILL_CATALOG.en.md](./SKILL_CATALOG.en.md) for the full catalog. Call `/cs` when you are unsure which entry fits.
-
----
-
-## Workflow and project memory
-
-Every entry shares one execution mainline: **understand the relevant facts → act → run proportionate verification → deliver**. Risk is re-judged per request — no persistent lanes, no stage state machines; ordinary tasks produce zero CodeStable artifacts — the diff, test output, and delivery summary are the evidence.
-
-Captured knowledge only has value when it gets read: before acting, `cs-feat`, `cs-issue`, `cs-refactor`, and `cs-epic` search `lessons/`, project docs, and the v1 historical directories above by task keywords, and report the sources of any hits; historical directories stay read-only with no writeback.
-
-After `/cs-onboard`, a new project has only this CodeStable-owned memory:
+`/cs-onboard` creates:
 
 ```text
 .codestable/
@@ -225,40 +110,51 @@ After `/cs-onboard`, a new project has only this CodeStable-owned memory:
 └── work/
 ```
 
-`.codestable/epics/` appears on demand only when the project has no existing Epic home and creates its first Epic; `.codestable/requirements/` is not part of the default skeleton. Skill-specific context and helpers belong to the owning skill. Requirements, domain models, and ADRs stay in the project's own documentation structure, and a requirements location is a maintainable canonical owner only when explicitly registered in `attention.md` — CodeStable builds no parallel truth. See [WORKFLOW.en.md](./WORKFLOW.en.md) for the full boundary.
+- `attention.md` holds the small set of project facts needed every session, capped at 25 entries.
+- `lessons/` keeps one evidence-backed lesson per file and deduplicates before writing.
+- `work/` exists only for active cross-session work, multi-agent handoff, or an explicitly requested durable record.
 
----
+Ordinary work creates no CodeStable stage docs; the diff, tests, and delivery summary are the evidence. Discussion does not enter `work/`; only stable conclusions graduate through the owning skill to a canonical home.
 
-## Design philosophy
+### The Two-Layer Epic Model
 
-CodeStable takes the **opposite** philosophy from OMO:
+Large initiatives separate durable contracts from temporary execution state. A permanent Epic document owns goals, scope, acceptance, approved items, key decisions, and final delivery.
 
-- OMO says: any human intervention is a failure signal
-- CodeStable says: **the programmer is in the loop of software coding** — you may not understand the black-box implementation, but you must own the whole, and dive in when needed
+A temporary work cursor keeps only its pointer, approved revision, progress, policies, and evidence.
 
-Software architecture must be **evolvable**, **observable**, **controllable**.
+An Epic reuses an existing Epic, RFC, or initiative home when available and creates `.codestable/epics/` only on demand. The temporary cursor is deleted at completion; the permanent document remains.
 
-This may matter less as AI gets stronger, but **right now this makes programmers comfortable in reality** — and that's the value.
+See [WORKFLOW.en.md](./WORKFLOW.en.md) for owner gates, recovery, and terminal rules.
 
-CodeStable is modeled for real-world development scenarios, aiming to handle common dev problems through a closed-loop system. **Most existing frameworks model around AI, not around humans.** I think their authors have strong AI-driving skills but aren't seriously building software — they lack the basic ability to organize requirements and design, and they lack respect for code implementation.
+## Fit
 
----
+CodeStable fits best when:
 
-## Roadmap
+- software will evolve for months or years;
+- later sessions, models, or developers must recover historical constraints accurately;
+- AI should execute efficiently while humans retain product boundaries and final acceptance;
+- the team values verifiable results, independent review, and reusable knowledge.
 
-CodeStable adapts to model capability. If a future model nails a module reliably, that module gets removed.
+It is not:
 
-- [x] Simplified the cs skills family: converged on 8 independent thin-harness skills
-- [x] v2 dogfood loop in motion: same-turn dispatch, graduation lists, type-prefixed work docs, and the 3-round review cap all landed from real usage feedback
-- [ ] Refactor flow needs hardening
-- [ ] …
+- a multi-agent team orchestrator or automatic relay platform;
+- a process engine that forces every task through one pipeline;
+- a replacement for existing project docs, ADRs, issues, or pull requests;
+- a necessary dependency for a disposable prototype with no maintenance horizon.
 
-Issues welcome — share your real-world dev pain and refactoring experience.
+CodeStable can coexist with agent-orchestration tools. It owns task boundaries, evidence, and memory, not how the host organizes agents.
 
----
+## Go Deeper
+
+- [Full workflow and project structure](./WORKFLOW.en.md)
+- [Responsibilities of all 8 skills and retired-entry mappings](./SKILL_CATALOG.en.md)
+- [Installation upgrades and the v1 project boundary](./UPGRADE.en.md)
+- [Why CodeStable exists](./docs/why-codestable.en.md)
+- [Roadmap](./ROADMAP.en.md)
+- [Version changes](./CHANGELOG.md)
 
 <div align="center">
 
-MIT License · by [@liuzhengdong](https://github.com/liuzhengdongfortest)
+MIT License · Authors [@liuzhengdong](https://github.com/liuzhengdong), [@dafang](https://github.com/dafang), Codex, and Claude
 
 </div>

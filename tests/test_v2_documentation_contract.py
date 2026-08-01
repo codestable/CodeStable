@@ -24,7 +24,7 @@ V2_SKILLS = {
 # 发布契约显式交付的唯一兼容别名（v1 沿用名 -> v2 新名）；不算独立能力。
 SHIM_SKILLS = {"cs-code-review"}
 
-PUBLIC_DOCS = (
+CURRENT_CONTRACT_DOCS = (
     "README.md",
     "README.en.md",
     "WORKFLOW.md",
@@ -32,6 +32,17 @@ PUBLIC_DOCS = (
     "SKILL_CATALOG.md",
     "SKILL_CATALOG.en.md",
 )
+
+SUPPORTING_PUBLIC_DOCS = (
+    "UPGRADE.md",
+    "UPGRADE.en.md",
+    "ROADMAP.md",
+    "ROADMAP.en.md",
+    "docs/why-codestable.md",
+    "docs/why-codestable.en.md",
+)
+
+PUBLIC_DOCS = CURRENT_CONTRACT_DOCS + SUPPORTING_PUBLIC_DOCS
 
 AUTHORING_DOCS = (
     ".claude/skills/build-cs-skill/SKILL.md",
@@ -69,6 +80,18 @@ def _upgrade_remove_tokens(text: str) -> list[str]:
     return shlex.split(command)
 
 
+def _ordinary_prose_paragraphs(text: str) -> list[str]:
+    without_code = re.sub(r"```.*?```", "", text, flags=re.S)
+    paragraphs: list[str] = []
+    excluded_prefixes = ("#", "|", "<", ">", "- ", "* ")
+    for block in re.split(r"\n\s*\n", without_code):
+        lines = [line.strip() for line in block.splitlines() if line.strip()]
+        if not lines or any(line.startswith(excluded_prefixes) for line in lines):
+            continue
+        paragraphs.append(" ".join(lines))
+    return paragraphs
+
+
 def test_public_docs_present_the_exact_v2_skill_family() -> None:
     zh_catalog = _read("SKILL_CATALOG.md")
     en_catalog = _read("SKILL_CATALOG.en.md")
@@ -76,10 +99,15 @@ def test_public_docs_present_the_exact_v2_skill_family() -> None:
     assert _skill_table(zh_catalog, "## 当前入口", "## v1.0.4") == V2_SKILLS
     assert _skill_table(en_catalog, "## Current Entries", "## Retired") == V2_SKILLS
 
-    assert "8 个 skill" in _read("README.md")
-    assert "8 skills" in _read("README.en.md")
-    assert "cs--skills-8" in _read("README.md")
-    assert "cs--skills-8" in _read("README.en.md")
+    zh_readme = _read("README.md")
+    en_readme = _read("README.en.md")
+    assert "8 个 skill" in zh_readme
+    assert "8 skills" in en_readme
+    assert "cs--skills-8" in zh_readme
+    assert "cs--skills-8" in en_readme
+    for skill in V2_SKILLS:
+        assert f"`{skill}`" in zh_readme
+        assert f"`{skill}`" in en_readme
     assert "已退役，不随 v2 交付" in zh_catalog
     assert "retired and not shipped in v2" in en_catalog
 
@@ -91,8 +119,8 @@ def test_skills_cli_major_upgrade_removes_exactly_the_retired_v1_names() -> None
     retired = set(legacy["skills"]) - V2_SKILLS - SHIM_SKILLS
 
     assert len(retired) == 24
-    zh = _read("README.md")
-    en = _read("README.en.md")
+    zh = _read("UPGRADE.md")
+    en = _read("UPGRADE.en.md")
 
     for readme in (zh, en):
         block = _skills_cli_upgrade_block(readme)
@@ -112,6 +140,149 @@ def test_skills_cli_major_upgrade_removes_exactly_the_retired_v1_names() -> None
 
     assert "按名称删除，不校验安装来源" in zh
     assert "name-based and does not verify the installation source" in en
+
+
+def test_readme_is_a_compact_first_evaluator_entry() -> None:
+    zh = _read("README.md")
+    en = _read("README.en.md")
+    headings = {
+        "README.md": (
+            "## 30 秒运行模型",
+            "## 5 分钟开始",
+            "## 三个核心原则",
+            "## 项目记忆",
+            "## 适用边界",
+            "## 深入文档",
+        ),
+        "README.en.md": (
+            "## 30-Second Model",
+            "## Start in 5 Minutes",
+            "## Three Principles",
+            "## Project Memory",
+            "## Fit",
+            "## Go Deeper",
+        ),
+    }
+    for filename, ordered_headings in headings.items():
+        text = _read(filename)
+        positions = [text.index(heading) for heading in ordered_headings]
+        assert positions == sorted(positions)
+        assert len(text.splitlines()) <= 300
+        assert all(len(paragraph) <= 240 for paragraph in _ordinary_prose_paragraphs(text))
+        assert "asset/PromotionalImage.png" not in text
+
+    for anchor in (
+        "轻量 skill 契约",
+        "不编排 Agent 团队",
+        "不为项目建立第二套文档系统",
+        "明确行动默认同轮直转",
+        "未收敛讨论不承诺跨会话恢复",
+        "直接执行 / 当前会话讨论 / 给出建议",
+        "thin harness, thick context",
+        "证据先于结论",
+        "一个事实，一个 canonical owner",
+        "永久 Epic 文档",
+        "临时 work 游标",
+        "叶子执行器",
+    ):
+        assert anchor in zh
+    for anchor in (
+        "lightweight skill contracts",
+        "does not orchestrate agent teams",
+        "does not create a second documentation system",
+        "Explicit actions dispatch in the same turn by default",
+        "Unresolved discussion is not recoverable across sessions",
+        "execute directly / discuss in this session / advise",
+        "thin harness, thick context",
+        "Evidence before conclusions",
+        "One fact, one canonical owner",
+        "permanent Epic document",
+        "temporary work cursor",
+        "leaf executor",
+    ):
+        assert anchor in en
+
+    for text in (zh, en):
+        for anchor in (
+            "codex plugin marketplace add codestable/CodeStable",
+            "/plugin marketplace add codestable/CodeStable",
+            "npx skills@latest add codestable/CodeStable/plugins/codestable",
+            "/cs-onboard",
+            "/cs",
+            "attention.md",
+            "lessons/",
+            "work/",
+        ):
+            assert anchor in text
+        assert "codex plugin marketplace upgrade codestable" not in text
+        assert "npx skills@latest remove" not in text
+
+    assert "[升级指南](./UPGRADE.md#从-v104-升级到-v2)" in zh
+    assert "精确删除 24 个退役入口" in zh
+    assert "[upgrade guide](./UPGRADE.en.md#upgrade-from-v104-to-v2)" in en
+    assert "remove the 24 retired entries" in en
+
+    assert (
+        "作者 [@liuzhengdong](https://github.com/liuzhengdong)、"
+        "[@dafang](https://github.com/dafang)、Codex、Claude"
+    ) in zh
+    assert (
+        "Authors [@liuzhengdong](https://github.com/liuzhengdong), "
+        "[@dafang](https://github.com/dafang), Codex, and Claude"
+    ) in en
+    assert "liuzhengdongfortest" not in zh
+    assert "liuzhengdongfortest" not in en
+
+
+def test_readme_links_to_canonical_deep_docs() -> None:
+    links = {
+        "README.md": (
+            ("./WORKFLOW.md", "WORKFLOW.md"),
+            ("./SKILL_CATALOG.md", "SKILL_CATALOG.md"),
+            ("./UPGRADE.md", "UPGRADE.md"),
+            ("./docs/why-codestable.md", "docs/why-codestable.md"),
+            ("./ROADMAP.md", "ROADMAP.md"),
+            ("./CHANGELOG.md", "CHANGELOG.md"),
+        ),
+        "README.en.md": (
+            ("./WORKFLOW.en.md", "WORKFLOW.en.md"),
+            ("./SKILL_CATALOG.en.md", "SKILL_CATALOG.en.md"),
+            ("./UPGRADE.en.md", "UPGRADE.en.md"),
+            ("./docs/why-codestable.en.md", "docs/why-codestable.en.md"),
+            ("./ROADMAP.en.md", "ROADMAP.en.md"),
+            ("./CHANGELOG.md", "CHANGELOG.md"),
+        ),
+    }
+    for readme, targets in links.items():
+        text = _read(readme)
+        for link, target in targets:
+            assert link in text
+            assert (ROOT / target).is_file()
+
+
+def test_public_document_local_links_resolve() -> None:
+    for filename in PUBLIC_DOCS:
+        document = ROOT / filename
+        for target in re.findall(r"!?\[[^]]*\]\(([^)]+)\)", _read(filename)):
+            if "://" in target or target.startswith(("#", "mailto:")):
+                continue
+            relative = target.split("#", 1)[0]
+            if relative:
+                assert (document.parent / relative).resolve().exists(), (
+                    f"{filename} links to missing local target {target}"
+                )
+
+
+def test_upgrade_docs_keep_legacy_assets_without_owning_runtime_policy() -> None:
+    zh = _read("UPGRADE.md")
+    en = _read("UPGRADE.en.md")
+
+    assert "升级不会删除项目里的 v1 历史资产" in zh
+    assert "检索与写入政策以 [WORKFLOW.md](./WORKFLOW.md#v1-升级边界) 为准" in zh
+    assert "does not delete historical v1 project assets" in en
+    assert "retrieval and write policy remains owned by [WORKFLOW.en.md](./WORKFLOW.en.md#v1-upgrade-boundary)" in en
+    assert ".codestable/reference/" not in zh
+    assert ".codestable/reference/" not in en
 
 
 def test_active_docs_do_not_publish_v1_runtime_as_current_contract() -> None:
@@ -231,7 +402,7 @@ def test_cs_session_discussion_and_handoff_contract_is_bilingual() -> None:
     assert "stable assets graduate through the owning skill into their canonical homes" in en_catalog
 
 
-def test_epic_and_legacy_knowledge_contracts_are_bilingual() -> None:
+def test_workflow_owns_epic_and_legacy_knowledge_contracts() -> None:
     zh_workflow = " ".join(_read("WORKFLOW.md").split())
     en_workflow = " ".join(_read("WORKFLOW.en.md").split())
 
@@ -304,18 +475,12 @@ def test_epic_and_legacy_knowledge_contracts_are_bilingual() -> None:
     en_readme = _read("README.en.md")
     zh_catalog = _read("SKILL_CATALOG.md")
     en_catalog = _read("SKILL_CATALOG.en.md")
-    assert "九个历史知识目录" in zh_readme
-    assert "nine v1 historical knowledge directories" in en_readme
-    assert "每个 skill 动手前按任务关键词检索" not in zh_readme
-    assert "every skill searches" not in en_readme
     assert "默认连续策略" not in zh_workflow
-    assert "默认连续策略" not in zh_readme
-    for task_skill in ("cs-feat", "cs-issue", "cs-refactor", "cs-epic"):
-        assert task_skill in zh_readme
-        assert task_skill in en_readme
     assert "永久 Epic 文档" in zh_catalog
     assert "permanent Epic doc" in en_catalog
-    for document in (zh_readme, zh_catalog):
-        assert "串行连续推进" in document
-    for document in (en_readme, en_catalog):
-        assert "serially and continuously" in document
+    assert "永久 Epic 文档" in zh_readme
+    assert "临时 work 游标" in zh_readme
+    assert "permanent Epic document" in en_readme
+    assert "temporary work cursor" in en_readme
+    assert "串行连续推进" in zh_catalog
+    assert "serially and continuously" in en_catalog
