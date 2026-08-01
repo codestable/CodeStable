@@ -118,6 +118,32 @@ python3 {skill_dir}/scripts/bump_version.py --to X.Y.Z
 
 `{skill_dir}` = 本 SKILL.md 所在目录。工具随 skill 包分发，不复制到 `.codestable/tools/`。
 
+### 项目内学习迁移实验
+
+`execution_mode: learning-transfer` 是维护者侧实验，不在用户任务中构造样本或运行模型。它用独立
+`sequence.py` 执行 A -> fresh `cs-keep` -> treatment/control fresh B；每次 invocation 只注入 owning
+skill 的冻结快照，B 两侧 prompt 相同，唯一处理变量必须是经 schema 校验的项目 lesson。
+
+真实运行前必须同时满足：实验输入与 hypothesis 已提交；checkpoint fingerprint 绑定 config、fixture、
+skill 快照、seed、完整 pipeline、target、`k` 与 run identity；golden/naive preflight 成立；显式
+`family/harness/model` target 至少覆盖两个 model family；每个 target 的外部 sandbox 已通过宿主与
+sibling cell 读取、宿主写入隔离探针，且宿主配置与已知会话状态快照保持不变。
+输入 commit 后先做最小真实 target 探针，再提交含 `source_commit` 和逐 target 布尔 oracle 的 frozen
+attestation；attestation 只接受注册字段，不得记录 prompt、输出、路径、sentinel 或 session id。
+prepared manifest 不能运行真实 sequence。
+失配的 checkpoint 拒绝恢复；校准保留完整 fixtures/model families，只缩小
+`k`，并与最终运行使用不同 run identity；`learning_transfer` scorer 不可替换。
+
+Deterministic pipeline / fixture / oracle 失败永久阻断 structural integrity；adapter / transport 故障
+单列为 operational error。成功重试保留尝试与成本但不永久污染 integrity，未解决时保持
+`[underpowered]`；只有完整 pair 才能把历史 operational error 标为 resolved。
+
+每次 provider 调用前，append-only checkpoint 必须用新的 invocation ID 先 `flush + fsync` start 与
+`[soft]` fallback，再追加同 ID terminal metrics；中断时 reducer 保留 fallback、成本和 unresolved
+attempt。`--fresh` 只允许删除 header-only journal，其他运行证据与已有结果都必须换新 `--out`。每个
+cell repo 在 oracle 后销毁；checkpoint 只保留结构化 phase、指标与哈希，不保留原始子进程输出，
+也不得持久化 transcript、完整 treatment/control repo，或自动导出、上传、改写 skill。
+
 ---
 
 ## 认知诚实纪律（硬约束）
@@ -126,6 +152,8 @@ python3 {skill_dir}/scripts/bump_version.py --to X.Y.Z
 - `hypotheses.md` 冻结后**先 git commit 再跑任何 LLM**；provenance 由 `tests/test_cs_skill_convergence.py` 机械校验。
 - 禁止裸 `V_instance = 0.XX` 自评分；收敛判据见 optimize 协议。
 - 跨模型 ≥2；judge 模型须独立于被测模型（避免同源偏差）。
+- learning-transfer 校准可用 `k=2`，但接受证据要求每 fixture、每 family `k>=5`；任一 primary
+  aggregate 为 `[underpowered]` 时扩大样本后重跑，不得把校准结果混入最终结论。
 
 ---
 

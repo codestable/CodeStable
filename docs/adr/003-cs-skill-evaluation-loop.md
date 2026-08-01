@@ -34,6 +34,19 @@ CodeStable 原有 `tests/test_skill_*` 只验证 skill **写得对不对**（路
 8. **v2 输入边界**：评测 fixture 是 repo-local 维护者资产，不依赖任何 shipped runtime
    skill。`promote_feedback_fixture.py` 只保留为 v1 `cs-feedback` candidate 的 legacy-only
    导入器，不构成 v2 production feedback 入口。
+9. **项目 lesson 的 paired sequence**：`answerType/task.kind: learning-transfer` 由独立
+   `sequence.py` / `learning_transfer` scorer 承载 A -> fresh `cs-keep` -> treatment/control fresh B。
+   它只用于维护者验证项目内跨会话迁移，不在用户使用 CodeStable 时构造实验。post-A 同源、B prompt
+   equality、严格 lesson schema/窄迁移、Git 与文件 mutation、hidden/regression、stale retirement
+   都是机械 oracle。Deterministic failure 永久阻断 structural integrity；adapter/transport error 单列
+   operational history，成功重试仍计成本但不永久污染 integrity，未解决则保持 underpowered。调用前
+   durable append start 与 soft fallback，terminal 只追加；仅完整 pair 能把历史 operational error 标为
+   resolved，`--fresh` 只允许 header-only journal，其他 campaign 必须使用新的输出身份。
+10. **冻结与隔离是接受前提**：真实调用前提交 hypothesis 与完整 campaign 输入，checkpoint fingerprint
+    绑定 config、fixtures、skill snapshots、runner/scorer、seed、target、`k` 与 run identity，校准不得
+    混入最终结果。每个 harness 必须通过宿主与 sibling cell 读取、宿主写入隔离探针；deterministic
+    子进程只获最小环境且不保留原始输出。cell repo 在 oracle 后销毁，只保留结构化指标和哈希，不保留
+    transcript 或完整 treatment/control 仓库。
 
 ## Consequences
 
@@ -42,6 +55,8 @@ CodeStable 原有 `tests/test_skill_*` 只验证 skill **写得对不对**（路
 - 冻结的 v1 feedback candidate 仍可显式导入历史 experiment；v2 不承诺 production feedback promotion。
 - eval-cs-skill 自身可被同一闭环评测优化（自指）。
 - 真实多模型运行需 API/CLI 鉴权并产生成本，受 `--dry-run` + `budget_usd` 护栏约束。
+- paired learning-transfer 的结论要求至少两个 model family、每 fixture 每 family `k>=5`；校准可用
+  `k=2` 但只能标探路证据，任何 primary aggregate 仍为 `[underpowered]` 时不得接受。
 - **评测效度是头等风险**（首轮真实 campaign 教训）：必须复现被测 skill 实际声明的 context contract，而不是注入统一 onboard runtime；同时用语义 oracle（`recall_judge`）判散文 answer，并让 fixture 内嵌被操作的 subject matter。否则测到的是「skill 在残缺环境下的反应」而非真实能力。核查须分模型看 + 手工读原始输出 + 认 k=1 variance。细则见 `references/eval/protocol.md` 效度三铁律。
 
 ## Rejected alternatives

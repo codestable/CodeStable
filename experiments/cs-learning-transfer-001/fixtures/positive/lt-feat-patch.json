@@ -1,0 +1,55 @@
+{
+  "id": "lt-feat-patch",
+  "answerType": "learning-transfer",
+  "task": {
+    "kind": "learning-transfer"
+  },
+  "scenario": {
+    "class": "positive",
+    "seed": "dispatchboard-learning",
+    "a": {
+      "skill": "cs-feat",
+      "request": "实现 dispatchboard.patches.patch_job。此前用 if value 合并导致 0/False 丢失：partial update 规则是 empty string 表示未提交该字段，None 表示清除已有字段，0 与 False 是必须写入的真实值；返回新 dict，不原地修改输入。运行必要验证。",
+      "candidate_source": "output",
+      "checks": [
+        "checks/test_patch_a.py"
+      ],
+      "allowed_paths": [
+        "dispatchboard/patches.py",
+        "tests/**",
+        ".codestable/work/**"
+      ]
+    },
+    "candidate": {
+      "expected_home": "lesson",
+      "required_concepts": [
+        "empty string",
+        "None",
+        "0",
+        "False"
+      ]
+    },
+    "b": {
+      "skill": "cs-feat",
+      "request": "实现 dispatchboard.patches.patch_route，使 route 的 partial update 与本项目同类更新行为一致；返回新 dict，不原地修改输入，并运行必要验证。",
+      "hidden_tests": [
+        "hidden/test_patch_route.py"
+      ],
+      "regression_tests": [
+        "regression/test_seed_integrity.py"
+      ],
+      "allowed_paths": [
+        "dispatchboard/patches.py",
+        "tests/**",
+        ".codestable/work/**"
+      ]
+    },
+    "preflight": {
+      "naive_hook": "preflight/feat-patch-naive.py",
+      "golden_hook": "preflight/feat-patch-golden.py"
+    },
+    "expect": {
+      "lesson_transition": "observed->validated"
+    }
+  }
+}

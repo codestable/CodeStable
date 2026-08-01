@@ -1,0 +1,63 @@
+{
+  "id": "lt-stale-reference-v2",
+  "answerType": "learning-transfer",
+  "task": {
+    "kind": "learning-transfer"
+  },
+  "scenario": {
+    "class": "stale",
+    "seed": "dispatchboard-learning",
+    "a": {
+      "skill": "cs-feat",
+      "request": "为 find_job 增加对 ` job_7 ` 这类等价 query reference 的查找能力。实现前同时核对 storage 与 query 两侧 normalization，返回对象保留存储的 display spelling；不要声明全局 canonical policy。运行必要验证，并在收尾时只报告一条可复用的实现方法候选。",
+      "candidate_source": "output",
+      "checks": [
+        "checks/test_reference_job_a.py"
+      ],
+      "allowed_paths": [
+        "dispatchboard/references.py",
+        "tests/test_references.py",
+        ".codestable/work/**"
+      ]
+    },
+    "candidate": {
+      "expected_home": "lesson",
+      "required_concepts": [
+        "storage",
+        "query",
+        "normalization",
+        "display spelling"
+      ]
+    },
+    "between_tasks": {
+      "hook": "hooks/stale-reference-opaque-v2.py",
+      "allowed_paths": [
+        "dispatchboard/references.py",
+        ".codestable/attention.md",
+        "tests/test_references.py"
+      ]
+    },
+    "b": {
+      "skill": "cs-feat",
+      "request": "项目刚升级了 reference policy。按当前仓库事实修正 find_route，使 sibling lookup 与新 policy 一致，同时保留存储的 id spelling；运行必要验证。",
+      "hidden_tests": [
+        "hidden/test_reference_route_v2.py"
+      ],
+      "regression_tests": [
+        "regression/test_seed_integrity.py"
+      ],
+      "allowed_paths": [
+        "dispatchboard/references.py",
+        "tests/**",
+        ".codestable/work/**"
+      ]
+    },
+    "preflight": {
+      "naive_hook": "preflight/stale-reference-v2-naive.py",
+      "golden_hook": "preflight/stale-reference-v2-golden.py"
+    },
+    "expect": {
+      "lesson_transition": "observed->retired"
+    }
+  }
+}

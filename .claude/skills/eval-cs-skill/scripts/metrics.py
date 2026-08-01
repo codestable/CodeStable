@@ -50,7 +50,7 @@ def capture(result: HarnessResult, prompt: str | None = None) -> dict[str, Any]:
         metrics["turns"] = tagged(result.turns, MEASURED)
 
     usage = result.usage or {}
-    real = usage.get("source") == "claude-json"
+    real = usage.get("source") in {"claude-json", "codex-json"}
     tag = MEASURED if real else SOFT
 
     tin = usage.get("input_tokens")

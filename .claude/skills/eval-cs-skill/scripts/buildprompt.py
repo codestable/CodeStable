@@ -210,6 +210,49 @@ def build_e2e_prompt(fixture: Fixture, variant_text: str) -> str:
     return "\n".join(parts)
 
 
+def build_sequence_task_prompt(fixture: Fixture, variant_text: str, phase: str) -> str:
+    """构建 learning-transfer 的 A/B 任务 prompt；B 不接收任何候选或 treatment 信息。"""
+    if phase not in {"a", "b"}:
+        raise ValueError(f"sequence task phase 非法: {phase!r}")
+    scenario = (fixture.raw or {}).get("scenario") or {}
+    task = scenario.get(phase) or {}
+    return "\n".join([
+        _INTRO,
+        "===== SKILL.md 开始 =====",
+        variant_text.strip(),
+        "===== SKILL.md 结束 =====\n",
+        "你在一个已 onboard 的真实仓库工作目录中（当前目录即仓库根）。",
+        "按该 skill 的流程直接修改文件、运行必要验证，并按其收尾契约报告。",
+        "\n## 用户请求",
+        str(task.get("request", "")).strip(),
+    ])
+
+
+def build_curation_prompt(
+    fixture: Fixture,
+    keep_text: str,
+    candidate: str,
+    evidence: str,
+) -> str:
+    """把 A 的唯一候选交给 fresh cs-keep；授权只覆盖精确 lesson 写入。"""
+    scenario = (fixture.raw or {}).get("scenario") or {}
+    expected_home = (scenario.get("candidate") or {}).get("expected_home")
+    return "\n".join([
+        _INTRO,
+        "===== SKILL.md 开始 =====",
+        keep_text.strip(),
+        "===== SKILL.md 结束 =====\n",
+        "fixture 预检已确认这个候选属于 lesson 类归宿，不属于 attention 或 ADR。"
+        if expected_home == "lesson" else "fixture 归宿预检未通过。",
+        "用户现对下面这条精确内容给出显式授权：请记录为 observed lesson。",
+        "不得修改业务代码，不得扩大规则、scope、写入或上传授权。",
+        "\n## 候选",
+        candidate.strip(),
+        "\n## 可追溯证据",
+        evidence.strip(),
+    ])
+
+
 _BUILDERS = {
     "review": build_review_prompt,
     "fix": build_fix_prompt,

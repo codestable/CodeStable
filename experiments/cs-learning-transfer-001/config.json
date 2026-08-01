@@ -1,0 +1,33 @@
+{
+  "name": "cs-learning-transfer-001",
+  "skill_under_test": "cs-feat",
+  "execution_mode": "learning-transfer",
+  "variants": [
+    "baseline"
+  ],
+  "k": 5,
+  "scorers": [
+    "learning_transfer"
+  ],
+  "fixture_classes": [
+    "positive",
+    "unrelated",
+    "stale"
+  ],
+  "budget_usd": 50.0,
+  "inject_context": false,
+  "model_targets": [
+    {
+      "id": "claude-haiku",
+      "family": "claude",
+      "harness": "claude-headless",
+      "model": "claude-haiku-4-5"
+    },
+    {
+      "id": "codex-terra",
+      "family": "codex",
+      "harness": "codex-cli",
+      "model": "gpt-5.6-terra"
+    }
+  ]
+}

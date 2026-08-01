@@ -54,19 +54,87 @@ def available() -> list[str]:
     return sorted(_REGISTRY)
 
 
-ENV_WHITELIST = (
-    "PATH", "HOME", "LANG", "LC_ALL", "TERM",
-    "ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_BASE_URL", "ANTHROPIC_MODEL",
-    "OPENAI_API_KEY", "OPENAI_BASE_URL",
-    "CLAUDE_CODE_OAUTH_TOKEN", "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
-    "CLAUDE_CODE_ATTRIBUTION_HEADER", "CODEX_HOME",
+COMMON_ENV_KEYS = (
+    "PATH", "LANG", "LC_ALL", "TERM",
     "HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy", "ALL_PROXY", "NO_PROXY",
 )
+CLAUDE_ENV_KEYS = COMMON_ENV_KEYS + (
+    "ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_BASE_URL", "ANTHROPIC_MODEL",
+    "CLAUDE_CODE_OAUTH_TOKEN", "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
+    "CLAUDE_CODE_ATTRIBUTION_HEADER",
+)
+CODEX_ENV_KEYS = COMMON_ENV_KEYS + ("OPENAI_API_KEY", "OPENAI_BASE_URL")
+ENV_WHITELIST = CLAUDE_ENV_KEYS + CODEX_ENV_KEYS + ("HOME", "CODEX_HOME")
 
 
-def whitelisted_env(extra: dict[str, str] | None = None) -> dict[str, str]:
+def _sandbox_quote(value: Path | str) -> str:
+    text = str(value)
+    if any(character in text for character in ("\x00", "\n", "\r")):
+        raise ValueError("Seatbelt path 不得包含 NUL 或换行")
+    return text.replace("\\", "\\\\").replace('"', '\\"')
+
+
+def physical_home() -> Path:
+    """Return the account home independently of a caller-controlled HOME variable."""
+    try:
+        import os
+        import pwd
+
+        return Path(pwd.getpwuid(os.getuid()).pw_dir).resolve()
+    except (ImportError, KeyError, OSError):
+        return Path.home().resolve()
+
+
+def macos_sandbox_profile(
+    workdir: Path,
+    runtime: Path,
+    binary: Path,
+    read_roots: tuple[Path, ...] = (),
+) -> str:
+    """Seatbelt profile: protect host home and sibling cells, allow only this cell/runtime."""
+    protected_roots = sorted({
+        Path.home().resolve(),
+        physical_home(),
+        workdir.resolve().parent,
+    }, key=str)
+    protected = "\n".join(
+        f'      (subpath "{_sandbox_quote(path)}")'
+        for path in protected_roots
+    )
+    readable_roots = sorted({
+        workdir.resolve(),
+        runtime.resolve(),
+        *(path.resolve() for path in read_roots),
+    }, key=str)
+    readable = "\n".join(
+        f'        (subpath "{_sandbox_quote(path)}")'
+        for path in readable_roots
+    )
+    return f'''(version 1)
+(allow default)
+(deny file-read*
+  (require-all
+    (require-any
+{protected})
+    (require-not
+      (require-any
+{readable}
+        (literal "{_sandbox_quote(binary.resolve())}")))))
+(deny file-write*
+  (require-not
+    (require-any
+      (subpath "{_sandbox_quote(workdir.resolve())}")
+      (subpath "{_sandbox_quote(runtime.resolve())}")
+      (literal "/dev/null"))))
+'''
+
+
+def whitelisted_env(
+    extra: dict[str, str] | None = None,
+    include: tuple[str, ...] = ENV_WHITELIST,
+) -> dict[str, str]:
     import os
-    env = {k: os.environ[k] for k in ENV_WHITELIST if k in os.environ}
+    env = {k: os.environ[k] for k in include if k in os.environ}
     if extra:
         env.update(extra)
     return env

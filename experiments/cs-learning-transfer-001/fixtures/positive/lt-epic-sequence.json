@@ -1,0 +1,54 @@
+{
+  "id": "lt-epic-sequence",
+  "answerType": "learning-transfer",
+  "task": {
+    "kind": "learning-transfer"
+  },
+  "scenario": {
+    "class": "positive",
+    "seed": "dispatchboard-learning",
+    "a": {
+      "skill": "cs-epic",
+      "request": "fresh reviewer 已复现：Sequence rollout Epic 的 SEQ-A 只读取一处当前记录，遗漏另一处 persisted history source 后会分配已使用编号。恢复 active Epic，执行当前已批准子项 SEQ-A；实现前盘点全部 persisted history sources 并建立 single snapshot。沿用现有批准 revision 与 per-item/manual 策略，不修改拆解或扩大范围；运行必要验证并按游标契约记录进度。收尾的唯一晶化候选只记录可复用方法：实现 sibling allocator 前先盘点全部 persisted history sources，并建立 single snapshot。",
+      "candidate_source": "epic-cursor",
+      "checks": [
+        "checks/test_epic_sequence_a.py"
+      ],
+      "allowed_paths": [
+        "dispatchboard/job_sequence.py",
+        "tests/**",
+        ".codestable/work/epic-sequence-rollout.md"
+      ]
+    },
+    "candidate": {
+      "expected_home": "lesson",
+      "required_concepts": [
+        "persisted history sources",
+        "single snapshot",
+        "sibling allocator"
+      ]
+    },
+    "b": {
+      "skill": "cs-epic",
+      "request": "继续仓库中 active 的 Sequence rollout Epic，执行已批准子项 SEQ-B。沿用现有批准 revision 与 per-item/manual 策略，不修改拆解或扩大范围；运行必要验证并按游标契约记录进度。",
+      "hidden_tests": [
+        "hidden/test_route_sequence.py"
+      ],
+      "regression_tests": [
+        "regression/test_seed_integrity.py"
+      ],
+      "allowed_paths": [
+        "dispatchboard/route_sequence.py",
+        "tests/**",
+        ".codestable/work/epic-sequence-rollout.md"
+      ]
+    },
+    "preflight": {
+      "naive_hook": "preflight/epic-sequence-naive.py",
+      "golden_hook": "preflight/epic-sequence-golden.py"
+    },
+    "expect": {
+      "lesson_transition": "observed->validated"
+    }
+  }
+}

@@ -12,6 +12,7 @@ import sys
 sys.dont_write_bytecode = True  # 不污染 plugin 包
 
 import json
+import re
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Any
@@ -20,6 +21,31 @@ MEASURED = "measured"
 SOFT = "soft"
 UNDERPOWERED = "underpowered"
 _TAGS = {MEASURED, SOFT, UNDERPOWERED}
+_SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
+
+
+def is_safe_slug(value: object) -> bool:
+    """可安全进入 artifact 路径的稳定 ID。"""
+    return isinstance(value, str) and _SLUG_RE.fullmatch(value) is not None
+
+
+@dataclass(frozen=True)
+class ExecutionTarget:
+    """一个真实执行目标：model family、harness 与 model 的显式绑定。"""
+
+    id: str
+    family: str
+    harness: str
+    model: str
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "ExecutionTarget":
+        missing = [key for key in ("id", "family", "harness", "model") if not data.get(key)]
+        if missing:
+            raise ValueError(f"model target 缺字段 {missing}")
+        if not is_safe_slug(data["id"]):
+            raise ValueError("model target id 必须是小写连字符 slug（最多 64 字符）")
+        return cls(**{key: str(data[key]) for key in ("id", "family", "harness", "model")})
 
 
 def tagged(value: Any, tag: str, evidence: str | None = None) -> dict[str, Any]:
@@ -58,6 +84,8 @@ class Fixture:
         missing = [k for k in ("id", "answerType") if k not in data]
         if missing:
             raise ValueError(f"fixture 缺字段 {missing}: {data.get('id', '<no-id>')}")
+        if not is_safe_slug(data["id"]):
+            raise ValueError("fixture id 必须是小写连字符 slug（最多 64 字符）")
         return cls(
             id=str(data["id"]),
             answer_type=str(data["answerType"]),
