@@ -73,7 +73,7 @@ npx skills@latest add codestable/CodeStable/plugins/codestable
 | `cs-refactor` | 在行为等价证据下调整结构或性能 |
 | `cs-epic` | 拆解并按已确认策略推进多个可交付子项 |
 | `cs-review` | 只读叶子执行器；单轮审查，不创建子 agent |
-| `cs-keep` | 沉淀有证据的项目事实和可复用经验 |
+| `cs-keep` | 管理有证据的项目事实、lesson 生命周期与 canonical 归宿 |
 
 `cs-code-review` 是 `cs-review` 的兼容别名，只转发，不包含独立规则。
 
@@ -109,8 +109,12 @@ CodeStable 给强模型写责任，不写逐步脚本。skill 只约束目标、
 ```
 
 - `attention.md` 保存每次会话都需要的少量项目事实，最多 25 条。
-- `lessons/` 一条经验一个文件，要求有可追溯证据，并在写入前查重合并。
+- `lessons/` 一条经验一个文件，按 observed / validated / retired 演化，并在写入前查重合并。
 - `work/` 只服务活动中的跨会话任务、多人交接或明确要求的持久记录。
+
+CodeStable 边做边识别晶化时刻：任务中静默观察，普通收尾最多给一条有证据的候选。
+
+能机械化的错误优先进入测试或 checker。新 lesson 仍需明确授权，后续会话核实后再验证或退役。
 
 普通任务不生成 CodeStable 阶段文档。diff、测试输出和交付说明就是证据。会话内讨论不进入 `work/`；只有稳定、值得复用的结论才由 owning skill 毕业到 canonical 归宿。
 

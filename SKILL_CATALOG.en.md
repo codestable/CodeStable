@@ -14,11 +14,15 @@ skill files or a centralized onboard runtime.
 | Refactor | `cs-refactor` | Change structure or performance under verifiable behavioral equivalence |
 | Epic | `cs-epic` | Decompose, confirm, and advance multiple deliverable items serially and continuously through a permanent Epic doc and temporary work cursor |
 | Review | `cs-review` | Read-only leaf executor for one change, design, module, or repository review |
-| Memory | `cs-keep` | Store evidence-backed frequent facts or reusable lessons in project memory |
+| Memory | `cs-keep` | Manage evidence-backed project facts, lesson lifecycle, and canonical homes |
 
 `cs-code-review` ships as the single compatibility alias of `cs-review` (the carried-over v1 name; forwarding only, no independent rules).
 
 Discussion exists only in the current session and creates no work cursor or transcript; stable assets graduate through the owning skill into their canonical homes, while unresolved discussion has no cross-session recovery promise.
+
+Task skills identify strong signals silently. Ordinary work shows at most one crystallization candidate, while Epic
+items defer candidates to the final graduation list. `cs-keep` evolves lessons through observed / validated / retired;
+mechanical guards come first, and creation or cross-project sharing still requires explicit authorization.
 
 ## Project Knowledge and Epic Boundary
 

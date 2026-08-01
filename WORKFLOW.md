@@ -48,10 +48,25 @@ bug / 行为异常    -> cs-issue ----------> cs-review（高风险或按需）
 - 有 blocking 或未被用户明确接受的 important 时不提交当前候选，也不创建正式里程碑；修复后重新验证、冻结目标并创建 fresh reviewer。只有审查门槛通过且已有 commit 授权时才形成语义原子里程碑；WIP/checkpoint 只作恢复或隔离基线，不代表通过。
 - Epic 同一时间只允许一个 `current_item`；这是串行约束，不是每个子项的人工 gate。连续策略下，普通子项达到语义原子里程碑后自动进入下一项，不得询问“是否继续下一项”或终态返回；逐项暂停必须是 owner 明示策略或真实门槛。
 - 健康运行中的 reviewer 与原 run/target 绑定；running，或 Awaiting 携带同一可查询 run identity 且仍为活动态时继续等待，不因后来发现更优创建方式而取消、重复创建或并行补发。只有终止无报告、run identity 不可恢复、能力不满足或目标失效时，本轮才失败且不计审查轮次；外层主流程先诊断再决定有界重试、更换创建方式或上交，不盲目重发。
-- `cs-keep` 把高频事实压进 attention，把可复用经验写成 lesson。
+- `cs-keep` 把高频事实压进 attention，把尚未被更强 owner 承接的经验暂存为 lesson，并推动它们
+  毕业到机械 guard、项目文档或 ADR。
 
 普通任务不生成阶段文档。diff、测试输出和交付说明就是证据；只有跨会话、多人交接或用户
 要求留痕时，才维护一个 work 文档，完成后删除或按用户要求保留。
+
+## 项目内持续学习
+
+- 四个 task skill 在任务内静默观察，只把经当前代码、测试或 canonical 文档核实且真实改变计划或
+  验证的 lesson 报告为 `经验命中：{path}（{status}）；核验：{fact}；影响：{plan_or_check}`；
+  纯关键词碰撞不算复用。
+- 晶化候选只存在于当前会话内。普通任务最多展示一条最高价值候选，无强信号就不显示；
+  Epic 子项不新增暂停，每项最多把一条去重候选写入既有游标证据区，最终毕业清单统一处理。
+- lesson 生命周期为 observed / validated / retired。新条目从 observed 开始，只有独立后续任务中
+  的有效命中和成功验证才能进入 validated；事实反证、scope 失效或已有更强 owner 时进入 retired。
+- read-repair 只允许已有命中条目的窄状态维护；稳定 validated 命中不写文件。
+  新 lesson 仍需显式授权，规则/scope 改写、晋升、删除和跨项目分享也不能从任务执行授权中推断。
+- 机械 guard 优先：能在当前任务范围内落成测试、checker、lint、类型或 helper 的错误，不再写重复
+  lesson。经验最终进入一个 canonical owner；不保存 transcript、逐次命中日志或后台 telemetry。
 
 ## Epic 生命周期
 

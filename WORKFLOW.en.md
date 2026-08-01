@@ -81,11 +81,31 @@ Execution strength follows risk:
   dispatch. Only terminal failure without a report, an unrecoverable run identity, a capability mismatch,
   or target invalidation fails the delegation; it does not consume a review round. The outer workflow diagnoses
   before a bounded retry, creation-method switch, or escalation; it never blindly resends the task.
-- `cs-keep` compresses frequently needed facts into attention and reusable experience into lessons.
+- `cs-keep` compresses frequently needed facts into attention, stages experience without a stronger owner as
+  lessons, and graduates it to mechanical guards, project docs, or ADRs.
 
 Ordinary work creates no stage artifacts. The diff, test output, and delivery report are the evidence.
 Create one work document only for cross-session work, multi-agent handoff, or an explicit request for
 a durable record; remove it when complete unless the owner asks to retain it.
+
+## Project-Local Continuous Learning
+
+- Each task skill observes silently during the task. It reports
+  `lesson hit: {path} ({status}); check: {fact}; impact: {plan_or_check}` only after current code, tests, or
+  canonical docs confirm the lesson and it actually changes the plan or verification; keyword overlap alone is
+  not reuse.
+- A crystallization candidate exists only in the current session. Ordinary work shows at most one candidate and
+  stays quiet without a strong signal. Epic items add no pause: each may place one deduplicated candidate in the
+  existing cursor evidence, and the final graduation list handles them together.
+- The lesson lifecycle is observed / validated / retired. A new lesson starts observed, reaches validated only
+  after successful use in an independent later task, and becomes retired when facts contradict it, its scope
+  expires, or a stronger owner exists.
+- Read-repair permits only narrow state maintenance on an existing matched lesson; stable validated hits create
+  no file churn. New lessons still require explicit authorization, as do rule/scope rewrites, promotion, deletion,
+  and cross-project sharing; none may be inferred from task-execution authorization.
+- Put mechanical guards first: when an in-scope test, checker, lint, type, or helper can prevent recurrence, do
+  not write a duplicate lesson. Experience converges on one canonical owner and does not save transcripts,
+  per-hit logs, or background telemetry.
 
 ## Epic Lifecycle
 

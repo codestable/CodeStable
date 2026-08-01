@@ -364,6 +364,60 @@ def test_keep_never_writes_v1_compound() -> None:
     assert "能合并就更新旧文件" not in keep
 
 
+def test_keep_owns_the_three_state_lesson_lifecycle() -> None:
+    frontmatter, keep = _read_skill(SKILLS / "cs-keep/SKILL.md")
+    assert str(frontmatter["description"]).startswith(
+        "管理有证据的项目事实、lesson 生命周期与 canonical 归宿"
+    )
+    for anchor in (
+        "status: observed",
+        "scope: 模块 / 命令 / 场景关键词",
+        "适用 / 不适用：边界与停止应用信号",
+        "证据：最多三个代表性路径、测试、diff 或任务指针",
+        "候选归宿：test | checker | attention | project-doc | adr | codestable-eval",
+        "`observed`",
+        "尚未在独立后续任务验证",
+        "`validated`",
+        "非创建该 lesson 的任务和 agent invocation 中有效命中",
+        "真实改善行为并验证成功",
+        "`retired`",
+        "不得应用且不再复活原结论",
+        "旧 lesson 缺 `status` 按 `observed` 读取",
+        "不批量迁移",
+        "不得保存原始对话、逐次命中日志或无限 evidence history",
+        "Epic 最终毕业 gate 批准候选",
+    ):
+        assert _contains_contract(keep, anchor)
+
+
+def test_keep_promotes_or_retires_without_creating_parallel_truth() -> None:
+    _, keep = _read_skill(SKILLS / "cs-keep/SKILL.md")
+    for anchor in (
+        "机械 guard 优先",
+        "测试、checker、lint、类型或 deterministic helper",
+        "高频必读事实进入 `attention.md`",
+        "全文保持 ≤25 条",
+        "难回退、缺少上下文会令人意外、源于真实取舍",
+        "其他稳定方法进入项目既有文档",
+        "目标不存在时请 owner 选择",
+        "不发明目录",
+        "先验证新 owner",
+        "同一更新中删除重复 lesson",
+        "约 50 条预算",
+        "`codestable-eval` 只标记未来上游候选",
+        "不导出、不上传、不改 skill",
+    ):
+        assert _contains_contract(keep, anchor)
+
+    for anchor in (
+        "新建、改写规则/scope、晋升、删除或跨项目分享仍需用户显式授权",
+        "不能把创建该 lesson 的同一任务自证为 validated",
+        "retired 条目上的新结论必须另建 observed lesson",
+        "不因命中次数或模型自评晋级",
+    ):
+        assert _contains_contract(keep, anchor)
+
+
 def test_onboard_keeps_the_base_skeleton_minimal() -> None:
     _, onboard = _read_skill(SKILLS / "cs-onboard/SKILL.md")
     skeleton = onboard.split("```text", 1)[1].split("```", 1)[0]

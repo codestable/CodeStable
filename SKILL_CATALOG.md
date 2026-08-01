@@ -14,11 +14,14 @@ runtime。
 | 重构 | `cs-refactor` | 在可核验的行为等价约束下调整结构或性能 |
 | 大需求 | `cs-epic` | 用永久 Epic 文档与临时 work 游标拆解、确认并串行连续推进多个可交付子项 |
 | 审查 | `cs-review` | 只读叶子执行器；单轮审查，不创建子 agent |
-| 记忆 | `cs-keep` | 将有证据的高频事实或可复用经验写入项目记忆 |
+| 记忆 | `cs-keep` | 管理有证据的项目事实、lesson 生命周期与 canonical 归宿 |
 
 `cs-code-review` 作为 `cs-review` 的唯一兼容别名随包交付（v1 沿用名，只转发、不含独立规则）。
 
 讨论本身只存在于当前会话，不创建 work 游标或 transcript；稳定资产由 owning skill 按 canonical 归宿毕业，未收敛讨论不承诺跨会话恢复。
+
+task skill 静默识别强信号，普通任务最多展示一条晶化候选，Epic 子项统一在最终毕业清单处理。
+`cs-keep` 让 lesson 按 observed / validated / retired 演化；机械 guard 优先，新建与跨项目分享仍需显式授权。
 
 ## 项目知识与 Epic 边界
 

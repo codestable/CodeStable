@@ -75,7 +75,7 @@ When you are unsure which entry fits, call `/cs`; you can also call the owning s
 | `cs-refactor` | Change structure or performance under equivalence evidence |
 | `cs-epic` | Decompose and advance multiple deliverable items under confirmed policies |
 | `cs-review` | Read-only leaf executor; one review, with no child agent |
-| `cs-keep` | Capture evidence-backed project facts and reusable lessons |
+| `cs-keep` | Manage evidence-backed project facts, lesson lifecycle, and canonical homes |
 
 `cs-code-review` is a compatibility alias of `cs-review`. It only forwards and contains no independent rules.
 
@@ -111,8 +111,12 @@ The owning skill returns conclusions to one home; if none exists, it asks the ow
 ```
 
 - `attention.md` holds the small set of project facts needed every session, capped at 25 entries.
-- `lessons/` keeps one evidence-backed lesson per file and deduplicates before writing.
+- `lessons/` keeps one lesson per file, evolves it through observed / validated / retired, and deduplicates before writing.
 - `work/` exists only for active cross-session work, multi-agent handoff, or an explicitly requested durable record.
+
+CodeStable recognizes crystallization moments while working: it observes silently and shows at most one evidence-backed candidate at ordinary completion.
+
+Mechanizable failures go to tests or checkers first. New lessons still require explicit authorization; later sessions validate or retire them after checking current facts.
 
 Ordinary work creates no CodeStable stage docs; the diff, tests, and delivery summary are the evidence. Discussion does not enter `work/`; only stable conclusions graduate through the owning skill to a canonical home.
 

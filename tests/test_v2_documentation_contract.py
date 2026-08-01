@@ -60,6 +60,10 @@ def _read(relative: str) -> str:
     return (ROOT / relative).read_text(encoding="utf-8")
 
 
+def _contains_contract(text: str, anchor: str) -> bool:
+    return "".join(anchor.split()) in "".join(text.split())
+
+
 def _skill_table(text: str, start: str, end: str) -> set[str]:
     section = text.split(start, 1)[1].split(end, 1)[0]
     return set(re.findall(r"^\|[^|]+\|\s*`(cs(?:-[a-z0-9]+)*)`\s*\|", section, re.M))
@@ -484,3 +488,52 @@ def test_workflow_owns_epic_and_legacy_knowledge_contracts() -> None:
     assert "temporary work cursor" in en_readme
     assert "串行连续推进" in zh_catalog
     assert "serially and continuously" in en_catalog
+
+
+def test_project_learning_lifecycle_is_bilingual_and_low_interruption() -> None:
+    zh_workflow = _read("WORKFLOW.md")
+    en_workflow = _read("WORKFLOW.en.md")
+    for anchor in (
+        "任务内静默观察",
+        "经验命中：{path}（{status}）；核验：{fact}；影响：{plan_or_check}",
+        "observed / validated / retired",
+        "普通任务最多展示一条",
+        "Epic 子项不新增暂停",
+        "机械 guard 优先",
+        "新 lesson 仍需显式授权",
+        "不保存 transcript",
+    ):
+        assert _contains_contract(zh_workflow, anchor)
+    for anchor in (
+        "observes silently during the task",
+        "lesson hit: {path} ({status}); check: {fact}; impact: {plan_or_check}",
+        "observed / validated / retired",
+        "at most one candidate",
+        "Epic items add no pause",
+        "mechanical guards first",
+        "New lessons still require explicit authorization",
+        "does not save transcripts",
+    ):
+        assert _contains_contract(en_workflow, anchor)
+
+    public_pairs = (
+        ("README.md", "README.en.md", "边做边识别晶化时刻", "recognizes crystallization moments while working"),
+        ("SKILL_CATALOG.md", "SKILL_CATALOG.en.md", "observed / validated / retired", "observed / validated / retired"),
+        ("docs/why-codestable.md", "docs/why-codestable.en.md", "经验不是活动日志", "Experience is not an activity log"),
+    )
+    for zh_path, en_path, zh_anchor, en_anchor in public_pairs:
+        assert _contains_contract(_read(zh_path), zh_anchor)
+        assert _contains_contract(_read(en_path), en_anchor)
+
+    assert not _contains_contract(zh_workflow, "把可复用经验写成 lesson")
+    assert not _contains_contract(en_workflow, "reusable experience into lessons")
+    assert "| `cs-keep` | 管理有证据的项目事实、lesson 生命周期与 canonical 归宿 |" in _read("README.md")
+    assert (
+        "| `cs-keep` | Manage evidence-backed project facts, lesson lifecycle, and canonical homes |"
+        in _read("README.en.md")
+    )
+    assert _contains_contract(_read("docs/why-codestable.md"), "尚未被更强 owner 承接的经验暂存于 lessons")
+    assert _contains_contract(
+        _read("docs/why-codestable.en.md"),
+        "experience without a stronger owner is staged in lessons",
+    )

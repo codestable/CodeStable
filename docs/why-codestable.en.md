@@ -49,11 +49,22 @@ This division makes AI an efficient executor while preserving the programmer's r
 
 Domain terms, requirements, architecture decisions, failed approaches, and acceptance evidence should not live only in chat. Copying all of them into a new archive, however, creates another source of drift.
 
-CodeStable keeps one canonical owner for each fact: stable product facts return to project docs, structural trade-offs enter ADRs, and reusable experience enters lessons.
+CodeStable keeps one canonical owner for each fact: stable product facts return to project docs, structural
+trade-offs enter ADRs, and experience without a stronger owner is staged in lessons.
 
 Session-critical facts enter attention, and durable Epic contracts enter permanent Epic documents.
 
 Only active cross-session state uses a temporary work cursor. Ordinary work relies on the diff, test output, and delivery summary as evidence and creates no extra stage documents.
+
+## Experience Evolves Through Verification
+
+Experience is not an activity log. CodeStable silently recognizes crystallization moments that truly change a
+plan, root cause, or verification, and keeps a candidate only when it has evidence, applies beyond the exact diff,
+and has no stronger owner. Without a strong signal, completion gains no extra ritual.
+
+A lesson is staging, not a permanent archive. An independent later task validates it; changed facts retire it;
+and mechanizable failures move into tests or checkers. The project accumulates methods that reduce failure instead
+of an ever-growing set of prose rules.
 
 ## Deliberate Non-Goals
 
