@@ -146,6 +146,9 @@ CodeStable 更适合：
 
 CodeStable 可以与 Agent 编排工具共存。它负责软件任务的边界、证据和记忆，不接管宿主如何组织 Agent。
 
+需要多 Agent 协作，或需要在 CodeStable 流程中由异构 Agent 承担独立 review 时，推荐配合
+[cs-agent](https://github.com/codestable/cs-agent-mcp) 使用。
+
 ## 深入文档
 
 - [完整工作流与项目结构](./WORKFLOW.md)

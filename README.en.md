@@ -148,6 +148,9 @@ It is not:
 
 CodeStable can coexist with agent-orchestration tools. It owns task boundaries, evidence, and memory, not how the host organizes agents.
 
+For multi-agent collaboration or independent review by a heterogeneous agent inside a CodeStable flow, use
+[cs-agent](https://github.com/codestable/cs-agent-mcp) alongside CodeStable.
+
 ## Go Deeper
 
 - [Full workflow and project structure](./WORKFLOW.en.md)
