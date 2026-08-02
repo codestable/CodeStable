@@ -48,7 +48,7 @@
     ".claude/skills/eval-cs-skill/scripts/harness/__init__.py": "c4acec6d69f515784bdab53afbb99ac5c3f7f5e527a62fea290f534f7f021e41",
     ".claude/skills/eval-cs-skill/scripts/harness/adapter_api.py": "b8fafd8fe14d8856274880a45c9f470de17624adc6e0a88f99664acaa6f48dfb",
     ".claude/skills/eval-cs-skill/scripts/harness/adapter_claude.py": "905dcaee41a8a9b5629489a8734c0a5b968d8e3cc73d6c20173e0a0dbda1c2a8",
-    ".claude/skills/eval-cs-skill/scripts/harness/adapter_codex.py": "22fb0a4b22619afe0f48c9c4dd059be6bc3612c5ac223b409a9c014f42f15f6c",
+    ".claude/skills/eval-cs-skill/scripts/harness/adapter_codex.py": "7e6b6330b92eb6ee9a1814e22b895cbb5e970b1f16fd55ba35439c6ecf074426",
     ".claude/skills/eval-cs-skill/scripts/harness/adapter_paseo.py": "15ec2e456b8af9493da2b405d6379136a7872a7aaea0e7c6d8486073468c1a17",
     ".claude/skills/eval-cs-skill/scripts/harness/base.py": "db08d4bb912391812e99cb625efd6d046b1744e44df0d41b823b3cd81a15f2af",
     ".claude/skills/eval-cs-skill/scripts/harness/mock.py": "e9de0dad8dc219a27756e5827bdf4ad0dfada9bb17ca461249ff31627de93fae",

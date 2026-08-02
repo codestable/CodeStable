@@ -1294,7 +1294,7 @@ command = "must-not-cross"
     assert "OPENAI_BASE_URL" not in env
 
 
-def test_codex_harness_explicit_key_does_not_inherit_host_provider_route(
+def test_codex_harness_keeps_selected_provider_and_stored_auth_atomic(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
@@ -1302,12 +1302,29 @@ def test_codex_harness_explicit_key_does_not_inherit_host_provider_route(
 
     source_home = tmp_path / "source-codex"
     source_home.mkdir()
+    _write_private_text(
+        source_home / "auth.json",
+        '{"auth_mode":"apikey","OPENAI_API_KEY":"stored-route-token"}',
+    )
     (source_home / "config.toml").write_text(
         'model_provider="gateway"\n[model_providers.gateway]\n'
-        'name="gateway"\nbase_url="https://gateway.example.invalid"\n',
+        'name="gateway"\nbase_url="https://gateway.example.invalid"\n'
+        'wire_api="responses"\nrequires_openai_auth=true\n',
         encoding="utf-8",
     )
     observed: dict[str, object] = {}
+
+    class FakeProxy:
+        def __init__(self, route, key, timeout_s) -> None:
+            observed["provider_route"] = route
+            observed["provider_key"] = key
+            observed["provider_timeout"] = timeout_s
+
+        def __enter__(self) -> str:
+            return "http://127.0.0.1:43125/v1"
+
+        def __exit__(self, *_args: object) -> None:
+            return None
 
     def fake_run(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
         observed["command"] = command
@@ -1320,7 +1337,10 @@ def test_codex_harness_explicit_key_does_not_inherit_host_provider_route(
         lambda name: f"/usr/bin/{name}" if name in {"codex", "sandbox-exec"} else None,
     )
     monkeypatch.setattr(adapter_codex.subprocess, "run", fake_run)
-    monkeypatch.setenv("OPENAI_API_KEY", "explicit-key")
+    monkeypatch.setattr(adapter_codex, "_credential_proxy", FakeProxy)
+    monkeypatch.setenv("OPENAI_API_KEY", "ambient-unrelated-key")
+    monkeypatch.setenv("OPENAI_BASE_URL", "https://ambient.example.invalid/v1")
+    monkeypatch.setenv("CODEX_API_KEY", "ambient-codex-key")
     monkeypatch.setenv("CODEX_HOME", str(source_home))
 
     adapter_codex.CodexHarness().invoke("task", "gpt-5.6-terra", tmp_path / "repo", 30)
@@ -1328,11 +1348,58 @@ def test_codex_harness_explicit_key_does_not_inherit_host_provider_route(
     command = observed["command"]
     assert isinstance(command, list)
     assert 'shell_environment_policy.inherit="core"' in command
-    assert "gateway.example.invalid" not in "\n".join(command)
+    route = observed["provider_route"]
+    assert route.base_url == "https://gateway.example.invalid"
+    assert route.wire_api == "responses"
+    assert route.requires_openai_auth is True
+    assert observed["provider_key"] == "stored-route-token"
+    combined_command = "\n".join(command)
+    assert "gateway.example.invalid" not in combined_command
+    assert "ambient.example.invalid" not in combined_command
+    assert "stored-route-token" not in combined_command
+    assert "ambient-unrelated-key" not in combined_command
+    assert "ambient-codex-key" not in combined_command
     env = observed["env"]
     assert isinstance(env, dict)
     assert "CODEX_API_KEY" not in env
     assert "OPENAI_API_KEY" not in env
+    assert "OPENAI_BASE_URL" not in env
+
+
+def test_codex_harness_does_not_fallback_to_ambient_auth_for_selected_provider(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    import harness.adapter_codex as adapter_codex
+
+    source_home = tmp_path / "source-codex"
+    source_home.mkdir()
+    (source_home / "config.toml").write_text(
+        'model_provider="gateway"\n[model_providers.gateway]\n'
+        'name="gateway"\nbase_url="https://gateway.example.invalid"\n'
+        'wire_api="responses"\nrequires_openai_auth=true\n',
+        encoding="utf-8",
+    )
+    provider_calls: list[list[str]] = []
+
+    monkeypatch.setattr(
+        adapter_codex.shutil,
+        "which",
+        lambda name: f"/usr/bin/{name}" if name in {"codex", "sandbox-exec"} else None,
+    )
+    monkeypatch.setattr(
+        adapter_codex.subprocess,
+        "run",
+        lambda command, **_kwargs: provider_calls.append(command),
+    )
+    monkeypatch.setenv("OPENAI_API_KEY", "ambient-unrelated-key")
+    monkeypatch.setenv("OPENAI_BASE_URL", "https://ambient.example.invalid/v1")
+    monkeypatch.setenv("CODEX_HOME", str(source_home))
+
+    with pytest.raises(adapter_codex.HarnessError):
+        adapter_codex.CodexHarness().invoke("task", "gpt-5.6-terra", tmp_path / "repo", 30)
+
+    assert provider_calls == []
 
 
 def test_codex_harness_maps_an_explicit_ambient_route_to_minimal_overrides(
@@ -1341,6 +1408,8 @@ def test_codex_harness_maps_an_explicit_ambient_route_to_minimal_overrides(
 ) -> None:
     import harness.adapter_codex as adapter_codex
 
+    source_home = tmp_path / "source-codex"
+    source_home.mkdir()
     observed: dict[str, object] = {}
 
     class FakeProxy:
@@ -1369,6 +1438,7 @@ def test_codex_harness_maps_an_explicit_ambient_route_to_minimal_overrides(
     monkeypatch.setattr(adapter_codex, "_credential_proxy", FakeProxy)
     monkeypatch.setenv("OPENAI_API_KEY", "explicit-key")
     monkeypatch.setenv("OPENAI_BASE_URL", "https://gateway.example.invalid/v1")
+    monkeypatch.setenv("CODEX_HOME", str(source_home))
 
     adapter_codex.CodexHarness().invoke(
         "task",

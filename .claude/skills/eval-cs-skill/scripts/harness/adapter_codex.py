@@ -420,27 +420,28 @@ class CodexHarness:
         workdir.mkdir(parents=True, exist_ok=True)
         workdir = workdir.resolve()
         source_home = Path(os.environ.get("CODEX_HOME", Path.home() / ".codex")).expanduser().resolve()
-        explicit_key = os.environ.get("OPENAI_API_KEY") if "OPENAI_API_KEY" in os.environ else None
-        if explicit_key is None:
-            selected = _selected_provider(source_home)
+        selected = _selected_provider(source_home)
+        if selected is not None:
             provider_api_key = _provider_api_key(source_home)
-            if selected is None and os.environ.get("OPENAI_BASE_URL"):
-                raise HarnessError("codex-cli 的 ambient provider route 缺少受控 selected provider")
-            if selected is None:
+            _, provider = selected
+            provider_route = _ProviderRoute(
+                base_url=str(provider["base_url"]),
+                wire_api=str(provider["wire_api"]),
+                requires_openai_auth=bool(provider["requires_openai_auth"]),
+            )
+        else:
+            explicit_key = os.environ.get("OPENAI_API_KEY") if "OPENAI_API_KEY" in os.environ else None
+            if explicit_key is None:
+                provider_api_key = _provider_api_key(source_home)
+                if os.environ.get("OPENAI_BASE_URL"):
+                    raise HarnessError("codex-cli 的 ambient provider route 缺少受控 selected provider")
                 provider_route = _route_from_base_url(None)
             else:
-                _, provider = selected
-                provider_route = _ProviderRoute(
-                    base_url=str(provider["base_url"]),
-                    wire_api=str(provider["wire_api"]),
-                    requires_openai_auth=bool(provider["requires_openai_auth"]),
+                provider_api_key = _validate_provider_api_key(
+                    explicit_key,
+                    source="显式 OPENAI_API_KEY",
                 )
-        else:
-            provider_api_key = _validate_provider_api_key(
-                explicit_key,
-                source="显式 OPENAI_API_KEY",
-            )
-            provider_route = _route_from_base_url(os.environ.get("OPENAI_BASE_URL"))
+                provider_route = _route_from_base_url(os.environ.get("OPENAI_BASE_URL"))
         with tempfile.TemporaryDirectory(prefix="cs-eval-codex-", dir=workdir.parent) as tmp:
             runtime = Path(tmp).resolve()
             codex_home = runtime / "codex-home"

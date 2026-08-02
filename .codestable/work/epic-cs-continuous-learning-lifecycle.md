@@ -3,8 +3,8 @@ epic: ../epics/cs-continuous-learning-lifecycle.md
 phase: executing
 approved_revision: 4b0b8e8e0596e7ee42611864843512ecd9402970bb3682b5605f0dc0f8dcf01a
 current_item: LEARN-3
-next_action: obtain a valid Codex CLI provider credential, then rerun both target probes
-blocked_by: "codex-terra target probe fails at provider invocation; previous classified response was INVALID_API_KEY"
+next_action: publish the reviewed provider/auth atomicity milestone, then rerun both target probes
+blocked_by: null
 item_progression: continuous
 milestone_commit: authorized
 remote_publish: each-milestone
@@ -242,3 +242,14 @@ remote_publish: each-milestone
   invocation 返回 `HarnessError`。同一 provider 的上次可诊断响应为 `INVALID_API_KEY`，本轮未修改宿主认证，
   不再盲目重试。freeze 与 attestation 继续保持 prepared/pending，未启动 calibration/final campaign；
   probe sentinel、sandbox 与进程均已清理。
+- owner 确认 shell 同时配置 `OPENAI_API_KEY` 与 `OPENAI_BASE_URL`；只读核验又确认本机 Codex 的
+  `config.toml` 已选 `sub2api`、`auth.json` 与 `codex login status` 一致。根因不是凭证失效，而是 harness
+  让 ambient key 优先，拆散 selected provider 与 stored auth，并把无关 key 发往错误 endpoint。
+- provider/auth 原子性回归先红：期望 `gateway.example.invalid`，实际取 ambient route；实现改为 selected
+  provider 存在时只配对同一 `CODEX_HOME/auth.json`，仅无 selected provider 时才采用完整 ambient fallback。
+  缺失 stored auth 时也禁止回退到 ambient。修复后聚焦 `5 passed`、四份 eval
+  `258 passed, 3 skipped`、全量 `352 passed, 4 skipped`；分发 `3 passed, 1 skipped`、seed verify `4 passed`、package checker 与
+  `git diff --check` 通过，dry-run 保持 240 invocation / 20 hook / `$3.41 [soft]`，freeze 33/26 全匹配。
+- provider/auth 原子性 fresh review：Paseo `74f5b8ef-8a33-41fb-b79f-703c872cd2ec`，
+  `claude-fable-5` / `plan-high`，冻结 staged patch `2e03b9af...f9ce`、tree `80919f9e...2512`；
+  `0 blocking / 0 important / 3 nit`，结论可合。reviewer 未运行真实 CLI、模型调用或进程扫描。
