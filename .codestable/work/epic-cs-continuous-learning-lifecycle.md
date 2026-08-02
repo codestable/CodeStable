@@ -3,7 +3,7 @@ epic: ../epics/cs-continuous-learning-lifecycle.md
 phase: executing
 approved_revision: 4b0b8e8e0596e7ee42611864843512ecd9402970bb3682b5605f0dc0f8dcf01a
 current_item: LEARN-3
-next_action: publish the A pipeline correction; wait for fresh owner authorization before any real probe
+next_action: wait for fresh owner authorization before any real probe; do not resume the interrupted checkpoint
 blocked_by: null
 item_progression: continuous
 milestone_commit: authorized
@@ -261,5 +261,7 @@ remote_publish: each-milestone
   用例改为 21 个越界路径 + local config mutation，逐值锁定 20 条上限、截断与 changed control key。
 - 第三轮 review `a011c1a7` 的唯一 important 指向 `9fb5d0f` 完整负 calibration 漏披露；结果与双 hash 已
   补回 results/游标。三轮上限已到；末项是现存 artifact 的机械事实补录，无实现分歧，不再创建第 4 轮。
+- A pipeline correction milestone `83669b3` 已发布到 `origin/refactor-v2`；freeze 保持 prepared/pending，
+  后续真实 probe 与新 identity calibration 均等待 owner 逐次显式授权，不恢复中断 checkpoint。
 - pipeline 输入已重置为 `prepared-awaiting-commit` / probe pending / `real_llm_runs_started=false`；该字段只
   描述尚未运行的新 source。真实 probe、CLI 或 calibration 均须 owner 重新逐次授权，本流程不自动执行。
