@@ -1,39 +1,14 @@
 {
   "schema_version": 1,
-  "state": "frozen",
+  "state": "prepared-awaiting-commit",
   "prepared_on": "2026-08-02",
   "hash_algorithm": "sha256",
-  "source_commit": "652949c08d42ee099be404cdc9e6914a69b5439b",
-  "real_llm_runs_started": true,
+  "source_commit": "pending",
+  "real_llm_runs_started": false,
   "model_target_probe": {
-    "status": "passed",
-    "source_commit": "652949c08d42ee099be404cdc9e6914a69b5439b",
-    "targets": [
-      {
-        "cell_write": true,
-        "family": "claude",
-        "harness": "claude-headless",
-        "host_config_unchanged": true,
-        "host_read_blocked": true,
-        "host_write_blocked": true,
-        "id": "claude-haiku",
-        "model": "claude-haiku-4-5",
-        "runtime_removed": true,
-        "sibling_read_blocked": true
-      },
-      {
-        "cell_write": true,
-        "family": "codex",
-        "harness": "codex-cli",
-        "host_config_unchanged": true,
-        "host_read_blocked": true,
-        "host_write_blocked": true,
-        "id": "codex-terra",
-        "model": "gpt-5.6-terra",
-        "runtime_removed": true,
-        "sibling_read_blocked": true
-      }
-    ]
+    "status": "pending",
+    "source_commit": "pending",
+    "targets": []
   },
   "primary_metric": {
     "name": "overall_paired_hidden_pass_delta",
@@ -66,9 +41,9 @@
   },
   "external_inputs": {
     ".claude/skills/eval-cs-skill/scripts/_model.py": "5847997e90aba27d998dbd811e9f1507d0979bd89bfb76775da716337d47f24f",
-    ".claude/skills/eval-cs-skill/scripts/buildprompt.py": "047e64fc119c7e75060fc0bc581a12c52273761c1263d1975e6924986f21ed9f",
+    ".claude/skills/eval-cs-skill/scripts/buildprompt.py": "5d1bc95157b7c04fbc9cf8f74d235ce8782c85cf391bf15d301f3f68f7f19fe7",
     ".claude/skills/eval-cs-skill/scripts/config.py": "094923d9b0fb8676cc2910758fd8660a9a5d3fd9637ed2189ddaf83442f3d113",
-    ".claude/skills/eval-cs-skill/scripts/e2e_env.py": "0728d026c5ebed589d3ae19fe14cb8f5f38d5616501307aaf5624f121c1684e6",
+    ".claude/skills/eval-cs-skill/scripts/e2e_env.py": "1d7c9b704b79d64b29a5b4d1124a9285433fe44bd7fd3fcbcb11cf023b8a670a",
     ".claude/skills/eval-cs-skill/scripts/fixtures.py": "cfb5f41817eec3ec28be4322a5959d31afd8f9b90e10fa6a842b270083dd7305",
     ".claude/skills/eval-cs-skill/scripts/harness/__init__.py": "c4acec6d69f515784bdab53afbb99ac5c3f7f5e527a62fea290f534f7f021e41",
     ".claude/skills/eval-cs-skill/scripts/harness/adapter_api.py": "b8fafd8fe14d8856274880a45c9f470de17624adc6e0a88f99664acaa6f48dfb",
@@ -84,7 +59,7 @@
     ".claude/skills/eval-cs-skill/scripts/scorers/__init__.py": "917a22c5614078caeb4daf20b5f71687e16838af67a624e30e427c4834a649e0",
     ".claude/skills/eval-cs-skill/scripts/scorers/base.py": "dba496f77c139f516d09f7c64a1d2e38db2e5a2b981c76ce165b5d56b4218189",
     ".claude/skills/eval-cs-skill/scripts/scorers/learning_transfer.py": "d34ba315c065b880c0043af94a9ca87bd275d7b18e4ee3d8346858d33fdbebce",
-    ".claude/skills/eval-cs-skill/scripts/sequence.py": "f11637b3474c4161549fe9380c10c734c3d14a18214824707ba2d9f3c34d11df",
+    ".claude/skills/eval-cs-skill/scripts/sequence.py": "c4059892481527bce85964b80375f23524b4427b3d879fa84e7b99c821e958b5",
     "experiments/seeds/dispatchboard-learning/build-seed.py": "4c7f7090abe69aca0b6be2a3568c85a91345374a4879f94da9f6704f028689b1",
     "plugins/codestable/skills/cs-epic/SKILL.md": "4f67e0efc6aa446eceaf3e57bf31b4fcc18af7ba87ce927be6b4bbb0d35407aa",
     "plugins/codestable/skills/cs-feat/SKILL.md": "54261caf4d0cb8f01b225c3041d41476691efbaa29a5390e7f9887c9cbfb70ff",

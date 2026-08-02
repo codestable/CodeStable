@@ -882,6 +882,7 @@ def _run_check_files(repo: Path, paths: list[Path]) -> dict[str, Any]:
                 returncode = 124
             passed += int(ok)
             evidence.append({
+                "check_id": path.name,
                 "check_sha256": _file_hash(path),
                 "passed": ok,
                 "returncode": returncode,
@@ -1130,6 +1131,38 @@ def _all_checks_passed(result: dict[str, Any]) -> bool:
     return result["passed"] == result["total"]
 
 
+def _a_failure_diagnostics(
+    *,
+    checks: dict[str, Any],
+    changes: set[str],
+    allowed_paths: list[str],
+    before_control: dict[str, object],
+    after_control: dict[str, object],
+) -> dict[str, Any]:
+    """保留有界机械证据，不持久化模型输出或文件内容。"""
+    unexpected = sorted(
+        path
+        for path in changes
+        if path.startswith(".codestable/lessons/")
+        or not paths_match_allowlist({path}, allowed_paths)
+    )
+    limit = 20
+    return {
+        "checks": checks,
+        "mutation": {
+            "changed_path_count": len(changes),
+            "unexpected_path_count": len(unexpected),
+            "unexpected_paths": unexpected[:limit],
+            "unexpected_paths_truncated": len(unexpected) > limit,
+            "repo_control_changes": sorted(
+                key
+                for key in set(before_control) | set(after_control)
+                if before_control.get(key) != after_control.get(key)
+            ),
+        },
+    }
+
+
 def _pipeline_failure(
     *,
     target: ExecutionTarget,
@@ -1141,12 +1174,13 @@ def _pipeline_failure(
     candidate_unique: bool,
     reason: str,
     phase_metrics: list[dict[str, Any]],
+    a_diagnostics: dict[str, Any] | None = None,
     lesson_schema_ok: bool = False,
     lesson_only_mutation: bool = False,
     curation_repo_integrity_ok: bool | None = None,
 ) -> dict[str, Any]:
     scenario = (fixture.raw or {}).get("scenario") or {}
-    return {
+    failure = {
         "state": "pipeline-failed",
         "target_id": target.id,
         "family": target.family,
@@ -1173,6 +1207,9 @@ def _pipeline_failure(
         "phase_metrics": phase_metrics,
         "failure_reason": reason,
     }
+    if a_diagnostics is not None:
+        failure["a_diagnostics"] = a_diagnostics
+    return failure
 
 
 def _invoke_phase(
@@ -1298,10 +1335,8 @@ def run_pair(
         [resolve_experiment_asset(experiment_dir, path) for path in a_spec.get("checks", [])],
     )
     a_changes = changed_paths(before_a, repo_manifest(a_repo))
-    a_repo_integrity_ok = repo_control_unchanged(
-        before_a_control,
-        repo_control_snapshot(a_repo),
-    )
+    after_a_control = repo_control_snapshot(a_repo)
+    a_repo_integrity_ok = repo_control_unchanged(before_a_control, after_a_control)
     a_mutation_ok = (
         paths_match_allowlist(a_changes, list(a_spec.get("allowed_paths", [])))
         and a_repo_integrity_ok
@@ -1319,6 +1354,13 @@ def run_pair(
             candidate_unique=False,
             reason="A oracle failed",
             phase_metrics=[{"phase": "a", "metrics": a_metrics}],
+            a_diagnostics=_a_failure_diagnostics(
+                checks=a_checks,
+                changes=a_changes,
+                allowed_paths=list(a_spec.get("allowed_paths", [])),
+                before_control=before_a_control,
+                after_control=after_a_control,
+            ),
         )
     try:
         candidate = extract_candidate(

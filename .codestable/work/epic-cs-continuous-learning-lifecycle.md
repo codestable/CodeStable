@@ -3,7 +3,7 @@ epic: ../epics/cs-continuous-learning-lifecycle.md
 phase: executing
 approved_revision: 4b0b8e8e0596e7ee42611864843512ecd9402970bb3682b5605f0dc0f8dcf01a
 current_item: LEARN-3
-next_action: commit and publish the frozen target attestation, then run k=2 calibration with a new output identity
+next_action: publish the A pipeline correction; wait for fresh owner authorization before any real probe
 blocked_by: null
 item_progression: continuous
 milestone_commit: authorized
@@ -242,3 +242,24 @@ remote_publish: each-milestone
 - nested Seatbelt milestone `652949c08d42ee099be404cdc9e6914a69b5439b` 已发布。提交后的官方双 target
   probe 通过：`claude-haiku` 与 `codex-terra` 的 cell write、host/sibling read block、host write block、
   config unchanged、runtime removed 六项均为 true；输出只含闭集布尔 attestation，无 prompt、回答或凭证。
+- 双 target attestation commit `70ae347` 已发布。随后 `652949c` 的 `k=2` calibration 按 owner 纠偏中断；
+  无最终 JSON 或 verdict，53 行 append-only checkpoint 原样保留（SHA-256 `61efb61b...ac052`），不得恢复、
+  删除或 `--fresh` 覆盖。旧 `92b12ba` 的完整负结果亦原样保留。
+- 更早的 `9fb5d0f` 完整 calibration 亦补回 tracked 披露：Claude 12/12 pipeline-failed、Codex 12/12
+  unresolved operational、0 完成 pair、`$2.003669 [soft]`、`REJECTED / underpowered`；JSON/checkpoint
+  SHA-256 为 `afce3136...959e6` / `c72675d0...38ca19`。该 source 后被修正取代，不计当前接受证据。
+- 中断时已有 17 个 `A oracle failed` 终态和 1 个 durable start：Claude 8 个 checks-only、4 个
+  allowlist/lesson mutation 失败，Codex 5 个 control mutation 失败。旧 journal 只存布尔，无法倒推 4 个
+  越界路径；该类不得隐藏或从样本删除，若新 source 重现则用新增有界诊断继续修正。
+- A pipeline correction 直接修正三处：A 失败持久化有界 check/mutation 诊断（无模型原文）；Git index 改按
+  staged entries/flags 的语义 hash 比较，仍拒绝真实 staged mutation；A/B 同源注入已确认范围与不可用外部
+  gate 的执行上下文。聚焦红态 `4 failed`，实现后 `4 passed`；相关 sequence/oracle/eval 为 `202 passed`。
+- 首轮 review（Paseo `734e0b9a`，Opus 5）指出共享 context 对 seed attention 的摘要不实，且“流程产物
+  照常落盘”可能放大上述 4 个 mutation 失败。sequence 现改用专用 context：要求读取真实 attention，
+  不替代仓库事实、不为评测模拟 reviewer/gate 或新建无关流程产物；A/B 对称注入由同一测试锁定。
+- 第二轮 review `bdec2b7c` 的唯一 important 指向非空/截断/control diagnostics 缺回归；现有 Git mutation
+  用例改为 21 个越界路径 + local config mutation，逐值锁定 20 条上限、截断与 changed control key。
+- 第三轮 review `a011c1a7` 的唯一 important 指向 `9fb5d0f` 完整负 calibration 漏披露；结果与双 hash 已
+  补回 results/游标。三轮上限已到；末项是现存 artifact 的机械事实补录，无实现分歧，不再创建第 4 轮。
+- pipeline 输入已重置为 `prepared-awaiting-commit` / probe pending / `real_llm_runs_started=false`；该字段只
+  描述尚未运行的新 source。真实 probe、CLI 或 calibration 均须 owner 重新逐次授权，本流程不自动执行。

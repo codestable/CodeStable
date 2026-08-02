@@ -143,7 +143,7 @@ def _local_config_has_includes(path: Path) -> bool:
 
 
 def repo_control_snapshot(repo: Path) -> dict[str, object]:
-    """冻结 agent 不得改写的 Git HEAD、index、local config 与 hooks。"""
+    """冻结 agent 不得改写的 Git HEAD、index 语义、local config 与 hooks。"""
     if repo.is_symlink():
         return {"repository": True, "safe": False, "git_layout": "repo-symlink"}
     repo_root = repo.resolve()
@@ -227,7 +227,14 @@ def repo_control_snapshot(repo: Path) -> dict[str, object]:
         "head": _git_output(repo, "rev-parse", "--verify", "HEAD"),
         "head_ref": _git_output(repo, "rev-parse", "--symbolic-full-name", "HEAD"),
         "index_location": index_location,
-        "index": _hash_optional_file(index_path) if index_path is not None else None,
+        # Git 的只读命令可刷新 index stat cache；只冻结 staged entries 与 index flags。
+        "index": (
+            hashlib.sha256(
+                _git_output(repo, "ls-files", "--stage", "-v", "-z").encode("utf-8")
+            ).hexdigest()
+            if index_path is not None
+            else None
+        ),
         "config_location": config_location,
         "local_config": local_config,
         "hooks_location": hooks_location,

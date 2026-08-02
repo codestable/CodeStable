@@ -28,6 +28,17 @@ _CONTEXT_BLOCK = (
     "checklist 等落盘产物）照常执行，不因本环境而省略。\n"
 )
 
+_SEQUENCE_CONTEXT_BLOCK = (
+    "\n## 本轮已确认的 learning-transfer 执行上下文\n"
+    "- 当前目录是已 onboard 的隔离 seed repo；先读取仓库实际的 `.codestable/attention.md` 和已有"
+    "项目文档，本段不替代仓库事实。\n"
+    "- 下方用户请求就是本轮已确认的目标与范围；直接完成实现和必要验证，不重复询问已确认事项。\n"
+    "- fresh reviewer 与外部 gate 在此评测 cell 中不可用；实现与验证仍须完成，收尾如实记录该限制，"
+    "不要仅因此 `blocked`。\n"
+    "- 不为评测模拟 reviewer/gate，也不新建与用户请求无关的流程产物；请求明确要求的已有 work/"
+    "证据记录仍按 skill 契约更新。\n"
+)
+
 
 def build_prompt(fixture: Fixture, variant_text: str, inject_context: bool = False) -> str:
     kind = (fixture.task or {}).get("kind", "review")
@@ -221,6 +232,7 @@ def build_sequence_task_prompt(fixture: Fixture, variant_text: str, phase: str) 
         "===== SKILL.md 开始 =====",
         variant_text.strip(),
         "===== SKILL.md 结束 =====\n",
+        _SEQUENCE_CONTEXT_BLOCK.strip(),
         "你在一个已 onboard 的真实仓库工作目录中（当前目录即仓库根）。",
         "按该 skill 的流程直接修改文件、运行必要验证，并按其收尾契约报告。",
         "\n## 用户请求",

@@ -884,10 +884,18 @@ def test_learning_transfer_b_prompt_does_not_leak_the_candidate() -> None:
 
     fixture = Fixture.from_dict(_learning_fixture_dict())
 
+    a_prompt = build_sequence_task_prompt(fixture, "A SKILL SNAPSHOT", phase="a")
     prompt = build_sequence_task_prompt(fixture, "B SKILL SNAPSHOT", phase="b")
 
     assert "B SKILL SNAPSHOT" in prompt
     assert "实现第二条选择路径" in prompt
+    for task_prompt in (a_prompt, prompt):
+        assert "先读取仓库实际的 `.codestable/attention.md`" in task_prompt
+        assert "本段不替代仓库事实" in task_prompt
+        assert "直接完成实现和必要验证" in task_prompt
+        assert "不新建与用户请求无关的流程产物" in task_prompt
+        assert "不要仅因此 `blocked`" in task_prompt
+        assert "无特殊命令陷阱或路径约定" not in task_prompt
     assert "empty collection" not in prompt
     assert "sibling behavior" not in prompt
     assert "晶化候选" not in prompt

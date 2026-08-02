@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import hashlib
+import os
 import subprocess
 import sys
 import time
@@ -920,6 +921,7 @@ def test_deterministic_pytest_receives_exact_repo_pythonpath_and_no_host_credent
     assert result["passed"] == 1
     assert result["total"] == 1
     assert set(result["evidence"][0]) == {
+        "check_id",
         "check_sha256",
         "passed",
         "returncode",
@@ -1536,7 +1538,7 @@ def test_fresh_runner_refuses_to_erase_irreversible_sequence_evidence(
     assert checkpoint.exists()
 
 
-def test_a_rejects_git_config_mutation_even_when_business_diff_is_allowed(tmp_path) -> None:
+def test_a_failure_diagnostics_bound_paths_and_name_git_control_changes(tmp_path) -> None:
     fixture = _fixture()
     fixture.raw["scenario"]["a"]["allowed_paths"] = ["post-a.txt"]
     seed = tmp_path / "seed"
@@ -1558,6 +1560,8 @@ def test_a_rejects_git_config_mutation_even_when_business_diff_is_allowed(tmp_pa
             assert timeout_s == 600
             self.calls += 1
             (workdir / "post-a.txt").write_text("done\n", encoding="utf-8")
+            for index in range(21):
+                (workdir / f"unexpected-{index:02}.txt").write_text("unexpected\n", encoding="utf-8")
             subprocess.run(["git", "config", "user.name", "changed"], cwd=workdir, check=True)
             return HarnessResult(
                 output="晶化候选：example rule",
@@ -1587,6 +1591,14 @@ def test_a_rejects_git_config_mutation_even_when_business_diff_is_allowed(tmp_pa
     assert pair["state"] == "pipeline-failed"
     assert pair["a_mutation_ok"] is False
     assert pair["a_repo_integrity_ok"] is False
+    mutation = pair["a_diagnostics"]["mutation"]
+    assert mutation["changed_path_count"] == 22
+    assert mutation["unexpected_path_count"] == 21
+    assert mutation["unexpected_paths"] == [
+        f"unexpected-{index:02}.txt" for index in range(20)
+    ]
+    assert mutation["unexpected_paths_truncated"] is True
+    assert mutation["repo_control_changes"] == ["local_config"]
 
 
 def test_epic_preflight_rejects_seed_with_mismatched_approved_revision(tmp_path) -> None:
@@ -1853,6 +1865,18 @@ def test_a_check_timeout_is_fast_pipeline_failure(monkeypatch, tmp_path) -> None
     assert harness.calls == 1
     assert pair["state"] == "pipeline-failed"
     assert pair["failure_reason"] == "A oracle failed"
+    diagnostics = pair["a_diagnostics"]
+    assert diagnostics["checks"]["timed_out"] == 1
+    assert diagnostics["checks"]["evidence"][0]["check_id"] == "hang.py"
+    assert diagnostics["checks"]["evidence"][0]["returncode"] == 124
+    assert len(diagnostics["checks"]["evidence"][0]["output_sha256"]) == 64
+    assert diagnostics["mutation"] == {
+        "changed_path_count": 0,
+        "unexpected_path_count": 0,
+        "unexpected_paths": [],
+        "unexpected_paths_truncated": False,
+        "repo_control_changes": [],
+    }
 
 
 def test_between_tasks_hook_timeout_is_fast_and_symmetric(monkeypatch, tmp_path) -> None:
@@ -1976,6 +2000,27 @@ def test_b_rejects_index_mutation_while_control_business_diff_stays_valid(tmp_pa
     assert pair["treatment_mutation_ok"] is False
     assert pair["control_repo_integrity_ok"] is True
     assert pair["control_mutation_ok"] is True
+
+
+def test_repo_control_allows_semantically_unchanged_index_stat_refresh(tmp_path) -> None:
+    repo = tmp_path / "index-refresh"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repo, check=True)
+    subprocess.run(["git", "config", "user.name", "eval"], cwd=repo, check=True)
+    subprocess.run(["git", "config", "user.email", "eval@example.invalid"], cwd=repo, check=True)
+    tracked = repo / "tracked.txt"
+    tracked.write_text("base\n", encoding="utf-8")
+    subprocess.run(["git", "add", "tracked.txt"], cwd=repo, check=True)
+    subprocess.run(["git", "commit", "-q", "-m", "base"], cwd=repo, check=True)
+    before = sequence.repo_control_snapshot(repo)
+    raw_index_before = (repo / ".git/index").read_bytes()
+
+    stat = tracked.stat()
+    os.utime(tracked, ns=(stat.st_atime_ns, stat.st_mtime_ns + 2_000_000_000))
+    subprocess.run(["git", "update-index", "--refresh"], cwd=repo, check=True)
+
+    assert (repo / ".git/index").read_bytes() != raw_index_before
+    assert sequence.repo_control_unchanged(before, sequence.repo_control_snapshot(repo)) is True
 
 
 @pytest.mark.parametrize("mutation", ["head", "index", "config", "hooks"])
