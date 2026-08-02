@@ -496,6 +496,9 @@ def test_project_learning_lifecycle_is_bilingual_and_low_interruption() -> None:
     for anchor in (
         "任务内静默观察",
         "经验命中：{path}（{status}）；核验：{fact}；影响：{plan_or_check}",
+        "一次有界、最低成本的定向核实",
+        "明确排除一个具体且合理的错误路径",
+        "本次通过的验收证据",
         "observed / validated / retired",
         "普通任务最多展示一条",
         "Epic 子项不新增暂停",
@@ -507,6 +510,9 @@ def test_project_learning_lifecycle_is_bilingual_and_low_interruption() -> None:
     for anchor in (
         "observes silently during the task",
         "lesson hit: {path} ({status}); check: {fact}; impact: {plan_or_check}",
+        "one bounded, lowest-cost targeted check",
+        "explicitly rules out a concrete, plausible wrong path",
+        "the task's passing acceptance evidence",
         "observed / validated / retired",
         "at most one candidate",
         "Epic items add no pause",
@@ -520,6 +526,12 @@ def test_project_learning_lifecycle_is_bilingual_and_low_interruption() -> None:
         ("README.md", "README.en.md", "边做边识别晶化时刻", "recognizes crystallization moments while working"),
         ("SKILL_CATALOG.md", "SKILL_CATALOG.en.md", "observed / validated / retired", "observed / validated / retired"),
         ("docs/why-codestable.md", "docs/why-codestable.en.md", "经验不是活动日志", "Experience is not an activity log"),
+        (
+            "docs/why-codestable.md",
+            "docs/why-codestable.en.md",
+            "排除一个具体且合理的错误路径",
+            "rules out a concrete, plausible wrong path",
+        ),
     )
     for zh_path, en_path, zh_anchor, en_anchor in public_pairs:
         assert _contains_contract(_read(zh_path), zh_anchor)

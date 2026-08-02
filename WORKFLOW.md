@@ -56,13 +56,15 @@ bug / 行为异常    -> cs-issue ----------> cs-review（高风险或按需）
 
 ## 项目内持续学习
 
-- 四个 task skill 在任务内静默观察，只把经当前代码、测试或 canonical 文档核实且真实改变计划或
-  验证的 lesson 报告为 `经验命中：{path}（{status}）；核验：{fact}；影响：{plan_or_check}`；
-  纯关键词碰撞不算复用。
+- 四个 task skill 在任务内静默观察。lesson 只做一次有界、最低成本的定向核实，不为此运行大范围
+  测试或反复复现；仍不足时跳过，不阻塞正常任务。只有当前事实成立，且真实改变计划或验证，或
+  明确排除一个具体且合理的错误路径时，才报告为
+  `经验命中：{path}（{status}）；核验：{fact}；影响：{plan_or_check}`；纯关键词碰撞不算复用。
 - 晶化候选只存在于当前会话内。普通任务最多展示一条最高价值候选，无强信号就不显示；
   Epic 子项不新增暂停，每项最多把一条去重候选写入既有游标证据区，最终毕业清单统一处理。
 - lesson 生命周期为 observed / validated / retired。新条目从 observed 开始，只有独立后续任务中
-  的有效命中和成功验证才能进入 validated；事实反证、scope 失效或已有更强 owner 时进入 retired。
+  的有效命中和成功验证才能进入 validated，并须记录实际行为变化与本次通过的验收证据；事实反证、
+  scope 失效或已有更强 owner 时进入 retired。
 - read-repair 只允许已有命中条目的窄状态维护；稳定 validated 命中不写文件。
   新 lesson 仍需显式授权，规则/scope 改写、晋升、删除和跨项目分享也不能从任务执行授权中推断。
 - 机械 guard 优先：能在当前任务范围内落成测试、checker、lint、类型或 helper 的错误，不再写重复

@@ -99,16 +99,21 @@ def test_v1_feedback_promoter_is_explicitly_legacy_only() -> None:
 
 def test_project_learning_lifecycle_is_an_accepted_narrow_staging_contract() -> None:
     adr6 = ROOT / "docs/adr/006-project-learning-lifecycle.md"
+    epic = ROOT / ".codestable/epics/cs-continuous-learning-lifecycle.md"
 
     assert adr6.is_file()
+    assert epic.is_file()
     assert _frontmatter(adr6)["status"] == "Accepted"
     text = adr6.read_text(encoding="utf-8")
     for anchor in (
         "在任务中静默观察",
         "最多保留 3 条候选",
         "read-repair",
+        "一次有界、最低成本的定向核实",
+        "具体且合理的错误路径",
         "必须优先机械化",
         "`observed -> validated`",
+        "本次通过的验收证据",
         "`observed|validated -> retired`",
         "显式授权",
         "feedback runtime",
@@ -119,6 +124,14 @@ def test_project_learning_lifecycle_is_an_accepted_narrow_staging_contract() -> 
         "不新增逐项暂停或确认",
     ):
         assert anchor in text
+
+    epic_text = epic.read_text(encoding="utf-8")
+    for anchor in (
+        "一次有界、最低成本的定向核实",
+        "明确排除一个具体且合理的错误路径",
+        "本次通过的验收证据",
+    ):
+        assert anchor in epic_text
 
 
 def test_project_learning_does_not_restore_feedback_or_global_runtime_state() -> None:

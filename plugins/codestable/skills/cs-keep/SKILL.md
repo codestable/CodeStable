@@ -56,13 +56,13 @@ date: YYYY-MM-DD
 | status | 判据 |
 |---|---|
 | `observed` | 单次任务已有证据，尚未在独立后续任务验证 |
-| `validated` | 非创建该 lesson 的任务和 agent invocation 中有效命中，真实改善行为并验证成功 |
+| `validated` | 非创建该 lesson 的任务和 agent invocation 中有效命中，真实改善行为并验证成功；具体表现为改变计划或验证，或明确排除一个具体且合理的错误路径 |
 | `retired` | 被仓库事实反证、scope 完全失效或已有更强 canonical owner；不得应用且不再复活原结论 |
 
 - 新 lesson 一律从 `observed` 开始；不能把创建该 lesson 的同一任务自证为 validated，也不因命中
   次数或模型自评晋级。
 - 旧 lesson 缺 `status` 按 `observed` 读取，不批量迁移；只在真实状态变化或本来就要更新时补字段。
-- `observed -> validated` 只在独立后续任务确实采用并验证成功时发生，并只补一次代表性证据。
+- `observed -> validated` 只在独立后续任务确实采用并验证成功时发生，并只补一次代表性证据；必须记录 lesson 实际改变的计划或验证，或明确排除的具体且合理错误路径，以及本次通过的验收证据。
 - `observed|validated -> retired` 只写反证/替代原因与指针。retired 条目上的新结论必须另建 observed
   lesson，不继承旧条目的 validated 身份。
 - 稳定 validated 命中不产生文件 churn。不得保存原始对话、逐次命中日志或无限 evidence history。

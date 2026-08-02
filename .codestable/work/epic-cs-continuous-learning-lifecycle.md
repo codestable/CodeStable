@@ -1,7 +1,7 @@
 ---
 epic: ../epics/cs-continuous-learning-lifecycle.md
 phase: executing
-approved_revision: 4b0b8e8e0596e7ee42611864843512ecd9402970bb3682b5605f0dc0f8dcf01a
+approved_revision: 44ae22f3cc8cb675686a143bf0deff5a06bd7231ceb8f92274042e0a4bcd17e7
 current_item: LEARN-3
 next_action: wait for fresh owner authorization before any real probe; do not resume the interrupted checkpoint
 blocked_by: null
@@ -265,3 +265,13 @@ remote_publish: each-milestone
   后续真实 probe 与新 identity calibration 均等待 owner 逐次显式授权，不恢复中断 checkpoint。
 - pipeline 输入已重置为 `prepared-awaiting-commit` / probe pending / `real_llm_runs_started=false`；该字段只
   描述尚未运行的新 source。真实 probe、CLI 或 calibration 均须 owner 重新逐次授权，本流程不自动执行。
+- owner 批准持续学习契约澄清方向：read-repair 只做一次有界、最低成本的定向核实且不得为 lesson
+  反复复现或运行大范围测试；排除具体且合理的错误路径也算真实影响；`validated` 必须记录行为变化与
+  本次通过的验收证据。稳定契约已同步回永久 Epic，按 lifecycle 重置批准 revision 并等待 fresh review
+  后的 owner 确认；目标、范围、验收阈值与子项定义未改变。
+- 契约 tests-first 先得 `5 failed, 35 passed`，同步 5 个 shipped Skill、ADR-006 与中英文 WORKFLOW 后
+  转为 `40 passed`；连同分发/package 测试为 `75 passed, 1 skipped`，plugin checker 通过。freeze 仍为
+  prepared/pending/false，33 inputs / 26 external inputs 逐项匹配，未执行真实 CLI、probe 或模型运行。
+- 契约澄清 fresh review：Paseo `c06c2e6a`，Opus 5 / high / plan，冻结 patch `2ccbaf55...d9619`、
+  tree `649332c7...293b02`；`0 blocking / 0 important / 3 nit`，新永久 Epic hash
+  `44ae22f3...d17e7` 可确认。owner 随后正式确认该 revision；三条 nit 均为可选措辞粒度，不影响合入。

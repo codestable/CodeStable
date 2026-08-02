@@ -61,12 +61,14 @@ canonical guard/knowledge 才是稳定归宿。
 
 ### 开工：有效命中必须说明影响
 
-只有 scope 符合、未退役、经当前代码/测试/canonical 文档核实，并真实改变计划或验证的条目才算
-有效命中。四个 task skill 必须报告：`经验命中：{path}（{status}）；核验：{fact}；影响：
+应用前 read-repair 只做一次有界、最低成本的定向核实，优先读取已有代码、测试或 canonical 文档；
+不得仅为核实 lesson 运行大范围测试或反复复现。一次定向核实仍不足时跳过该 lesson，不阻塞正常任务。
+只有 scope 符合、未退役、当前事实成立，并真实改变计划或验证，或明确排除一个具体且合理的错误路径
+的条目才算有效命中。四个 task skill 必须报告：`经验命中：{path}（{status}）；核验：{fact}；影响：
 {plan_or_check}`。纯关键词碰撞不报告为有效命中，也不能把“读过”冒充“采用”。
 
-应用前 read-repair：`retired` 不应用；`observed` / `validated` 先核实再用；只是相关但没有改变
-行为时不制造复用证据；当前事实明确反证时立即停止应用并走窄退役，证据不足时不猜。
+`retired` 不应用；`observed` / `validated` 经上述核实再用；只是相关但没有改变行为时不制造复用证据；
+当前事实明确反证时立即停止应用并走窄退役，证据不足时不猜。
 
 ### 任务中：静默识别晶化时刻
 
@@ -110,7 +112,7 @@ date: YYYY-MM-DD
 | status | 判据 |
 |---|---|
 | `observed` | 单次任务有证据，尚未在独立后续任务验证 |
-| `validated` | 非创建该 lesson 的任务和 agent invocation 中有效命中，真实改善行为并验证成功 |
+| `validated` | 非创建该 lesson 的任务和 agent invocation 中有效命中，真实改善行为并验证成功；具体表现为改变计划或验证，或明确排除一个具体且合理的错误路径 |
 | `retired` | 被事实反证、范围完全失效或已被更强 owner 替代；不得应用且不再复活原结论 |
 
 旧 lesson 缺 `status` 按 `observed` 读取，不批量迁移；只有真实状态变化或 `cs-keep` 本来就要更新
@@ -119,7 +121,8 @@ date: YYYY-MM-DD
 创建、改写规则/scope、晋升、删除与跨项目反馈仍须用户显式 `cs-keep` 诉求、接受普通候选，或
 Epic 最终毕业 gate。为实现不中断的 read-repair，仅对已有且有效命中的 lesson 开放两种窄维护：
 
-- `observed -> validated`：独立后续任务确实采用并验证成功，只补一次代表性证据；
+- `observed -> validated`：独立后续任务确实采用并验证成功，只补一次代表性证据；必须记录 lesson
+  实际改变的计划或验证，或明确排除的具体且合理错误路径，以及本次通过的验收证据；
 - `observed|validated -> retired`：当前仓库事实直接反证，只写原因与替代/反证指针。
 
 窄维护不新建事实、不改规则、不扩 scope、不新增 gate，随当次代码、证据和游标进入同一语义原子
@@ -199,8 +202,10 @@ README 精简结构、全部 Markdown ≤300、plugin/package/distribution tests
 
 ## 验收标准
 
-- 四 task skills 对有效命中报告路径、核验与具体影响；候选静默、普通最多一条、Epic 最终处理。
-- 三态可解析且按需迁移；退役不再应用，validated 稳定命中无 churn，机械化与单一 owner 优先。
+- 四 task skills 的 read-repair 有界且不阻塞正常任务；有效命中报告路径、核验与具体影响，并允许
+  “明确排除具体且合理的错误路径”作为真实影响；候选静默、普通最多一条、Epic 最终处理。
+- 三态可解析且按需迁移；validated 记录具体行为变化与本次通过的验收证据，退役不再应用，稳定命中
+  无 churn，机械化与单一 owner 优先。
 - 新 lesson 与跨项目分享保持显式授权；无 transcript、feedback runtime、global lessons 或新 skill。
 - paired 单测证明四类 invocation 独立、B prompt 相同、只有 lesson 差异、半 pair 不完成、成本不低估。
 - 冻结实验在两个 model family 上以非 `[underpowered]` 证据满足 verdict；否则本 Epic 保持未完成。

@@ -18,8 +18,10 @@ argument-hint: "[问题描述]"
 
 ## 持续学习
 
-检索到 lesson 后先做 read-repair。只有 scope 符合、未退役、经当前代码/测试/canonical 文档核实，
-并真实改变计划或验证的条目才算有效命中；按
+检索到 lesson 后先做 read-repair。只做一次有界、最低成本的定向核实，优先读取已有代码、测试或
+canonical 文档；不得仅为核实 lesson 运行大范围测试或反复复现。仍不足时跳过该 lesson，不阻塞正常任务。
+只有 scope 符合、未退役、当前事实成立，并真实改变计划或验证，或明确排除一个具体且合理的错误路径
+的条目才算有效命中；按
 `经验命中：{path}（{status}）；核验：{fact}；影响：{plan_or_check}` 报告。`retired` 不应用；
 `observed` / `validated` 先核实再用；旧 lesson 缺 `status` 按 `observed` 读取，不批量迁移。只是相关
 但没有改变行为时不制造复用证据；当前事实明确反证时立即停止应用，证据不足时不猜。
@@ -34,7 +36,8 @@ owner。网络波动、拼写、泛化口号、活动记录，以及已被机械
 
 创建、改写规则/scope、晋升、删除与跨项目反馈仍须用户显式授权。为不中断 read-repair，仅对已有且
 有效命中的 lesson 开放两种窄维护：`observed -> validated` 仅在独立后续任务确实采用并验证成功时
-发生，只补一次代表性证据；`observed|validated -> retired` 仅在当前仓库事实直接反证或发现已有
+发生，只补一次代表性证据；必须记录 lesson 实际改变的计划或验证，或明确排除的具体且合理错误路径，
+以及本次通过的验收证据。`observed|validated -> retired` 仅在当前仓库事实直接反证或发现已有
 canonical owner 时发生，只写原因与替代/反证指针。窄维护不新建事实、不改规则、不扩 scope、不新增
 gate，随当次代码、证据和
 游标进入同一语义原子 milestone；稳定 validated 命中不写文件。需要改写结论或证据不足时只给

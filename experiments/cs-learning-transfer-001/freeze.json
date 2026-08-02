@@ -61,11 +61,11 @@
     ".claude/skills/eval-cs-skill/scripts/scorers/learning_transfer.py": "d34ba315c065b880c0043af94a9ca87bd275d7b18e4ee3d8346858d33fdbebce",
     ".claude/skills/eval-cs-skill/scripts/sequence.py": "c4059892481527bce85964b80375f23524b4427b3d879fa84e7b99c821e958b5",
     "experiments/seeds/dispatchboard-learning/build-seed.py": "4c7f7090abe69aca0b6be2a3568c85a91345374a4879f94da9f6704f028689b1",
-    "plugins/codestable/skills/cs-epic/SKILL.md": "4f67e0efc6aa446eceaf3e57bf31b4fcc18af7ba87ce927be6b4bbb0d35407aa",
-    "plugins/codestable/skills/cs-feat/SKILL.md": "54261caf4d0cb8f01b225c3041d41476691efbaa29a5390e7f9887c9cbfb70ff",
-    "plugins/codestable/skills/cs-issue/SKILL.md": "203ca2710355a56a12236c2d55f57e7264b744be4f13edd633af4f352be1b707",
-    "plugins/codestable/skills/cs-keep/SKILL.md": "3d2d2cbb0114b963b1847f3d2caaa2d58db193cbf1cf38039d5b52044d3dd6ca",
-    "plugins/codestable/skills/cs-refactor/SKILL.md": "a225c692ce7776f9305b14cbb7c424656304cbe2b59c0a70aeedb3802e5b01b8"
+    "plugins/codestable/skills/cs-epic/SKILL.md": "e3f4c89ce04e41db022935bf251a012fe2cf613226d24f339569ef9d65e510dd",
+    "plugins/codestable/skills/cs-feat/SKILL.md": "df8d3de6f7bb4925024f24d93290c9a644bf24b2359588eeee51cc57ce9c7047",
+    "plugins/codestable/skills/cs-issue/SKILL.md": "fa36e43ff0785e13fcfdc222fd87b15fb22a38bbb5e9872c338a401a1320e88a",
+    "plugins/codestable/skills/cs-keep/SKILL.md": "1d8f56aae90ab45b0ab966ae15c42d8d958e1a3a1a29ca2e196871afda90354d",
+    "plugins/codestable/skills/cs-refactor/SKILL.md": "a3b5e29ae6919969e659799faed8513dbd8dad7b3713cee09aae1edcf35e7871"
   },
   "inputs": {
     "_asset_mutations.py": "fe952ddc35ddc1fd0976627043383f9b4d4ec05fd8202ac5fe963bdd0b904210",

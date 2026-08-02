@@ -59,8 +59,9 @@ Only active cross-session state uses a temporary work cursor. Ordinary work reli
 ## Experience Evolves Through Verification
 
 Experience is not an activity log. CodeStable silently recognizes crystallization moments that truly change a
-plan, root cause, or verification, and keeps a candidate only when it has evidence, applies beyond the exact diff,
-and has no stronger owner. Without a strong signal, completion gains no extra ritual.
+plan, root cause, or verification, or explicitly rules out a concrete, plausible wrong path. It keeps a candidate
+only when it has evidence, applies beyond the exact diff, and has no stronger owner. Without a strong signal,
+completion gains no extra ritual.
 
 A lesson is staging, not a permanent archive. An independent later task validates it; changed facts retire it;
 and mechanizable failures move into tests or checkers. The project accumulates methods that reduce failure instead

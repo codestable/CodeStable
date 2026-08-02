@@ -90,16 +90,19 @@ a durable record; remove it when complete unless the owner asks to retain it.
 
 ## Project-Local Continuous Learning
 
-- Each task skill observes silently during the task. It reports
-  `lesson hit: {path} ({status}); check: {fact}; impact: {plan_or_check}` only after current code, tests, or
-  canonical docs confirm the lesson and it actually changes the plan or verification; keyword overlap alone is
-  not reuse.
+- Each task skill observes silently during the task. Read-repair performs one bounded, lowest-cost targeted check
+  against existing code, tests, or canonical docs; it must not run broad tests or repeat reproductions solely to
+  verify a lesson. If that check is insufficient, it skips the lesson without blocking the task. It reports
+  `lesson hit: {path} ({status}); check: {fact}; impact: {plan_or_check}` only when current facts hold and the
+  lesson changes the plan or verification, or explicitly rules out a concrete, plausible wrong path; keyword
+  overlap alone is not reuse.
 - A crystallization candidate exists only in the current session. Ordinary work shows at most one candidate and
   stays quiet without a strong signal. Epic items add no pause: each may place one deduplicated candidate in the
   existing cursor evidence, and the final graduation list handles them together.
-- The lesson lifecycle is observed / validated / retired. A new lesson starts observed, reaches validated only
-  after successful use in an independent later task, and becomes retired when facts contradict it, its scope
-  expires, or a stronger owner exists.
+- The lesson lifecycle is observed / validated / retired. A new lesson starts observed and reaches validated only
+  after successful use in an independent later task that records the lesson-caused plan or verification change,
+  or the concrete plausible wrong path it ruled out, together with the task's passing acceptance evidence. It
+  becomes retired when facts contradict it, its scope expires, or a stronger owner exists.
 - Read-repair permits only narrow state maintenance on an existing matched lesson; stable validated hits create
   no file churn. New lessons still require explicit authorization, as do rule/scope rewrites, promotion, deletion,
   and cross-project sharing; none may be inferred from task-execution authorization.

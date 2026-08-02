@@ -75,7 +75,7 @@ canonical owner。网络波动、拼写、活动记录、泛化口号和已被�
 | status | 判据 |
 |---|---|
 | `observed` | 单次任务有证据，尚未在独立后续任务验证 |
-| `validated` | 非创建该 lesson 的后续任务和 agent invocation 中有效命中，真实改善行为并验证成功 |
+| `validated` | 非创建该 lesson 的后续任务和 agent invocation 中有效命中，真实改善行为并验证成功；具体表现为改变计划或验证，或明确排除一个具体且合理的错误路径 |
 | `retired` | 被仓库事实反证、范围完全失效，或已被更强 owner 替代；不得再应用 |
 
 旧 lesson 缺少 `status` 时按 `observed` 读取，不批量迁移；只有真实状态变化或 `cs-keep` 本来就要
@@ -83,8 +83,10 @@ canonical owner。网络波动、拼写、活动记录、泛化口号和已被�
 
 ### Read-repair 与窄维护授权
 
-task skill 应用 lesson 前必须 read-repair：`retired` 不应用；`observed` / `validated` 先用当前代码、
-测试或 canonical 文档核实。只有条目 scope 符合、事实仍成立且真实改变计划或验证时，才报告
+task skill 应用 lesson 前必须 read-repair：`retired` 不应用；`observed` / `validated` 只做一次有界、最低成本的定向核实，
+优先读取已有代码、测试或 canonical 文档；不得仅为核实 lesson 运行大范围测试
+或反复复现。一次定向核实仍不足时跳过该 lesson，不阻塞正常任务。只有条目 scope 符合、事实仍成立，
+且真实改变计划或验证，或明确排除一个具体且合理的错误路径时，才报告
 `经验命中：{path}（{status}）；核验：{fact}；影响：{plan_or_check}`；纯关键词碰撞或只是读过不算
 有效命中。
 
@@ -92,7 +94,8 @@ task skill 应用 lesson 前必须 read-repair：`retired` 不应用；`observed
 普通任务候选，或 Epic 最终毕业 gate。为使 read-repair 不中断任务，仅对已有且有效命中的 lesson
 开放两种无需新增确认的窄维护：
 
-- `observed -> validated`：独立后续任务确实采用并验证成功，只补一次代表性证据；
+- `observed -> validated`：独立后续任务确实采用并验证成功，只补一次代表性证据；必须记录 lesson
+  实际改变的计划或验证，或明确排除的具体且合理错误路径，以及本次通过的验收证据；
 - `observed|validated -> retired`：当前仓库事实直接反证，或发现已有 canonical owner，只写退役原因
   与替代/反证指针。
 
