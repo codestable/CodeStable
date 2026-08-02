@@ -150,6 +150,43 @@ THIN_SKILL_FORBIDDEN_TEXT = {
     "cs-refactor": ("git push", "read all references"),
 }
 
+ISSUE_DIAGNOSIS_CONTRACT = (
+    "用户只要求定位、分析、解释或排查时，执行只诊断",
+    "诊断结论不扩大为修复授权",
+    "不改产品代码、测试或配置，不创建 commit",
+    "diagnose 不新增审查阶段",
+    "`已证实根因` / `可证伪假设` / `证据不足`",
+    "至少实际运行一次",
+    "可再次执行的命令及红色输出",
+    "手工复现步骤及失败观察",
+    "diagnose 下“优先失败测试”指优先运行既有失败或只读检查",
+    "同一失败信号",
+    "那条变红的验证必须变绿",
+    "无法建立时列明已尝试",
+    "日志、trace、环境访问",
+    "临时 harness、日志或埋点",
+    "先停下说明目标、路径、影响与清理方式",
+    "同会话直接授权修复不算诊断终止",
+    "核对工作树与仓库外临时路径",
+    "残留文件与保留理由",
+    "单独 change candidate",
+)
+
+ISSUE_DEBUG_REFERENCE_CONTRACT = (
+    "覆盖用户实际症状",
+    "出现任一才升级，不默认升级",
+    "3-5 个排序的可证伪假设",
+    "一次只动一个变量",
+    "自动化二分",
+    "提高并报告复现率",
+    "性能问题先建立可比较的性能基线",
+    "正确接缝",
+    "前缀或等价标签",
+    "定向搜索证明已移除",
+    "最小场景",
+    "原始完整复现",
+)
+
 
 def _read_skill(path: Path) -> tuple[dict[str, object], str]:
     text = path.read_text(encoding="utf-8")
@@ -194,6 +231,27 @@ def test_thin_skills_keep_explicit_safety_invariants() -> None:
     assert "独立" not in review_openai["interface"]["short_description"]
     assert "独立" not in review_prompt
     assert "派发独立 subagent reviewer" not in review_prompt
+
+
+def test_cs_issue_owns_diagnosis_and_authorized_fix_modes() -> None:
+    frontmatter, issue = _read_skill(SKILLS / "cs-issue/SKILL.md")
+    debug = (SKILLS / "cs-issue/references/debug.md").read_text(encoding="utf-8")
+    _, cs = _read_skill(SKILLS / "cs/SKILL.md")
+
+    assert str(frontmatter["description"]).startswith("诊断或修复 bug、报错、性能回退")
+    for anchor in ISSUE_DIAGNOSIS_CONTRACT:
+        assert _contains_contract(issue, anchor), f"cs-issue: missing {anchor!r}"
+    for anchor in ISSUE_DEBUG_REFERENCE_CONTRACT:
+        assert _contains_contract(debug, anchor), f"debug reference: missing {anchor!r}"
+
+    shipped_issue = issue + debug
+    assert "diagnosing-bugs" not in shipped_issue
+    assert "排查这个报错为什么发生" in cs
+    assert "排查、诊断、bug、报错、性能回退、行为异常" in cs
+
+    refactor_frontmatter, refactor = _read_skill(SKILLS / "cs-refactor/SKILL.md")
+    assert "行为等价" in refactor
+    assert "性能优化" in str(refactor_frontmatter["description"])
 
 
 def test_cs_discusses_in_session_then_hands_off_same_turn() -> None:

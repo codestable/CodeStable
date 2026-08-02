@@ -454,6 +454,46 @@ def test_cs_session_discussion_and_handoff_contract_is_bilingual() -> None:
     assert "stable assets graduate through the owning skill into their canonical homes" in en_catalog
 
 
+def test_issue_diagnosis_and_authorized_fix_contract_is_bilingual() -> None:
+    zh_readme = _read("README.md")
+    en_readme = _read("README.en.md")
+    zh_catalog = _read("SKILL_CATALOG.md")
+    en_catalog = _read("SKILL_CATALOG.en.md")
+    zh_workflow = " ".join(_read("WORKFLOW.md").split())
+    en_workflow = " ".join(_read("WORKFLOW.en.md").split())
+
+    for document in (zh_readme, zh_catalog):
+        assert "诊断问题；获授权后用红到绿证据修复" in document
+    for document in (en_readme, en_catalog):
+        assert "Diagnose problems; once repair is authorized, fix with red-to-green evidence" in document
+
+    for anchor in (
+        "只诊断 / 排查",
+        "获授权修复 bug / 性能回退 / 行为异常",
+        "默认；仅文案级微小改动可说明后跳过",
+        "默认；仅单行级微小修复可说明后跳过",
+        "跨模块大范围、公开 interface 或性能敏感路径",
+        "只要求诊断时保持零产品改动",
+        "已证实根因、可证伪假设或证据不足",
+        "性能回退或异常变慢",
+        "行为等价的主动优化",
+    ):
+        assert anchor in zh_workflow
+
+    for anchor in (
+        "diagnose / investigate",
+        "authorized repair of bug / performance regression / broken behavior",
+        "default; documentation-only tiny changes may be skipped with an explanation",
+        "default; single-line tiny fixes may be skipped with an explanation",
+        "cross-module, public-interface, or performance-sensitive work",
+        "A diagnosis-only request leaves zero product changes",
+        "confirmed root cause, falsifiable hypothesis, or insufficient evidence",
+        "performance regression or anomalous slowdown",
+        "proactive optimization under behavioral equivalence",
+    ):
+        assert anchor in en_workflow
+
+
 def test_workflow_owns_epic_and_legacy_knowledge_contracts() -> None:
     zh_workflow = " ".join(_read("WORKFLOW.md").split())
     en_workflow = " ".join(_read("WORKFLOW.en.md").split())

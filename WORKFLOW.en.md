@@ -12,9 +12,10 @@ without a task gets an overview.
 unsure which entry    -> cs
 discuss / align first -> cs -> cs-feat / cs-issue / cs-epic
 onboard / v1 upgrade  -> cs-onboard
-new capability        -> cs-feat ---------\
-bug / broken behavior -> cs-issue ----------> cs-review (high risk or on demand)
-equivalent refactor   -> cs-refactor ------/
+diagnose / investigate -> cs-issue (no product diff; no change review)
+new capability -> cs-feat -> cs-review (default; documentation-only tiny changes may be skipped with an explanation)
+authorized repair of bug / performance regression / broken behavior -> cs-issue -> cs-review (default; single-line tiny fixes may be skipped with an explanation)
+equivalent refactor -> cs-refactor -> cs-review (cross-module, public-interface, or performance-sensitive work; tiny cleanups may be skipped with an explanation)
 large initiative      -> cs-epic -> cs-feat / cs-issue / cs-refactor
 lessons and memory    -> cs-keep
 ```
@@ -46,8 +47,12 @@ Execution strength follows risk:
 
 - `cs-feat` normally understands, implements, and verifies directly. Public contracts, data,
   authorization, concurrency, or real design tradeoffs require owner confirmation first.
-- `cs-issue` establishes a reliably failing check before changing code, then proves it turns green.
+- `cs-issue` first establishes a repeatable failure signal for the user's actual symptom. A diagnosis-only request leaves
+  zero product changes and reports a confirmed root cause, falsifiable hypothesis, or insufficient evidence; once repair
+  is authorized, the same signal must go from red to green.
 - `cs-refactor` establishes equivalence evidence first and keeps verification green after each step.
+- A performance regression or anomalous slowdown enters `cs-issue`; without an existing failure, proactive optimization
+  under behavioral equivalence remains in `cs-refactor`.
 - `cs-epic` keeps approved delivery contracts in a permanent Epic document and active execution in
   a temporary work cursor. Decomposition, contract changes, and overall acceptance each cross an owner gate.
 - When independent review is needed, the outer workflow creates the reviewer. That reviewer runs

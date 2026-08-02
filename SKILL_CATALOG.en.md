@@ -10,7 +10,7 @@ skill files or a centralized onboard runtime.
 | Navigation | `cs` | Clear actions dispatch in the same turn. Requests to discuss first converge in the current session and hand off in the same turn; advice only recommends; the overview writes no files |
 | Onboarding | `cs-onboard` | Create minimal project memory and explain a lossless v1 upgrade |
 | Feature | `cs-feat` | Implement new capability; scale design confirmation and independent review with risk |
-| Issue | `cs-issue` | Fix bugs or broken existing behavior with red-to-green evidence |
+| Issue | `cs-issue` | Diagnose problems; once repair is authorized, fix with red-to-green evidence |
 | Refactor | `cs-refactor` | Change structure or performance under verifiable behavioral equivalence |
 | Epic | `cs-epic` | Decompose, confirm, and advance multiple deliverable items serially and continuously through a permanent Epic doc and temporary work cursor |
 | Review | `cs-review` | Read-only leaf executor for one change, design, module, or repository review |

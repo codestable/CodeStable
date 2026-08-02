@@ -69,7 +69,7 @@ npx skills@latest add codestable/CodeStable/plugins/codestable
 | `cs` | 路由明确行动、会话内讨论、咨询与体系导览 |
 | `cs-onboard` | 为仓库创建最小项目记忆骨架 |
 | `cs-feat` | 实现新功能或改变既有行为 |
-| `cs-issue` | 用红到绿证据修复 bug 或行为异常 |
+| `cs-issue` | 诊断问题；获授权后用红到绿证据修复 |
 | `cs-refactor` | 在行为等价证据下调整结构或性能 |
 | `cs-epic` | 拆解并按已确认策略推进多个可交付子项 |
 | `cs-review` | 只读叶子执行器；单轮审查，不创建子 agent |

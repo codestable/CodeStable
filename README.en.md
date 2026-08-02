@@ -71,7 +71,7 @@ When you are unsure which entry fits, call `/cs`; you can also call the owning s
 | `cs` | Route explicit actions, in-session discussion, advice, and system overview |
 | `cs-onboard` | Create the minimal project-memory skeleton |
 | `cs-feat` | Implement new capability or change existing behavior |
-| `cs-issue` | Fix bugs or broken behavior with red-to-green evidence |
+| `cs-issue` | Diagnose problems; once repair is authorized, fix with red-to-green evidence |
 | `cs-refactor` | Change structure or performance under equivalence evidence |
 | `cs-epic` | Decompose and advance multiple deliverable items under confirmed policies |
 | `cs-review` | Read-only leaf executor; one review, with no child agent |

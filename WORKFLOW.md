@@ -10,9 +10,10 @@ CodeStable v2 是 8 个独立安装的 thin-harness skill，加一个项目记�
 不确定入口       -> cs
 先讨论 / 对齐     -> cs -> cs-feat / cs-issue / cs-epic
 仓库接入 / v1 升级 -> cs-onboard
-新功能           -> cs-feat ---------\
-bug / 行为异常    -> cs-issue ----------> cs-review（高风险或按需）
-行为等价重构      -> cs-refactor ------/
+只诊断 / 排查     -> cs-issue（无产品 diff，不进入 change review）
+新功能           -> cs-feat -> cs-review（默认；仅文案级微小改动可说明后跳过）
+获授权修复 bug / 性能回退 / 行为异常 -> cs-issue -> cs-review（默认；仅单行级微小修复可说明后跳过）
+行为等价重构      -> cs-refactor -> cs-review（跨模块大范围、公开 interface 或性能敏感路径；微小整理可说明后跳过）
 大需求拆解        -> cs-epic -> cs-feat / cs-issue / cs-refactor
 经验与项目记忆    -> cs-keep
 ```
@@ -38,8 +39,10 @@ bug / 行为异常    -> cs-issue ----------> cs-review（高风险或按需）
 执行强度与风险相称：
 
 - `cs-feat` 默认直接理解、实现、验证；公开契约、数据、权限、并发或真实方案取舍先经用户确认。
-- `cs-issue` 先建立能明确变红的验证，再修复并证明它变绿。
+- `cs-issue` 先针对用户实际症状建立可重复的失败信号。只要求诊断时保持零产品改动，结论明确归为
+  已证实根因、可证伪假设或证据不足；获授权修复后，沿用同一信号证明红到绿。
 - `cs-refactor` 先建立等价性证据，分步改动并持续保持验证为绿。
+- 性能回退或异常变慢进入 `cs-issue`；没有既有异常、仅要求行为等价的主动优化仍进入 `cs-refactor`。
 - `cs-epic` 用永久 Epic 文档维护批准后的交付契约，用临时 work 游标恢复活动执行；拆解、契约变化和整体验收分别经过 owner gate。
 - 需要独立审查时由外层主流程创建 reviewer；reviewer 每轮执行一次 `cs-review`，返回结果前不再创建子 agent。每个独立审查阶段的首轮使用 fresh reviewer；reviewer 独立性要求它独立于实现者，不要求对自身上一轮审查失忆。
 - 一个独立审查阶段由单一审查目的界定；design review、change review、contract review 与 Epic final acceptance 是不同阶段。只有为本阶段 findings 所作修复的复审，才属于同一阶段并沿用原 reviewer lineage；审查目的变化时开启新阶段。
