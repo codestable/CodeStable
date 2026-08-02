@@ -3,7 +3,7 @@ epic: ../epics/cs-continuous-learning-lifecycle.md
 phase: executing
 approved_revision: 4b0b8e8e0596e7ee42611864843512ecd9402970bb3682b5605f0dc0f8dcf01a
 current_item: LEARN-3
-next_action: publish the reviewed provider/auth atomicity milestone, then rerun both target probes
+next_action: validate and publish the frozen target attestation, then run k=2 calibration with a fresh output identity
 blocked_by: null
 item_progression: continuous
 milestone_commit: authorized
@@ -253,3 +253,9 @@ remote_publish: each-milestone
 - provider/auth 原子性 fresh review：Paseo `74f5b8ef-8a33-41fb-b79f-703c872cd2ec`，
   `claude-fable-5` / `plan-high`，冻结 staged patch `2e03b9af...f9ce`、tree `80919f9e...2512`；
   `0 blocking / 0 important / 3 nit`，结论可合。reviewer 未运行真实 CLI、模型调用或进程扫描。
+- provider/auth 原子性里程碑已提交并发布：`92b12babe359b836e003cbe232358a1330c09a92`。提交后首轮
+  双 target probe 只返回 `RuntimeError`，未形成 attestation；清理核验无 sentinel、sandbox 或进程残留。
+  随后逐 target 诊断与官方双 target 复跑均通过：`claude-haiku`、`codex-terra` 的 cell write、
+  host/sibling read block、host write block、config unchanged、runtime removed 六项全部为 true。
+- `freeze.json` 已据官方闭集输出切换为 `frozen`，source commit 绑定 `92b12ba`，probe status 为 passed，
+  `real_llm_runs_started=true`；未启动 calibration 或 final campaign，也未持久化 prompt、模型输出或凭证。
