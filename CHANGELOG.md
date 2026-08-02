@@ -16,7 +16,7 @@
 - Reworked `build-cs-skill` around `thin harness, thick context`, direct semantic tests, explicit rule
   ownership, context plans, and continuous compression; frontmatter `contracts` are no longer used.
 - Separated frozen v1 experiment fixtures from the active v2 contract and added v1.0.4-to-v2
-  distribution, architecture, documentation, and archive-integrity coverage.
+  distribution, architecture, and documentation coverage.
 
 ## 1.0.4
 
