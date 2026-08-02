@@ -56,7 +56,7 @@ gate，随当次代码、证据和
 
 ## 风险升级信号
 
-出现任何一条，走设计对齐再动手：把方案要点（改什么、契约变化、取舍、影响面——影响面分**必须修改 / 需要验证 / 仍待调查**三层）写入 `.codestable/work/feat-{slug}.md` → 由当前主流程创建一个 fresh reviewer，让其单轮执行 `cs-review` 的 design review，reviewer 内不得再创建子 agent → 主流程处理 findings，需要时重新创建 reviewer，累计最多 3 轮，超限连分歧一起上交 → 交用户确认后动手。存在会卡死方案的技术风险时，先按风险降序垂直打通主路径再铺开（穿刺协议见 `references/code-design.md`）。信号清单：
+出现任何一条，走设计对齐再动手：把方案要点（改什么、契约变化、取舍、影响面——影响面分**必须修改 / 需要验证 / 仍待调查**三层）写入 `.codestable/work/feat-{slug}.md` → 按硬门槛中的 reviewer lineage 完成 `cs-review` design review → 主流程处理 findings → 交用户确认后动手。存在会卡死方案的技术风险时，先按风险降序垂直打通主路径再铺开（穿刺协议见 `references/code-design.md`）。信号清单：
 
 - 公开 interface、持久化 schema 或跨模块协议变化；
 - 权限、信息安全、数据迁移、并发或不可恢复副作用；
@@ -71,10 +71,14 @@ gate，随当次代码、证据和
 - 声称完成前必须给出**与声明相称的可核验证据**：目标行为的观察结果、测试输出；只说"应该可以"不算完成。
 - 当前主流程创建 reviewer 前，先发现当前会话可调用的 subagent 创建与管理能力。项目上下文有显式创建方式/model 约束时先遵守。达到审查质量基线后，优先选择与实现者异构的 agent，并显式指定最强稳定 `model`；创建方式依次使用受管理的结构化委派能力、宿主 subagent、本机有界 agent CLI 回退，不得只扫 PATH。
 - 没有合格异构候选时回退同构最强模型。把最终创建方式、agent/model 与回退原因写入 task packet，禁止依赖默认模型。
-- 审查前冻结一个明确目标（diff review 优先 staged diff，也可用明确 range/patch；design review 冻结对应文档版本；audit 冻结 commit + 范围标识），把目标标识写入 task packet；reviewer 返回前不改目标或对应工作树。有 blocking 或未被用户明确接受的 important 时不提交当前候选，也不得创建正式里程碑 commit；处理后重跑验证、重新冻结审查目标并创建 fresh reviewer。
+- 审查前冻结一个明确目标（diff review 优先 staged diff，也可用明确 range/patch；design review 冻结对应文档版本；audit 冻结 commit + 范围标识），把目标标识写入 task packet；reviewer 返回前不改目标或对应工作树。有 blocking 或未被用户明确接受的 important 时不提交当前候选，也不得创建正式里程碑 commit；处理后重跑验证并重新冻结完整审查目标。
 - 仅在跨会话恢复、agent 交接或隔离 reviewer 需要不可变基线时，且已有 commit 授权，才可在私有工作分支创建明确标记的 WIP/checkpoint commit；它不代表 review 通过或任务完成，交付前按仓库策略 fixup/squash。
 - 本 skill 的确认与验证门槛均满足、blocking 清零且其余 important 已处理或被用户明确接受后，已有 commit 授权时才创建语义原子的正式里程碑 commit；未获授权则只报告可提交状态，不自行提交。
-- 改动完成后默认由当前主流程创建一个 fresh reviewer，让其单轮执行 `cs-review`；仅文案级微小改动可说明后跳过。主流程处理 findings 并按需重新发起，累计最多 3 轮；超限仍有 blocking 或分歧时交用户裁决，不得继续对轮或宣称完成。
+- 一个独立审查阶段由单一审查目的界定；design review、change review、contract review 与 Epic final acceptance 是不同阶段。只有为本阶段 findings 所作修复的复审，才属于同一阶段并沿用原 reviewer lineage；审查目的变化时开启新阶段。
+- 改动完成后默认进入 change review 审查阶段；仅文案级微小改动可说明后跳过。
+- 每个独立审查阶段的首轮必须由当前主流程创建一个 fresh reviewer，与实现者保持独立；reviewer 单轮执行 `cs-review`，其内部不得创建子 agent。
+- 主流程处理 findings 后先修复并重跑验证，再冻结新的完整审查目标；仅因处理 findings 产生的修复，复审必须沿用同一 reviewer 的同一 session，以 follow-up 继续。复审同时检查完整当前候选与本轮修复增量，逐项报告 `resolved` / `unresolved` / `new findings`；不得只核对旧 finding 或机械打勾。reviewer 独立性要求它独立于实现者，不要求对自身上一轮审查失忆。
+- 同一审查阶段累计最多 3 个有终态报告的轮次；更换 reviewer 不重置计数。只有原 run/session 失败或不可恢复、能力不满足、目标、范围、设计或核心路径发生重大变化、reviewer 声明无法继续独立判断，或 owner 要求第二意见时，才可更换 reviewer；更换时创建 fresh reviewer。超限仍有 blocking 或分歧时交用户裁决，不得继续对轮或宣称完成。
 - reviewer 创建后绑定该运行并记录 run identity：目标有效、能力仍满足，且 reviewer 状态为 running，或 `Awaiting` 携带可查询的同一 run identity 且查询仍为活动态时为健康；状态健康时等待终态报告，不因后来发现更优创建方式而取消、重复创建或并行补发。仅在运行明确失败或终止无报告、idle / `Awaiting` 且无可恢复 run identity、能力不满足或目标失效时，本轮失败且不计轮次；不得盲目重发，先检查 task packet 与 agent 状态，再决定一次有界重试、更换创建方式或交用户。
 
 ## 收尾

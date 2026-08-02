@@ -51,7 +51,12 @@ Execution strength follows risk:
 - `cs-epic` keeps approved delivery contracts in a permanent Epic document and active execution in
   a temporary work cursor. Decomposition, contract changes, and overall acceptance each cross an owner gate.
 - When independent review is needed, the outer workflow creates the reviewer. That reviewer runs
-  `cs-review` once and does not create another agent before returning a result.
+  `cs-review` once per round and does not create another agent before returning a result. Each independent
+  review stage starts with one fresh reviewer. Reviewer independence means independence from the implementer,
+  not amnesia about its own prior review.
+- A review stage is defined by one review purpose. Design review, change review, contract review, and Epic final acceptance are
+  separate stages. Only re-review driven by fixes for that stage's findings remains in the same stage and reuses
+  its reviewer lineage; a changed review purpose starts a new stage.
 - Before creating a reviewer, the current workflow discovers the subagent creation and management
   capabilities callable in the current session. It first follows explicit creation-method/model
   constraints in project context. After meeting the review quality floor, it prefers an agent
@@ -68,9 +73,16 @@ Execution strength follows risk:
 - `cs-review` is a read-only leaf executor for change, module, or repository review. The outer
   workflow owns fixes and any later review round.
 - With blocking findings or important findings not explicitly accepted by the user, do not commit the
-  current candidate or create a formal milestone. After fixes, verify, freeze a new target, and use a
-  fresh reviewer. A formal semantic milestone requires the review gate plus existing commit authorization;
-  a WIP/checkpoint exists only for recovery or an isolated baseline and does not mean approval.
+  current candidate or create a formal milestone. After finding-driven fixes, rerun verification, freeze a
+  new complete target, and continue through a follow-up in the same reviewer's same session. The re-review
+  examines the complete current candidate and the repair delta, classifies prior findings as resolved or
+  unresolved, and reports new findings; it cannot be a checklist-only pass.
+- A review stage allows at most three completed rounds with terminal reports. Replacing a reviewer does not reset that count.
+  Replace one only when the original run/session fails or cannot be recovered, capability is insufficient,
+  the target, scope, design, or core path changes materially, the reviewer says it can no longer judge
+  independently, or the owner requests a second opinion. A replacement starts fresh. A formal semantic
+  milestone requires the review gate plus existing commit authorization; a WIP/checkpoint exists only for
+  recovery or an isolated baseline and does not mean approval.
 - An Epic allows only one `current_item` at a time. This is a serialization constraint, not a per-item owner gate.
   Under the continuous policy, an ordinary item milestone advances automatically; it must not ask whether
   to continue to the next item or return as a terminal result. Per-item pauses require an explicit owner policy
@@ -129,14 +141,16 @@ An Epic separates durable product intent from temporary execution state and keep
 An Epic retains three owner gates:
 
 1. The current outer workflow first creates a fresh reviewer for design review of the proposed
-   decomposition. After findings are handled, the owner confirms goals, boundaries, acceptance, and
-   item contracts before execution starts.
-2. Changes to goals, scope, non-goals, acceptance, item membership/definitions, or major risks update
-   the permanent document and require a fresh review plus owner reconfirmation. In-boundary technical
-   choices and ordering adjustments that do not change dependencies or acceptance add no gate.
-3. After every item and integration verification complete, the cursor enters acceptance. The current
-   outer workflow creates a fresh reviewer for a final acceptance review against the latest owner-approved
-   criteria. Passing that gate does not replace the owner's final acceptance.
+   decomposition. After findings are handled and re-reviewed in the same lineage, the owner confirms goals,
+   boundaries, acceptance, and item contracts before execution starts.
+2. During execution, after the permanent document has been approved, changes to goals, scope, non-goals,
+   acceptance, item membership/definitions, or major risks update the permanent document. These contract changes
+   start a separate contract-review stage with a fresh reviewer and require owner reconfirmation. In-boundary
+   technical choices and ordering adjustments that do not change dependencies or acceptance add no gate.
+3. After every item and integration verification complete, the cursor enters acceptance. Final acceptance is
+   a separate review stage: the current outer workflow starts a new fresh-reviewer lineage instead of reusing an
+   item, design-review, or contract-review lineage, and reviews against the latest owner-approved criteria. Passing that gate does
+   not replace the owner's final acceptance.
 
 The first gate determines item progression, milestone commit, and remote publication policies once. Approving
 the decomposition does not itself grant version-control authorization. Store those policies in the work cursor

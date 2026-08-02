@@ -12,9 +12,9 @@ argument-hint: "[--range <git-range>] [scope 或 audit 目标]"
 ## 调用边界
 
 - 用户直接调用时，当前 agent 就是 reviewer，不再派生 reviewer。
-- 来源流程派发前冻结一个明确的审查目标（diff review 优先 staged diff，也可用明确的 `--range` 或 patch；design review 冻结对应文档版本；audit 冻结 commit + 范围标识），把审查目标标识写入 task packet；reviewer 返回前不得移动该目标或对应工作树。目标变化则本轮失效，由调用方重新冻结后创建 fresh reviewer。
-- 来源流程负责在进入本 skill 前完成 reviewer 创建方式与 agent/model 选择并创建 fresh reviewer；task packet 传入改动意图、审查目标、不审内容、期望返回格式，以及最终创建方式、agent/model 与回退原因。
-- 独立性由调用方建立；本 skill 不通过再次委派来补建独立视角。
+- 来源流程派发前冻结一个明确的审查目标（diff review 优先 staged diff，也可用明确的 `--range` 或 patch；design review 冻结对应文档版本；audit 冻结 commit + 范围标识），把审查目标标识写入 task packet；reviewer 返回前不得移动该目标或对应工作树。目标变化则本轮失效；调用方重新冻结完整目标后，按 reviewer lineage 规则决定 follow-up 或更换 reviewer。
+- 来源流程负责在每个独立审查阶段首轮进入本 skill 前完成 reviewer 创建方式与 agent/model 选择并创建 fresh reviewer；首轮 task packet 传入单一审查目的、改动意图、审查目标、不审内容、期望返回格式，以及最终创建方式、agent/model 与回退原因。design review、change review、contract review 与 Epic final acceptance 使用不同阶段；仅因本阶段 findings 修复而复审时，调用方把新的冻结目标和修复摘要作为 follow-up 交给同一 reviewer 的同一 session。
+- follow-up 复审必须检查完整当前候选与本轮修复增量，逐项报告 `resolved` / `unresolved` / `new findings`，不得只核对旧 finding。独立性由调用方建立；reviewer 只需独立于实现者，不要求对自身上一轮审查失忆，本 skill 也不通过再次委派来补建独立视角。
 
 ## 模式
 
@@ -28,7 +28,7 @@ argument-hint: "[--range <git-range>] [scope 或 audit 目标]"
 - **叶子执行器**：禁止创建、委派或唤醒任何子 agent；不得再次调用 `cs-review` 或 `cs-code-review`，也不把审查转交给其他流程。
 - 每次调用必须返回一份终态审查结果；上下文不足时返回 `NeedsContext`、缺失项和已检查范围，不得以 `idle`、`Awaiting` 或无结果结束。
 - 每个发现附 `文件:行号`（design 审查附对应小节）、问题说明和理由；不确定的标注为疑问而不是断言。
-- blocking 未解决不得给出“通过”结论；本 skill 不修复、不自行复审。
+- blocking 未解决不得给出“通过”结论；本 skill 不修复、不自行发起复审，但可承接来源流程发给同一 session 的 follow-up。
 
 ## 审查标准
 

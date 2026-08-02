@@ -102,12 +102,16 @@ owner 确认 proposed 文档与上述策略后，主流程机械置 `active`，�
 
 ## 硬门槛
 
-- **拆解方案必须经用户确认**（目标、边界、验收、子项契约）后才开始执行；交确认前由当前主流程创建一个 fresh reviewer，让其单轮执行 `cs-review` 的 design review，reviewer 内不得再创建子 agent。主流程处理 findings 并按需重新创建 reviewer，累计最多 3 轮，超限连分歧一起上交。执行中要改变目标、范围、非目标、验收、子项定义或重大风险，先更新永久文档、重新 review 并征得同意。
+- **拆解方案必须经用户确认**（目标、边界、验收、子项契约）后才开始执行；交确认前进入 design review 审查阶段，按下述 reviewer lineage 完成 `cs-review`。永久文档已批准后的执行中，要改变目标、范围、非目标、验收、子项定义或重大风险时，契约变化形成新的 contract review 审查阶段：先更新永久文档，由 fresh reviewer 重新 review 并征得同意。
 - 当前主流程创建 reviewer 前，先发现当前会话可调用的 subagent 创建与管理能力。项目上下文有显式创建方式/model 约束时先遵守。达到审查质量基线后，优先选择与实现者异构的 agent，并显式指定最强稳定 `model`；创建方式依次使用受管理的结构化委派能力、宿主 subagent、本机有界 agent CLI 回退，不得只扫 PATH。
 - 没有合格异构候选时回退同构最强模型。把最终创建方式、agent/model 与回退原因写入 task packet，禁止依赖默认模型。
-- 审查前冻结一个明确目标（diff review 优先 staged diff，也可用明确 range/patch；design review 冻结对应文档版本；audit 冻结 commit + 范围标识），把目标标识写入 task packet；reviewer 返回前不改目标或对应工作树。有 blocking 或未被用户明确接受的 important 时不提交当前候选，也不得创建正式里程碑 commit；处理后重跑验证、重新冻结审查目标并创建 fresh reviewer。
+- 审查前冻结一个明确目标（diff review 优先 staged diff，也可用明确 range/patch；design review 冻结对应文档版本；audit 冻结 commit + 范围标识），把目标标识写入 task packet；reviewer 返回前不改目标或对应工作树。有 blocking 或未被用户明确接受的 important 时不提交当前候选，也不得创建正式里程碑 commit；处理后重跑验证并重新冻结完整审查目标。
 - 仅在跨会话恢复、agent 交接或隔离 reviewer 需要不可变基线时，且已有 commit 授权，才可在私有工作分支创建明确标记的 WIP/checkpoint commit；它不代表 review 通过或任务完成，交付前按仓库策略 fixup/squash。
 - 本 skill 的确认与验证门槛均满足、blocking 清零且其余 important 已处理或被用户明确接受后，已有 commit 授权时才创建语义原子的正式里程碑 commit；未获授权则只报告可提交状态，不自行提交。
+- 一个独立审查阶段由单一审查目的界定；design review、change review、contract review 与 Epic final acceptance 是不同阶段。只有为本阶段 findings 所作修复的复审，才属于同一阶段并沿用原 reviewer lineage；审查目的变化时开启新阶段。
+- 每个独立审查阶段的首轮必须由当前主流程创建一个 fresh reviewer，与实现者保持独立；reviewer 单轮执行 `cs-review`，其内部不得创建子 agent。
+- 主流程处理 findings 后先修复并重跑验证，再冻结新的完整审查目标；仅因处理 findings 产生的修复，复审必须沿用同一 reviewer 的同一 session，以 follow-up 继续。复审同时检查完整当前候选与本轮修复增量，逐项报告 `resolved` / `unresolved` / `new findings`；不得只核对旧 finding 或机械打勾。reviewer 独立性要求它独立于实现者，不要求对自身上一轮审查失忆。
+- 同一审查阶段累计最多 3 个有终态报告的轮次；更换 reviewer 不重置计数。只有原 run/session 失败或不可恢复、能力不满足、目标、范围、设计或核心路径发生重大变化、reviewer 声明无法继续独立判断，或 owner 要求第二意见时，才可更换 reviewer；更换时创建 fresh reviewer。超限仍有 blocking 或分歧时交用户裁决，不得继续对轮或宣称完成。
 - 同一时间只允许一个 `current_item`；这是串行约束，不是每个子项的人工 gate。`active` 且批准 hash 有效表示可执行已批准子项，恢复后沿用游标策略，不重新询问是否继续。
 - 子项通过其 owning skill 的验证与审查后，按 `milestone_commit` 把代码、证据和 work 游标更新收成一个语义原子里程碑，不把多个子项堆进同一 diff。`item_progression: continuous` 时，非最终子项完成后自动选择永久文档顺序中第一个依赖已满足的未完成子项，更新 `current_item` / `next_action`，并在同一受托主流程中继续执行；仍有未完成子项但无可运行候选时按阻塞暂停。不得询问“是否继续下一项”，不得把普通子项完成当作终态返回。
 - `item_progression: per-item` 时，完成当前里程碑后按已记录的逐项 checkpoint 策略暂停；它是 owner 在首次 gate 或后续显式变更中选择的行为，不得伪装成默认连续模式。`milestone_commit: manual` 时只交付可提交 checkpoint，不自行 commit。
@@ -115,7 +119,7 @@ owner 确认 proposed 文档与上述策略后，主流程机械置 `active`，�
 - Epic 编排只在以下情况新增暂停：契约或重大风险变化、无法自行解除的阻塞/产品决策、新增权限、需要 owner 明确接受的 important findings、review 超限仍有分歧、旧游标策略缺失或非法、用户明确要求暂停，以及全部子项完成后的最终 owner gate。子项 owning skill 自身的确认门槛照常生效；已批准子项契约覆盖同一决策时不得重复确认，新出现且会改变结果的风险仍按 owning skill 或 Epic 重确认处理。
 - reviewer 创建后绑定该运行并记录 run identity：目标有效、能力仍满足，且 reviewer 状态为 running，或 `Awaiting` 携带可查询的同一 run identity 且查询仍为活动态时为健康；状态健康时等待终态报告，不因后来发现更优创建方式而取消、重复创建或并行补发。仅在运行明确失败或终止无报告、idle / `Awaiting` 且无可恢复 run identity、能力不满足或目标失效时，本轮失败且不计轮次；不得盲目重发，先检查 task packet 与 agent 状态，再决定一次有界重试、更换创建方式或交用户。
 - 每个子项按其类型的纪律执行（cs-feat / cs-issue / cs-refactor 的门槛照常生效），完成即更新 work 游标的 ID 进度、证据和 commit 指针；文档与事实不一致时以仓库事实为准并修正文档。
-- 全部子项完成后把 phase 置为 acceptance，运行集成验证，并由当前主流程创建 fresh reviewer，对最新 owner 已批准的验收标准做 `cs-review` audit/acceptance review。主流程处理 findings，门槛通过后给出各子项结果、验证证据与遗留项，**不代替用户做整体验收**，停下等 owner 最终接受。
+- 全部子项完成后把 phase 置为 acceptance 并运行集成验证。final acceptance 是独立审查阶段，必须由当前主流程另建 fresh reviewer 开始新的 lineage，不得沿用子项、此前 design review 或 contract review 的 reviewer lineage；它对最新 owner 已批准的验收标准做 `cs-review` audit/acceptance review。主流程按同一 lineage 处理该阶段 findings，门槛通过后给出各子项结果、验证证据与遗留项，**不代替用户做整体验收**，停下等 owner 最终接受。
 
 ## 收尾
 

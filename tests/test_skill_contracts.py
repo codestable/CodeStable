@@ -489,6 +489,71 @@ def test_review_delegation_keeps_a_healthy_run_bound() -> None:
         assert "能力不满足或目标失效" in caller, skill_name
 
 
+def test_review_reuses_one_reviewer_lineage_for_finding_driven_repairs() -> None:
+    lineage_contract = (
+        "每个独立审查阶段的首轮必须由当前主流程创建一个 fresh reviewer",
+        "一个独立审查阶段由单一审查目的界定",
+        "design review、change review、contract review 与 Epic final acceptance 是不同阶段",
+        "只有为本阶段 findings 所作修复的复审",
+        "先修复并重跑验证，再冻结新的完整审查目标",
+        "同一 reviewer 的同一 session",
+        "完整当前候选与本轮修复增量",
+        "`resolved` / `unresolved` / `new findings`",
+        "不得只核对旧 finding 或机械打勾",
+        "累计最多 3 个有终态报告的轮次",
+        "更换 reviewer 不重置计数",
+        "只有原 run/session 失败或不可恢复、能力不满足、目标、范围、设计或核心路径发生重大变化",
+        "reviewer 声明无法继续独立判断",
+        "owner 要求第二意见",
+        "独立于实现者，不要求对自身上一轮审查失忆",
+    )
+
+    for skill_name in ("cs-feat", "cs-issue", "cs-refactor", "cs-epic"):
+        _, caller = _read_skill(SKILLS / skill_name / "SKILL.md")
+        for anchor in lineage_contract:
+            assert _contains_contract(caller, anchor), f"{skill_name}: missing {anchor!r}"
+        assert "处理后重跑验证、重新冻结审查目标并创建 fresh reviewer" not in caller
+        assert "需要复审时重新创建 reviewer" not in caller
+        assert "按需重新创建 reviewer" not in caller
+        assert "需要时重新创建 reviewer" not in caller
+        assert "按需重新发起" not in caller
+
+    trigger_contract = {
+        "cs-feat": "改动完成后默认进入 change review 审查阶段",
+        "cs-issue": "修复完成后默认进入 change review 审查阶段",
+        "cs-refactor": "完成后进入 change review 审查阶段",
+        "cs-epic": "交确认前进入 design review 审查阶段",
+    }
+    for skill_name, anchor in trigger_contract.items():
+        _, caller = _read_skill(SKILLS / skill_name / "SKILL.md")
+        assert _contains_contract(caller, anchor), skill_name
+
+    _, review = _read_skill(SKILLS / "cs-review/SKILL.md")
+    for anchor in (
+        "首轮 task packet 传入单一审查目的",
+        "design review、change review、contract review 与 Epic final acceptance 使用不同阶段",
+        "同一 reviewer 的同一 session",
+        "完整当前候选与本轮修复增量",
+        "`resolved` / `unresolved` / `new findings`",
+        "独立于实现者，不要求对自身上一轮审查失忆",
+    ):
+        assert anchor in review
+    assert "不修复、不自行发起复审" in review
+    assert "可承接来源流程发给同一 session 的 follow-up" in review
+    assert "目标变化则本轮失效，由调用方重新冻结后创建 fresh reviewer" not in review
+    assert "在进入本 skill 前完成 reviewer 创建方式与 agent/model 选择并创建 fresh reviewer" not in review
+
+
+def test_epic_final_acceptance_starts_a_separate_fresh_reviewer_lineage() -> None:
+    _, epic = _read_skill(SKILLS / "cs-epic/SKILL.md")
+    assert "final acceptance 是独立审查阶段" in epic
+    assert "另建 fresh reviewer" in epic
+    assert "不得沿用子项、此前 design review 或 contract review 的 reviewer lineage" in epic
+    assert "主流程按同一 lineage 处理该阶段 findings" in epic
+    assert "契约变化形成新的 contract review 审查阶段" in epic
+    assert "永久文档已批准后的执行中" in epic
+
+
 def test_shipped_skills_do_not_bind_review_backend_products() -> None:
     forbidden = (
         "cs-agent-mcp",
@@ -531,7 +596,7 @@ def test_review_snapshots_and_milestone_commits_are_not_conflated() -> None:
         assert "design review 冻结对应文档版本" in caller, skill_name
         assert "audit 冻结 commit + 范围标识" in caller, skill_name
         assert "目标标识写入 task packet" in caller, skill_name
-        assert "重新冻结审查目标" in caller, skill_name
+        assert "重新冻结完整审查目标" in caller, skill_name
         assert "有 blocking 或未被用户明确接受的 important 时不提交当前候选" in caller, skill_name
         assert "正式里程碑 commit" in caller, skill_name
         assert "WIP/checkpoint commit" in caller, skill_name

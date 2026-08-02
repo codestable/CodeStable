@@ -41,11 +41,13 @@ bug / 行为异常    -> cs-issue ----------> cs-review（高风险或按需）
 - `cs-issue` 先建立能明确变红的验证，再修复并证明它变绿。
 - `cs-refactor` 先建立等价性证据，分步改动并持续保持验证为绿。
 - `cs-epic` 用永久 Epic 文档维护批准后的交付契约，用临时 work 游标恢复活动执行；拆解、契约变化和整体验收分别经过 owner gate。
-- 需要独立审查时由外层主流程创建 reviewer；reviewer 单轮执行 `cs-review`，返回结果前不再创建子 agent。
+- 需要独立审查时由外层主流程创建 reviewer；reviewer 每轮执行一次 `cs-review`，返回结果前不再创建子 agent。每个独立审查阶段的首轮使用 fresh reviewer；reviewer 独立性要求它独立于实现者，不要求对自身上一轮审查失忆。
+- 一个独立审查阶段由单一审查目的界定；design review、change review、contract review 与 Epic final acceptance 是不同阶段。只有为本阶段 findings 所作修复的复审，才属于同一阶段并沿用原 reviewer lineage；审查目的变化时开启新阶段。
 - 当前主流程创建 reviewer 前，先发现当前会话可调用的 subagent 创建与管理能力。项目上下文有显式创建方式/model 约束时先遵守。达到审查质量基线后，优先选择与实现者异构的 agent，并显式指定最强稳定 model；创建方式依次使用受管理的结构化委派能力、宿主 subagent、本机有界 agent CLI 回退，不得只扫 PATH。没有合格异构候选时回退同构最强模型。把最终创建方式、agent/model 与回退原因写入 task packet，禁止依赖默认模型。具体后端与 model 约束属于项目上下文，不进入 shipped skill。
 - 外层主流程派发前冻结一个明确的审查目标（diff review 优先 staged diff，也可用明确 range/patch；design review 冻结对应文档版本；audit 冻结 commit + 范围标识），reviewer 返回前不移动目标或对应工作树；目标变化则本轮失效。
 - `cs-review` 是只读叶子执行器，也承接模块或全仓 audit；修复与复审由外层主流程负责。
-- 有 blocking 或未被用户明确接受的 important 时不提交当前候选，也不创建正式里程碑；修复后重新验证、冻结目标并创建 fresh reviewer。只有审查门槛通过且已有 commit 授权时才形成语义原子里程碑；WIP/checkpoint 只作恢复或隔离基线，不代表通过。
+- 有 blocking 或未被用户明确接受的 important 时不提交当前候选，也不创建正式里程碑。主流程处理 findings 后修复、重新验证并冻结新的完整目标；仅因 findings 修复产生的复审沿用同一 reviewer 的同一 session，以 follow-up 继续。复审检查完整当前候选与本轮修复增量，逐项报告 `resolved` / `unresolved` / `new findings`，不得只核对旧 finding 或机械打勾。
+- 同一审查阶段累计最多 3 个有终态报告的轮次，更换 reviewer 不重置计数。只有原 run/session 失败或不可恢复、能力不满足、目标、范围、设计或核心路径发生重大变化、reviewer 声明无法继续独立判断，或 owner 要求第二意见时才更换 reviewer；更换时重新创建 fresh reviewer。只有审查门槛通过且已有 commit 授权时才形成语义原子里程碑；WIP/checkpoint 只作恢复或隔离基线，不代表通过。
 - Epic 同一时间只允许一个 `current_item`；这是串行约束，不是每个子项的人工 gate。连续策略下，普通子项达到语义原子里程碑后自动进入下一项，不得询问“是否继续下一项”或终态返回；逐项暂停必须是 owner 明示策略或真实门槛。
 - 健康运行中的 reviewer 与原 run/target 绑定；running，或 Awaiting 携带同一可查询 run identity 且仍为活动态时继续等待，不因后来发现更优创建方式而取消、重复创建或并行补发。只有终止无报告、run identity 不可恢复、能力不满足或目标失效时，本轮才失败且不计审查轮次；外层主流程先诊断再决定有界重试、更换创建方式或上交，不盲目重发。
 - `cs-keep` 把高频事实压进 attention，把尚未被更强 owner 承接的经验暂存为 lesson，并推动它们
@@ -86,12 +88,15 @@ Epic 把长期产品意图与短期执行状态分成两层，并且只保留一
 
 Epic 保留三道 owner gate：
 
-1. proposed 拆解先由当前主流程创建 fresh reviewer 做 design review；处理 findings 后，owner
+1. proposed 拆解先由当前主流程创建 fresh reviewer 做 design review；处理 findings 后按同一 lineage 复审，owner
    确认目标、边界、验收和子项契约，才进入执行。
-2. 目标、范围、非目标、验收、子项增删/定义或重大风险变化时，更新永久文档，重新 review
-   并由 owner 确认；边界内技术选择和不改变依赖/验收的顺序微调不增加 gate。
-3. 全部子项完成并通过集成验证后，游标进入 acceptance；当前主流程创建 fresh reviewer，
-   对最新 owner 已批准的验收标准做 final acceptance review，门槛通过后仍由 owner 最终接受。
+2. 永久文档已批准后的执行中，目标、范围、非目标、验收、子项增删/定义或重大风险变化时，更新
+   永久文档；契约变化形成新的 contract review 审查阶段，由 fresh reviewer 审查并由 owner 确认。
+   边界内技术选择和不改变
+   依赖/验收的顺序微调不增加 gate。
+3. 全部子项完成并通过集成验证后，游标进入 acceptance；final acceptance 是独立审查阶段，
+   当前主流程另建 fresh reviewer 开始新的 lineage，不沿用子项、design review 或 contract review 的 lineage，对最新
+   owner 已批准的验收标准做 final acceptance review，门槛通过后仍由 owner 最终接受。
 
 首次 gate 一次性确定子项推进、里程碑 commit 与远端同步策略；拆解确认本身不等于版本控制授权。
 策略写入 work 游标并在恢复时直接沿用，缺失或非法才暂停一次补记；owner 显式改变策略只更新游标，

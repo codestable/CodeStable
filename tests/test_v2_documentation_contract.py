@@ -356,6 +356,54 @@ def test_review_docs_publish_single_level_agent_orchestration() -> None:
     assert "does not consume a review round" in en_workflow_compact
     assert "blocking findings or important findings not explicitly accepted by the user" in en_workflow_compact
 
+    for anchor in (
+        "每个独立审查阶段的首轮",
+        "一个独立审查阶段由单一审查目的界定",
+        "design review、change review、contract review 与 Epic final acceptance 是不同阶段",
+        "只有为本阶段 findings 所作修复的复审",
+        "同一 reviewer 的同一 session",
+        "完整当前候选与本轮修复增量",
+        "`resolved` / `unresolved` / `new findings`",
+        "累计最多 3 个有终态报告的轮次",
+        "更换 reviewer 不重置计数",
+        "独立于实现者，不要求对自身上一轮审查失忆",
+        "只有原 run/session 失败或不可恢复、能力不满足、目标、范围、设计或核心路径发生重大变化",
+        "reviewer 声明无法继续独立判断",
+        "owner 要求第二意见",
+    ):
+        assert _contains_contract(zh_workflow, anchor)
+
+    for anchor in (
+        "Each independent review stage starts with one fresh reviewer",
+        "A review stage is defined by one review purpose",
+        "Design review, change review, contract review, and Epic final acceptance are separate stages",
+        "Only re-review driven by fixes for that stage's findings",
+        "the same reviewer's same session",
+        "the complete current candidate and the repair delta",
+        "classifies prior findings as resolved or unresolved",
+        "reports new findings",
+        "at most three completed rounds with terminal reports",
+        "Replacing a reviewer does not reset that count",
+        "independence from the implementer, not amnesia about its own prior review",
+        "original run/session fails or cannot be recovered",
+        "capability is insufficient",
+        "target, scope, design, or core path changes materially",
+        "reviewer says it can no longer judge independently",
+        "owner requests a second opinion",
+    ):
+        assert anchor in en_workflow_compact
+
+    assert _contains_contract(zh_workflow, "final acceptance 是独立审查阶段")
+    assert _contains_contract(zh_workflow, "另建 fresh reviewer")
+    assert _contains_contract(zh_workflow, "不沿用子项、design review 或 contract review 的 lineage")
+    assert "Final acceptance is a separate review stage" in en_workflow_compact
+    assert "starts a new fresh-reviewer lineage" in en_workflow_compact
+    assert "instead of reusing an item, design-review, or contract-review lineage" in en_workflow_compact
+    assert _contains_contract(zh_workflow, "契约变化形成新的 contract review 审查阶段")
+    assert "contract changes start a separate contract-review stage with a fresh reviewer" in en_workflow_compact
+    assert _contains_contract(zh_workflow, "永久文档已批准后的执行中")
+    assert "During execution, after the permanent document has been approved" in en_workflow_compact
+
     public = "\n".join(_read(path) for path in PUBLIC_DOCS)
     assert "独立 subagent 视角" not in public
     assert "independent subagent perspective" not in public

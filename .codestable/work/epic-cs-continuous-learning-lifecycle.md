@@ -275,3 +275,16 @@ remote_publish: each-milestone
 - 契约澄清 fresh review：Paseo `c06c2e6a`，Opus 5 / high / plan，冻结 patch `2ccbaf55...d9619`、
   tree `649332c7...293b02`；`0 blocking / 0 important / 3 nit`，新永久 Epic hash
   `44ae22f3...d17e7` 可确认。owner 随后正式确认该 revision；三条 nit 均为可选措辞粒度，不影响合入。
+- owner 另行批准 reviewer lineage 工作流改造；稳定契约归属 shipped task/review Skill 与中英文
+  WORKFLOW，本游标只记录它作为 freeze external input 的变更与验证证据。
+- 该独立工作流改造只改变 freeze 已列出的 4 个 task Skill external hash；实验仍保持
+  prepared/pending/false，33/26 哈希全匹配；相关契约 `42 passed`，分发 `3 passed, 1 skipped`，全量离线
+  `356 passed, 1 skipped, 3 deselected`，package checker 与 diff check 通过。目标、指标、样本、预算与
+  probe 状态均未改，也未运行真实 CLI、probe 或模型。
+- lineage 首轮 fresh review 为 Paseo `e2bc9258`（Opus 5 / plan）：`0 blocking / 5 important`；修正完成后
+  聚焦守卫由 `3 failed` 转为 `3 passed`，只补完成后 review 触发、阶段边界、中英 gate 与非空替换条件，
+  并压缩游标重复契约；相关契约 `37 passed`、分发 `3 passed, 1 skipped`、freeze 33/26 与 package/diff
+  检查均通过。第 2 轮按新规则发回同一 reviewer session，不追加全量或安全类测试。
+- 同一 session 第 2 轮将上轮 5 important 全判 resolved，新 important 仅为 Epic gate 2 缺“批准后执行中”
+  的时间边界；末轮修正同时补齐 contract-review 阶段枚举与 final lineage 排除，聚焦守卫再次由
+  `3 failed` 转为 `3 passed`。第 3/3 轮仍发回 reviewer `e2bc9258`，不新建 agent 或重置轮次。
