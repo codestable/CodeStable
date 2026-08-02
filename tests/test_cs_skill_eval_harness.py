@@ -10,6 +10,7 @@ import shutil
 import socket
 import subprocess
 import sys
+import tempfile
 import threading
 import urllib.error
 import urllib.parse
@@ -439,6 +440,117 @@ def test_sandbox_profile_rejects_control_characters_and_protects_physical_home(
     assert "(allow process-info* (target self))" in profile
     with pytest.raises(ValueError, match="NUL 或换行"):
         base.macos_sandbox_profile(tmp_path / "bad\npath", runtime, binary)
+
+
+@pytest.mark.skipif(sys.platform != "darwin", reason="macOS Seatbelt 专用")
+def test_sandbox_profile_allows_only_required_metadata_under_home() -> None:
+    from harness import base
+
+    sandbox = shutil.which("sandbox-exec")
+    if not sandbox:
+        pytest.skip("需要本机 sandbox-exec")
+
+    with tempfile.TemporaryDirectory(
+        prefix=".cs-eval-profile-",
+        dir=base.physical_home(),
+    ) as tmp:
+        cell_root = Path(tmp) / "artifacts/analysis/runs/cell/pair"
+        workdir = cell_root / "post-a"
+        runtime = cell_root / "runtime"
+        home = runtime / "home"
+        codex_home = runtime / "codex-home"
+        runtime_tmp = runtime / "tmp"
+        binary_dir = Path(tmp) / "tools/claude/current"
+        binary = binary_dir / "claude"
+        sibling_secret = Path(tmp) / "sibling-secret.txt"
+        for path in (workdir, home, codex_home, runtime_tmp, binary_dir):
+            path.mkdir(parents=True, exist_ok=True)
+        binary.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        sibling_secret.write_text("sibling-must-not-cross\n", encoding="utf-8")
+
+        shell = Path("/bin/sh").resolve()
+        profile = base.macos_sandbox_profile(workdir, runtime, binary)
+        metadata_policy = profile.split("(allow file-read-metadata\n", 1)[1]
+        assert "(subpath " not in metadata_policy
+
+        completed = subprocess.run(
+            [
+                sandbox,
+                "-p",
+                profile,
+                str(shell),
+                "-c",
+                'cd "$CODEX_HOME" && pwd -P && cd "$BINARY_DIR" && pwd -P',
+            ],
+            cwd=workdir,
+            env={
+                "HOME": str(home),
+                "CODEX_HOME": str(codex_home),
+                "BINARY_DIR": str(binary_dir),
+                "TMPDIR": str(runtime_tmp),
+                "PATH": "/usr/bin:/bin",
+            },
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=30,
+            check=False,
+        )
+
+        assert completed.returncode == 0, completed.stderr
+        assert completed.stdout.splitlines() == [
+            str(codex_home.resolve()),
+            str(binary_dir.resolve()),
+        ]
+
+        direct_read = subprocess.run(
+            [str(shell), "-c", 'cat "$1"', "sh", str(sibling_secret)],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=30,
+            check=False,
+        )
+        assert direct_read.returncode == 0
+        assert direct_read.stdout == "sibling-must-not-cross\n"
+
+        sibling_read = subprocess.run(
+            [sandbox, "-p", profile, str(shell), "-c", 'cat "$1"', "sh", str(sibling_secret)],
+            cwd=workdir,
+            env={"HOME": str(home), "TMPDIR": str(runtime_tmp), "PATH": "/usr/bin:/bin"},
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=30,
+            check=False,
+        )
+        assert sibling_read.returncode != 0
+        assert "sibling-must-not-cross" not in sibling_read.stdout
+
+        sibling_listing = subprocess.run(
+            [sandbox, "-p", profile, "/bin/ls", str(Path(tmp))],
+            cwd=workdir,
+            env={"HOME": str(home), "TMPDIR": str(runtime_tmp), "PATH": "/usr/bin:/bin"},
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=30,
+            check=False,
+        )
+        assert sibling_listing.returncode != 0
+        assert sibling_secret.name not in sibling_listing.stdout
+
+        sibling_metadata = subprocess.run(
+            [sandbox, "-p", profile, "/usr/bin/stat", str(sibling_secret)],
+            cwd=workdir,
+            env={"HOME": str(home), "TMPDIR": str(runtime_tmp), "PATH": "/usr/bin:/bin"},
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=30,
+            check=False,
+        )
+        assert sibling_metadata.returncode != 0
 
 
 @pytest.mark.real_cli

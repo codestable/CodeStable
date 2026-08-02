@@ -3,7 +3,7 @@ epic: ../epics/cs-continuous-learning-lifecycle.md
 phase: executing
 approved_revision: 4b0b8e8e0596e7ee42611864843512ecd9402970bb3682b5605f0dc0f8dcf01a
 current_item: LEARN-3
-next_action: validate and publish the frozen target attestation, then run k=2 calibration with a fresh output identity
+next_action: publish the reviewed nested Seatbelt metadata fix, then rerun target probes for the new source
 blocked_by: null
 item_progression: continuous
 milestone_commit: authorized
@@ -18,65 +18,18 @@ remote_publish: each-milestone
 
 ## 临时决策与证据
 
-- 现有四个 task skill 只有 lesson 检索与笼统收尾推荐，没有 read-repair 或强信号筛选。
-- 现有 eval runner 每个 cell 只有一次 invocation，无法证明跨会话迁移。
-- 设计调研已核对 domain-modeling、teach、diagnosing-bugs、prototype、neat-freak 与现有 ADR-003；
-  只借鉴晶化、证据晋级、机械化优先与 read-repair，不引入它们的默认目录或全局状态。
-- design review round 1：Paseo `ceb5d5d6-4c74-4825-b600-64d5111b2f48`，
-  `claude-fable-5` / `plan-high`，冻结 SHA-256 `a660265a...e7ffd`；1 blocking / 4 important 已处理。
-- revised proposed Epic SHA-256：`a0107b6da2079556024c1a4807365e93a365149d37bedbbed7987188af45aa45`。
-- design review round 2：Paseo `50bf355c-fbbb-4ef0-a9fd-ec3d9c560e9f`，
-  `claude-fable-5` / `plan-high`，冻结 SHA-256 `a0107b6d...aa45`；0 blocking / 3 important 已处理。
-- final design review round 3：Paseo `00358ef1-46a8-4976-abe6-8a2d4b783a07`，
-  `claude-fable-5` / `plan-high`，冻结 SHA-256 `2c023c22...62cd`；0 blocking / 0 important / 3 nit，
-  结论可交 owner 确认。
-- accepted nit interpretation：Epic 游标候选沿用 `晶化候选：` marker；25pp 是总体聚合阈值且每个
-  model family 方向必须为正；“等集测试”指四 task skills 的一致契约断言。
-- owner 于 2026-08-01 确认 proposed Epic，并选择 `continuous` / `authorized` /
-  `each-milestone`；激活后批准版本 SHA-256 为
-  `4b0b8e8e0596e7ee42611864843512ecd9402970bb3682b5605f0dc0f8dcf01a`。
-- LEARN-1 tests-first：新增契约测试先得到 `4 failed, 2 passed`，实现后定向契约
-  `25 passed`、全量 `130 passed, 1 skipped`、分发 `3 passed, 1 skipped`，plugin package check 与
-  `git diff --check` 通过；四个 task skill 与 ADR-006 均未超过 300 行。
-- LEARN-1 晶化候选：无。Markdown 换行造成的锚点误判已通过空白归一化 helper 机械化，不另写
-  重复 lesson。
-- LEARN-1 diff review round 1：Paseo `8a20cd70-9f55-4331-9b69-90e63bed4913`，
-  `claude-fable-5` / `plan-high`，冻结 staged patch SHA-256 `eff4faae...5d02`；
-  `0 blocking / 1 important / 3 nit`。已补齐 canonical-owner 退役、候选证据/范围/归宿、显式记忆
-  诉求同轮处理、窄维护报告，并加入旧 lesson 缺 `status` 的独立安装兼容；新增锚点先红后绿。
-- LEARN-1 修复后验证：三份契约套件 `37 passed`、全量 `130 passed, 1 skipped`、分发
-  `3 passed, 1 skipped`，plugin package check 与 `git diff --check` 通过。
-- LEARN-1 diff review round 2：fresh Paseo `76255cc7-43b3-44d7-86af-90a2fffd3284`，
-  `claude-fable-5` / `plan-high`，冻结 staged patch SHA-256 `e3490e44...7deb`；
-  `0 blocking / 0 important / 4 nit`，结论可合。保留的 nit 仅为排版、授权来源概括、测试冗余和
-  范围外 cs-review 旧推荐句，不影响行为或授权边界。
-- LEARN-1 milestone：commit `45521f9`（`feat: add project learning lifecycle`），已发布到
-  `origin/refactor-v2`。
-- LEARN-2 tests-first：新增 `cs-keep` 三态生命周期、单一 owner 路由和双语低打扰文档契约，初始
-  `3 failed`；实现 schema、独立后续验证、退役不复活、机械 guard 优先、晋升清理与公开文档同步后
-  新增测试 `3 passed`，三份相关契约套件 `40 passed`。
-- LEARN-2 完整验证：全量 `133 passed, 1 skipped`、分发 `3 passed, 1 skipped`，plugin package
-  check 与 `git diff --check` 通过；所有相关 Markdown 均未超过 300 行。
-- LEARN-2 晶化候选：无。本轮没有出现超出 ADR-006 且尚未被测试或 canonical 文档承接的强信号。
-- LEARN-2 diff review round 1：Paseo `c50ee628-8fa6-4a1e-95cc-917b1c007de5`，
-  `claude-fable-5` / `plan-high`，冻结 staged patch SHA-256 `29e97d73...24d51`；
-  `0 blocking / 0 important / 5 nit`，结论可合。
-- 主流程独立预检补充发现并修复三处 reviewer 漏检的契约漂移：`cs-keep` 补入 Epic 最终毕业 gate
-  授权来源；WORKFLOW 命中报告补齐 status / 核验 / 影响；公开文档把 lesson 从经验终点纠正为无更强
-  owner 时的 staging。同步处理 reviewer 的负断言归属、空白归一化、中英措辞等 nit。
-- LEARN-2 review 修复后验证：三份相关契约套件 `40 passed`、全量 `133 passed, 1 skipped`、分发
-  `3 passed, 1 skipped`，plugin package check 与 `git diff --check` 通过。
-- LEARN-2 diff review round 2：fresh Paseo `ad9fd5a7-88b0-448a-88d0-5fe9a36d5739`，
-  `claude-fable-5` / `plan-high`，冻结 staged patch SHA-256 `5f8e4f5b...09b18`；
-  `0 blocking / 0 important / 3 nit`，结论可合，三处主流程补强均经独立核验成立。
-- LEARN-2 nit 收口：负向旧路由断言改为跨换行归一化；README 与 `cs-keep` metadata 对齐为管理
-  lesson 生命周期和 canonical 归宿；validated 统一使用“有效命中”。metadata 锚点初始 `1 failed`，
-  改为通过 frontmatter 接口断言后相关契约 `40 passed`，全量 `133 passed, 1 skipped`，分发与 package
-  checker 继续通过。
-- LEARN-2 final diff review round 3：fresh Paseo `a8bfa9c3-627f-4a7b-b0b4-5438ca32f3f5`，
-  `claude-fable-5` / `plan-high`，冻结 staged patch SHA-256 `6a04b044...50bdf`；
-  `0 blocking / 0 important / 2 nit`，结论可合。保留的 nit 仅为英文 validated 术语精度和两套测试
-  各自保留同名空白归一化 helper，不影响行为、授权或契约真实性。
+- 初始调研确认 task skills 只有 lesson 检索与笼统收尾，旧 eval 也不能证明跨会话迁移；设计只借鉴
+  晶化、证据晋级、机械化优先与 read-repair，不引入外部 skill 的默认目录或全局状态。
+- Epic design review 共三轮：Paseo `ceb5d5d6`、`50bf355c`、`00358ef1`；前两轮 findings 已处理，
+  末轮为 `0 blocking / 0 important / 3 nit`。owner 于 2026-08-01 确认永久 Epic，并选择
+  `continuous` / `authorized` / `each-milestone`；批准 hash 即 frontmatter `approved_revision`。
+- LEARN-1 tests-first 为 `4 failed, 2 passed`；修复与兼容收口后契约 `37 passed`、全量
+  `130 passed, 1 skipped`。reviews：Paseo `8a20cd70`（1 important 已处理）、`76255cc7`
+  （`0 blocking / 0 important`）；milestone `45521f9` 已发布。
+- LEARN-2 tests-first 为 `3 failed`；三态 lifecycle、canonical owner 与双语文档收口后契约
+  `40 passed`、全量 `133 passed, 1 skipped`。reviews：Paseo `c50ee628`、`ad9fd5a7`、`a8bfa9c3`，
+  末轮 `0 blocking / 0 important`；milestone `1d78fdd` 已发布。
+- LEARN-1/2 晶化候选均为无：换行锚点、lifecycle 与 owner 路由已由 helper、契约测试和 ADR-006 承接。
 - LEARN-3 tests-first：新增 sequence、oracle、harness、fixture/config/cost 契约；实现 paired A / fresh
   `cs-keep` / treatment-control B、phase checkpoint、Git/manifest 隔离、成本聚合与 fail-closed freeze gate。
 - LEARN-3 专项审计发现并修复：fixture/skill/seed/pipeline 输入漂移、截断 checkpoint 与 preflight cache、
@@ -259,3 +212,30 @@ remote_publish: each-milestone
   host/sibling read block、host write block、config unchanged、runtime removed 六项全部为 true。
 - `freeze.json` 已据官方闭集输出切换为 `frozen`，source commit 绑定 `92b12ba`，probe status 为 passed，
   `real_llm_runs_started=true`；未启动 calibration 或 final campaign，也未持久化 prompt、模型输出或凭证。
+- `92b12ba` 的 `k=2` calibration 使用独立 `calibration-k2-92b12ba.json`，实际软成本 `$1.886275`：
+  Claude 12/12 为 `pipeline-failed`，Codex 12/12 为未解决 operational error（外层
+  `RetryableSequenceError`，根因 `HarnessError`），0 个可聚合完成 pair，verdict 为 `REJECTED /
+  underpowered`。结果与 append-only checkpoint 均保留，不删除、不改样本，也不进入 final。
+- Codex error 均在 76–91ms 内发生；等价深层 artifacts workdir 复现 Seatbelt 无法 canonicalize 临时
+  `CODEX_HOME`。新增非 real-CLI `/bin/sh` 回归先红后绿：逐级放行受保护祖先的 metadata 后 runtime 可
+  canonicalize，sibling 内容仍不可读；同路径真实 Codex 短诊断通过。Claude 额外诊断在 600s 超时，
+  未据此改 prompt、fixture、hypothesis 或 metric，原负结果照实保留。
+- 因 `base.py` 是 frozen pipeline input，新候选 manifest 已用其新 hash 重新置为
+  `prepared-awaiting-commit` / pending / `real_llm_runs_started=false`；该字段只描述尚未运行的新 source。
+- nested Seatbelt 修复验证：harness `58 passed, 3 skipped`、四份 eval `259 passed, 3 skipped`、全量
+  `353 passed, 4 skipped`、分发 `3 passed, 1 skipped`、seed verify `4 passed`；package checker、
+  `git diff --check` 通过，dry-run 仍为 240 invocation / 20 hook / `$3.41 [soft]`，freeze 33/26 全匹配。
+- nested Seatbelt review 的 Fable 运行 `d48a130d` 在完成确定性核验后两次因 provider `503` 未形成报告；
+  owner 指定不可用时回退 Opus。fresh Opus reviewer `c50bd609` 冻结 patch `8b6ee734...271fa`、tree
+  `68fab428...21a4`，给出 `0 blocking / 2 important / 5 nit`：Claude binary 祖先 metadata 未覆盖，且新
+  metadata 放行缺少 listing/stat/literal 负向契约。
+- review 修复先红：同一非 real-CLI `/bin/sh + sandbox-exec` 用例中 runtime 可 canonicalize，但 home 下
+  模拟 Claude binary 目录报 `Not a directory`。共享 profile 现只把 binary 加入祖先 metadata 来源，
+  不把 binary 目录变成可读 subpath；同时锁住 sibling 内容、listing、stat 与 metadata 段只含 literal。
+- 修复后 harness `58 passed, 3 deselected`、全量 `353 passed, 1 skipped, 3 deselected`，命令显式
+  `-m 'not real_cli'`；seed verify `4 passed`、package checker、`git diff --check` 均通过，dry-run 仍为
+  240 invocation / 20 hook / `$3.41 [soft]`，freeze 33/26 零失配。游标已压缩已发布的 LEARN-1/2 过程
+  证据并保留 review/commit 指针；新 `base.py` hash 为 `2e440a7a...e061`。
+- nested Seatbelt fresh re-review：Opus Paseo `ab6f7611-adff-41dd-9801-4627652eb65e`，冻结 patch
+  `87122d76...cb327`、tree `69a55202...e3333`；`0 blocking / 0 important / 7 nit`，结论可合。两条
+  important 均经独立 `/bin/sh + sandbox-exec` 对照闭合，且未执行 real CLI、target probe 或模型调用。

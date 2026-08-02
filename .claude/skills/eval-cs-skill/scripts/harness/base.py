@@ -110,7 +110,20 @@ def macos_sandbox_profile(
         f'        (subpath "{_sandbox_quote(path)}")'
         for path in readable_roots
     )
-    readable_parent = workdir.resolve().parent
+    metadata_sources = (*readable_roots, binary.resolve())
+    readable_metadata = sorted({
+        parent
+        for path in metadata_sources
+        for parent in path.parents
+        if any(
+            parent == protected_root or protected_root in parent.parents
+            for protected_root in protected_roots
+        )
+    }, key=str)
+    metadata = "\n".join(
+        f'    (literal "{_sandbox_quote(path)}")'
+        for path in readable_metadata
+    )
     return f'''(version 1)
 (allow default)
 (deny process-info*)
@@ -130,7 +143,8 @@ def macos_sandbox_profile(
       (subpath "{_sandbox_quote(runtime.resolve())}")
       (literal "/dev/null"))))
 (allow file-read-metadata
-  (literal "{_sandbox_quote(readable_parent)}"))
+  (require-any
+{metadata}))
 '''
 
 

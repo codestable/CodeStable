@@ -1,39 +1,14 @@
 {
   "schema_version": 1,
-  "state": "frozen",
+  "state": "prepared-awaiting-commit",
   "prepared_on": "2026-08-02",
   "hash_algorithm": "sha256",
-  "source_commit": "92b12babe359b836e003cbe232358a1330c09a92",
-  "real_llm_runs_started": true,
+  "source_commit": "pending",
+  "real_llm_runs_started": false,
   "model_target_probe": {
-    "status": "passed",
-    "source_commit": "92b12babe359b836e003cbe232358a1330c09a92",
-    "targets": [
-      {
-        "cell_write": true,
-        "family": "claude",
-        "harness": "claude-headless",
-        "host_config_unchanged": true,
-        "host_read_blocked": true,
-        "host_write_blocked": true,
-        "id": "claude-haiku",
-        "model": "claude-haiku-4-5",
-        "runtime_removed": true,
-        "sibling_read_blocked": true
-      },
-      {
-        "cell_write": true,
-        "family": "codex",
-        "harness": "codex-cli",
-        "host_config_unchanged": true,
-        "host_read_blocked": true,
-        "host_write_blocked": true,
-        "id": "codex-terra",
-        "model": "gpt-5.6-terra",
-        "runtime_removed": true,
-        "sibling_read_blocked": true
-      }
-    ]
+    "status": "pending",
+    "source_commit": "pending",
+    "targets": []
   },
   "primary_metric": {
     "name": "overall_paired_hidden_pass_delta",
@@ -75,7 +50,7 @@
     ".claude/skills/eval-cs-skill/scripts/harness/adapter_claude.py": "905dcaee41a8a9b5629489a8734c0a5b968d8e3cc73d6c20173e0a0dbda1c2a8",
     ".claude/skills/eval-cs-skill/scripts/harness/adapter_codex.py": "7e6b6330b92eb6ee9a1814e22b895cbb5e970b1f16fd55ba35439c6ecf074426",
     ".claude/skills/eval-cs-skill/scripts/harness/adapter_paseo.py": "15ec2e456b8af9493da2b405d6379136a7872a7aaea0e7c6d8486073468c1a17",
-    ".claude/skills/eval-cs-skill/scripts/harness/base.py": "db08d4bb912391812e99cb625efd6d046b1744e44df0d41b823b3cd81a15f2af",
+    ".claude/skills/eval-cs-skill/scripts/harness/base.py": "2e440a7a2bef03f3f6db1116a7ec59b1378281d2638b9618310504c35c9be061",
     ".claude/skills/eval-cs-skill/scripts/harness/mock.py": "e9de0dad8dc219a27756e5827bdf4ad0dfada9bb17ca461249ff31627de93fae",
     ".claude/skills/eval-cs-skill/scripts/harness/mock_weak.py": "b50f2fadf541158791f918cf46dd55f30d13c1eba948bdc2f71026a3750a6234",
     ".claude/skills/eval-cs-skill/scripts/metrics.py": "59372930ebf1b55baeea3492055288ce4d9decf3599e919c360a2be731d505df",
