@@ -3,8 +3,8 @@ epic: ../epics/cs-continuous-learning-lifecycle.md
 phase: executing
 approved_revision: 4b0b8e8e0596e7ee42611864843512ecd9402970bb3682b5605f0dc0f8dcf01a
 current_item: LEARN-3
-next_action: publish the reviewed probe hardening, then rerun target probes
-blocked_by: null
+next_action: obtain a valid Codex CLI provider credential, then rerun both target probes
+blocked_by: "codex-terra target probe fails at provider invocation; previous classified response was INVALID_API_KEY"
 item_progression: continuous
 milestone_commit: authorized
 remote_publish: each-milestone
@@ -235,3 +235,10 @@ remote_publish: each-milestone
   `claude-fable-5` / `high`，冻结 staged patch `f63d6476...f4f27`、tree `7ec517ac...e1f0`；
   `0 blocking / 0 important / 3 nit`，结论可合。reviewer 未执行任何真实 CLI、模型调用或进程环境探测，
   并独立复现三项 real-CLI node 默认全部 skipped、marker 覆盖完整及 freeze 33/26 零漂移。
+- LEARN-3 reviewed probe-hardening milestone：commit `54785f7`（`fix: harden learning transfer target
+  probes`），已发布到 `origin/refactor-v2`。
+- commit 后正式 target probe 保持 fail-closed：Claude `claude-haiku` 的 cell write、host/sibling read
+  block、host write block、config unchanged、runtime removed 六项全部通过；Codex `codex-terra` 在 provider
+  invocation 返回 `HarnessError`。同一 provider 的上次可诊断响应为 `INVALID_API_KEY`，本轮未修改宿主认证，
+  不再盲目重试。freeze 与 attestation 继续保持 prepared/pending，未启动 calibration/final campaign；
+  probe sentinel、sandbox 与进程均已清理。
