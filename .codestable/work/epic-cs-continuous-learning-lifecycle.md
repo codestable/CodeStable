@@ -182,7 +182,7 @@ remote_publish: each-milestone
   `257 passed, 3 skipped`，全量 `351 passed, 4 skipped`；分发 `3 passed, 1 skipped`、seed verify
   `4 passed`、package checker 与 `git diff --check` 通过，dry-run 仍为 240 invocation / 20 hook /
   `$3.41 [soft]`，freeze 33 inputs / 26 external inputs 零漂移。
-- LEARN-3 real-CLI opt-in 修复晶化候选：无。默认禁跑由 pytest collection policy 与三处 marker
+- LEARN-3 real-CLI opt-in 修复晶化候选：无。默认禁跑由 eval tests 的 `conftest.py` 与三处 marker
   机械承接，不另建 lesson。
 - LEARN-3 real-CLI opt-in fresh review：Paseo `0667d2cf-d27c-4800-b048-fd6e1413a9d6`，
   `claude-fable-5` / `high`，冻结 staged patch `f63d6476...f4f27`、tree `7ec517ac...e1f0`；

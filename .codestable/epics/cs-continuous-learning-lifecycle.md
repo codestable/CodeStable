@@ -191,7 +191,8 @@ Epic。只有 treatment 比 control 高至少 25pp、两个 family 都为正、l
 - `tests/test_skill_contracts.py`、`test_v2_architecture_contract.py`、`test_v2_documentation_contract.py`。
 - `.claude/skills/eval-cs-skill/SKILL.md` 与 scripts 的 `runner.py`、`fixtures.py`、`buildprompt.py`、
   `_model.py`、`config.py`、`metrics.py`、scorer registry、新 sequence/scorer 模块。
-- `tests/test_cs_skill_eval.py`；新建 `experiments/cs-learning-transfer-001/`。
+- `.claude/skills/eval-cs-skill/tests/test_cs_skill_eval.py`；新建
+  `experiments/cs-learning-transfer-001/`。
 
 需要验证：`cs`、`cs-onboard`、`cs-review`、alias、AGENTS/CLAUDE 与 build-cs-skill 不变；8 skills、
 README 精简结构、全部 Markdown ≤300、plugin/package/distribution tests 继续成立。发布元数据只在 owner
@@ -209,7 +210,8 @@ README 精简结构、全部 Markdown ≤300、plugin/package/distribution tests
 - 新 lesson 与跨项目分享保持显式授权；无 transcript、feedback runtime、global lessons 或新 skill。
 - paired 单测证明四类 invocation 独立、B prompt 相同、只有 lesson 差异、半 pair 不完成、成本不低估。
 - 冻结实验在两个 model family 上以非 `[underpowered]` 证据满足 verdict；否则本 Epic 保持未完成。
-- 中英文契约对称；相关/全量 pytest、分发测试、plugin check 与 `git diff --check` 通过。
+- 中英文契约对称；默认 v2 与 maintainer eval 两套 pytest、分发测试、plugin check 与
+  `git diff --check` 通过。
 - 最终由 fresh reviewer 按最新批准版本做 acceptance review，再由 owner 整体验收。
 
 ## 关键决策

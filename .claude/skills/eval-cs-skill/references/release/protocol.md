@@ -50,6 +50,7 @@ python3 {skill_dir}/scripts/bump_version.py --to X.Y.Z --note "……"
 ```bash
 PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q tests/test_skills_cli_distribution.py tests/test_plugin_package.py
 PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q tests -rs
+PYTHONDONTWRITEBYTECODE=1 python3 -m pytest --strict-markers -q .claude/skills/eval-cs-skill/tests -rs
 PYTHONDONTWRITEBYTECODE=1 python3 tools/check-plugin-package.py --root . --json
 git diff --check
 ```
@@ -73,4 +74,4 @@ python3 -m pytest tests/test_skills_cli_distribution.py -q -rs
 - [ ] 版本 5 处一致 + CHANGELOG 有段。
 - [ ] distribution 测试确认活动 skill 集合精确相等；集合变化时真实 CLI E2E 未被 skip。
 - [ ] 被实验证实的 skill 声明按 `[measured: evidence_pointer]` 标注。
-- [ ] 全量 pytest、package check 与 `git diff --check` 全部通过。
+- [ ] 默认 v2 与 maintainer eval 两套 pytest、package check 与 `git diff --check` 全部通过。

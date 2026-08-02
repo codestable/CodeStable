@@ -9,7 +9,7 @@ applies-to:
   - ".claude/skills/eval-cs-skill/scripts/promote_feedback_fixture.py"
 enforcement: test
 stage: [author, eval, optimize, release]
-lint: "python3 -m pytest tests/test_cs_skill_eval.py tests/test_cs_skill_convergence.py tests/test_cs_skill_release.py tests/test_cs_skill_selfref.py"
+lint: "PYTHONDONTWRITEBYTECODE=1 python3 -m pytest --strict-markers -q .claude/skills/eval-cs-skill/tests -rs"
 ---
 
 # ADR-003: eval-cs-skill 评测与自研迭代闭环
@@ -26,7 +26,7 @@ CodeStable 原有 `tests/test_skill_*` 只验证 skill **写得对不对**（路
 
 1. **CS 自研执行引擎**：`scripts/runner.py` + harness 适配器注册表（claude-headless/codex-cli/paseo/api + 离线 mock/mock-weak）+ scorers（planted_defect/dod_gate/llm_judge）+ metrics。被测 SKILL.md 以**快照文本**经 `buildPrompt` 注入，绕开「skill 无法无头执行」，并隔离宿主已装版本（Superpowers 教训）。
 2. **复用 BAIME 的判据与编排**（以文本内联，运行时不跨插件读）：双层价值函数 V_instance∧V_meta≥0.80、四机械分量 V_meta、三收敛模式；`optimize.py` 自实现 OCA（因 `iteration-executor` agent 调不到本地 runner）。
-3. **认知诚实为硬约束**：一切数值带 `[measured]/[soft]/[underpowered]`；hypotheses 冻结须先 git commit（provenance）；`tests/test_cs_skill_convergence.py` 机械校验。
+3. **认知诚实为硬约束**：一切数值带 `[measured]/[soft]/[underpowered]`；hypotheses 冻结须先 git commit（provenance）；`.claude/skills/eval-cs-skill/tests/test_cs_skill_convergence.py` 机械校验。
 4. **experiments/ 布局**：hypotheses/fixtures/config/analysis/iteration 入库，`artifacts/runs/` 与 `.queue.jsonl` gitignore。
 5. **release 两步走**：`knowledge-extractor` 产草稿 → `adapt_extracted_skill.py` 翻译成 CS 合规结构（禁止 extractor 直写 plugins/），再 `regression.py` + `bump_version.py`。
 6. **自治默认轻量 cron**（`enqueue_experiment.py`），BAIME `loop-backlog` 为可选宿主。

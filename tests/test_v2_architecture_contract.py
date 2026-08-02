@@ -82,6 +82,13 @@ def test_active_adrs_do_not_enforce_deleted_v1_tests_or_assets() -> None:
         assert stale not in active
 
 
+def test_default_pytest_config_does_not_leak_into_eval_checks() -> None:
+    pytest_config = (ROOT / "pytest.ini").read_text(encoding="utf-8")
+
+    assert pytest_config == "[pytest]\ntestpaths = tests\n"
+    assert not (ROOT / "conftest.py").exists()
+
+
 def test_v1_feedback_promoter_is_explicitly_legacy_only() -> None:
     promoter = (
         ROOT

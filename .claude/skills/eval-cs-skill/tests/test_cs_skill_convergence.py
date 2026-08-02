@@ -8,8 +8,9 @@ import shutil
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-SCRIPTS = ROOT / ".claude/skills/eval-cs-skill/scripts"
+EVAL_SKILL = Path(__file__).resolve().parents[1]
+ROOT = EVAL_SKILL.parents[2]
+SCRIPTS = EVAL_SKILL / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 import optimize as opt              # noqa: E402

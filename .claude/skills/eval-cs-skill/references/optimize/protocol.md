@@ -5,7 +5,9 @@
 ## 前置：预注册并冻结
 
 1. 写/更新 `experiments/{skill}-{NNN}/hypotheses.md`（`H-<id>: metric ≥ threshold`）。
-2. **先 `git add` + `git commit` 再跑任何 LLM**——provenance 由 `tests/test_cs_skill_convergence.py` 与 optimize 的 `pre_registration` 分量机械校验。未提交=未冻结=不给分。
+2. **先 `git add` + `git commit` 再跑任何 LLM**——provenance 由
+   `.claude/skills/eval-cs-skill/tests/test_cs_skill_convergence.py` 与 optimize 的
+   `pre_registration` 分量机械校验。未提交=未冻结=不给分。
 
 ## 循环
 

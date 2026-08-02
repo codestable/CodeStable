@@ -16,6 +16,12 @@ CodeStable 所有落盘产出的正文用**中文**：plan / design、plan revie
 
 ### 测试
 
+- 默认 v2 产品与发布回归：`PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q tests -rs`。该命令不运行
+  repo-local maintainer eval。
+- 修改 `.claude/skills/eval-cs-skill/` 的 scripts、harness 或 experiment 时，显式运行
+  `PYTHONDONTWRITEBYTECODE=1 python3 -m pytest --strict-markers -q .claude/skills/eval-cs-skill/tests -rs`。
+- eval suite 中的 `real_cli` 用例默认 skip；只有明确需要真实 CLI 验证时才传 `--run-real-cli`。
+
 ### 命令与脚本陷阱
 
 ### 路径与目录约定

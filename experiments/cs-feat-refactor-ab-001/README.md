@@ -4,7 +4,7 @@
 
 ## ⚠️ 与 mock 自测 config 的区分（重要）
 
-experiments/ 下**大多数 config 是 mock**（`harnesses:["mock"]` / `model_list:["mock-model"]`）——那是**管线自测 fixture**，让 pytest 离线、确定、免费地验证 runner/scorer/metrics 逻辑（见 `tests/test_cs_skill_eval.py::test_runner_end_to_end`）。**它们不产生真实评估结论。**
+experiments/ 下**大多数 config 是 mock**（`harnesses:["mock"]` / `model_list:["mock-model"]`）——那是**管线自测 fixture**，让 pytest 离线、确定、免费地验证 runner/scorer/metrics 逻辑（见 `.claude/skills/eval-cs-skill/tests/test_cs_skill_eval.py::test_runner_end_to_end`）。**它们不产生真实评估结论。**
 
 **本实验相反，是真实 api 评估**：`harnesses:["api"]` + 真实模型 + 真实 judge。
 

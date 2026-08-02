@@ -54,7 +54,8 @@
 
 ## 3. 预注册与冻结
 
-写 `hypotheses.md`（`H-<id>: metric ≥ threshold`），**先 git commit 再跑任何 LLM**——provenance 由 `tests/test_cs_skill_convergence.py` 校验。
+写 `hypotheses.md`（`H-<id>: metric ≥ threshold`），**先 git commit 再跑任何 LLM**——provenance 由
+`.claude/skills/eval-cs-skill/tests/test_cs_skill_convergence.py` 校验。
 
 `learning-transfer` 还要生成 `freeze.json`，冻结 config、fixtures、A/hidden/regression checks、hook、
 seed builder、owning skill 快照、完整 pipeline 与显式 execution targets。先提交这些输入，再对每个

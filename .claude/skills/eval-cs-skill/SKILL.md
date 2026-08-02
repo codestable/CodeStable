@@ -149,7 +149,8 @@ cell repo 在 oracle 后销毁；checkpoint 只保留结构化 phase、指标与
 ## 认知诚实纪律（硬约束）
 
 - 一切数值必带 tag：`[measured]`（oracle/机械可验）/ `[soft]`（自评估算）/ `[underpowered]`（k<5 或 n<8）。
-- `hypotheses.md` 冻结后**先 git commit 再跑任何 LLM**；provenance 由 `tests/test_cs_skill_convergence.py` 机械校验。
+- `hypotheses.md` 冻结后**先 git commit 再跑任何 LLM**；provenance 由
+  `.claude/skills/eval-cs-skill/tests/test_cs_skill_convergence.py` 机械校验。
 - 禁止裸 `V_instance = 0.XX` 自评分；收敛判据见 optimize 协议。
 - 跨模型 ≥2；judge 模型须独立于被测模型（避免同源偏差）。
 - learning-transfer 校准可用 `k=2`，但接受证据要求每 fixture、每 family `k>=5`；任一 primary
