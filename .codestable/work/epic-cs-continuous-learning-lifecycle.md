@@ -3,7 +3,7 @@ epic: ../epics/cs-continuous-learning-lifecycle.md
 phase: executing
 approved_revision: 4b0b8e8e0596e7ee42611864843512ecd9402970bb3682b5605f0dc0f8dcf01a
 current_item: LEARN-3
-next_action: publish the reviewed nested Seatbelt metadata fix, then rerun target probes for the new source
+next_action: commit and publish the frozen target attestation, then run k=2 calibration with a new output identity
 blocked_by: null
 item_progression: continuous
 milestone_commit: authorized
@@ -239,3 +239,6 @@ remote_publish: each-milestone
 - nested Seatbelt fresh re-review：Opus Paseo `ab6f7611-adff-41dd-9801-4627652eb65e`，冻结 patch
   `87122d76...cb327`、tree `69a55202...e3333`；`0 blocking / 0 important / 7 nit`，结论可合。两条
   important 均经独立 `/bin/sh + sandbox-exec` 对照闭合，且未执行 real CLI、target probe 或模型调用。
+- nested Seatbelt milestone `652949c08d42ee099be404cdc9e6914a69b5439b` 已发布。提交后的官方双 target
+  probe 通过：`claude-haiku` 与 `codex-terra` 的 cell write、host/sibling read block、host write block、
+  config unchanged、runtime removed 六项均为 true；输出只含闭集布尔 attestation，无 prompt、回答或凭证。

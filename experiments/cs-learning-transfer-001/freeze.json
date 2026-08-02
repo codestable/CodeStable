@@ -1,14 +1,39 @@
 {
   "schema_version": 1,
-  "state": "prepared-awaiting-commit",
+  "state": "frozen",
   "prepared_on": "2026-08-02",
   "hash_algorithm": "sha256",
-  "source_commit": "pending",
-  "real_llm_runs_started": false,
+  "source_commit": "652949c08d42ee099be404cdc9e6914a69b5439b",
+  "real_llm_runs_started": true,
   "model_target_probe": {
-    "status": "pending",
-    "source_commit": "pending",
-    "targets": []
+    "status": "passed",
+    "source_commit": "652949c08d42ee099be404cdc9e6914a69b5439b",
+    "targets": [
+      {
+        "cell_write": true,
+        "family": "claude",
+        "harness": "claude-headless",
+        "host_config_unchanged": true,
+        "host_read_blocked": true,
+        "host_write_blocked": true,
+        "id": "claude-haiku",
+        "model": "claude-haiku-4-5",
+        "runtime_removed": true,
+        "sibling_read_blocked": true
+      },
+      {
+        "cell_write": true,
+        "family": "codex",
+        "harness": "codex-cli",
+        "host_config_unchanged": true,
+        "host_read_blocked": true,
+        "host_write_blocked": true,
+        "id": "codex-terra",
+        "model": "gpt-5.6-terra",
+        "runtime_removed": true,
+        "sibling_read_blocked": true
+      }
+    ]
   },
   "primary_metric": {
     "name": "overall_paired_hidden_pass_delta",
