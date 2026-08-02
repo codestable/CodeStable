@@ -3,7 +3,7 @@ epic: ../epics/cs-continuous-learning-lifecycle.md
 phase: executing
 approved_revision: 4b0b8e8e0596e7ee42611864843512ecd9402970bb3682b5605f0dc0f8dcf01a
 current_item: LEARN-3
-next_action: squash and publish the reviewed source, then run real target probes
+next_action: publish the reviewed probe hardening, then rerun target probes
 blocked_by: null
 item_progression: continuous
 milestone_commit: authorized
@@ -152,3 +152,86 @@ remote_publish: each-milestone
   patch SHA-256 `7e43904b...c022`、tree `39429368...edf4f`；`0 blocking / 0 important / 4 nit`，
   结论可合。上一轮 atomic tail repair important 经字节级故障注入与全候选复核确认闭合；保留 nit 仅为
   父目录 fsync、探针错误诊断、锁文件和 kill -9 临时文件清理等可选加固，不影响本轮证据完整性。
+- LEARN-3 reviewed source milestone：4 个未发布 checkpoint 已压缩为 commit `eed9f55`，父提交为远端
+  `1d78fdd`、tree `8b81cc0a...8c60`，已发布到 `origin/refactor-v2`；旧 attestation 从未用于真实模型。
+- LEARN-3 真实 probe 首轮未形成 attestation：Claude 复杂安全 prompt 被模型自身拒绝，且宿主
+  `.codex/logs_2.sqlite*` 的并发更新让全量 mtime snapshot 假失败；Codex runtime 又因 Seatbelt 父目录
+  metadata 与 `/var` canonical 路径错配在模型前退出。三项均用 red -> green 回归收口：既有 state 内容
+  变化不算 probe mutation、但新路径仍阻断；模型只验证 cell 写入，越界读写改由同一 Seatbelt profile
+  的确定性 shell 验证；runtime env 全部 canonical，并只开放父目录本身、不开放 sibling 子树。
+- LEARN-3 probe correction 证据：snapshot/prompt 回归先 `5 failed` 后 `8 passed`；分层 probe 回归先
+  `2 failed` 后通过；Codex canonical runtime 与真实 Seatbelt `CODEX_HOME` 遍历测试均先红后绿。
+  修复后的 Claude target 六个布尔 oracle 全部通过。Codex 已通过路径与 sandbox gate 并到达配置的
+  provider API，但宿主 Codex CLI 自身同样返回 `INVALID_API_KEY`；当前没有可安全复用的 API/Paseo
+  隔离替代，待有效 CLI credential 后重跑。freeze 保持 prepared/pending，未写失败 attestation，
+  未运行 calibration/final campaign。
+- LEARN-3 probe correction 晶化候选：无。三类可复发错误均已由契约测试和 frozen input 哈希机械承接。
+- LEARN-3 probe correction 深化审计发现三条安全/效度断点：provider 配置解析可能静默退回默认 route；
+  POSIX `read` 会把无换行 secret 的 EOF 误判为阻断；父进程会跟随模型控制的输出 symlink。新增
+  fail-closed route/auth、allow-all sandbox 负控、模型/确定性 cell 分离、no-follow/大小上限与 symlink
+  配置快照测试，红态为 `29 failed, 16 passed`，实现后 harness 为 `45 passed`。
+- Codex host auth 只接受当前 uid、`0600`、普通非 symlink 的 `apikey` JSON；只把最小 key 放入隔离 env
+  与临时最小 auth，不复制其他字段。selected provider 必须是 CLI `-c` 可表达的 bare id，四个 route
+  字段完整且无额外字段；config 派生 route 不继承 ambient `OPENAI_BASE_URL`，任何解析失败均在调用前阻断。
+- probe correction 修复后专项语义复核：内建只读 agent 冻结四文件 patch SHA-256
+  `e53f5c5a...105d`，独立复现 allow-all 泄漏、真实 profile 三项阻断、symlink 输出拒绝与配置内容变化；
+  `0 blocking / 0 important / 2 nit`。nit 仅为进一步锁定 >4 KiB 输出与更多异常清理分支。
+- probe correction 完整验证：四份 eval 定向 `246 passed`、全量 `340 passed, 1 skipped`、分发
+  `3 passed, 1 skipped`、seed verify `4 passed`，plugin package checker 与 `git diff --check` 通过；
+  dry-run 保持 240 invocation / 20 hook / `$3.41 [soft]`。freeze 的 33 inputs / 26 external inputs 已重新
+  匹配，仍为 prepared/pending，未运行 calibration/final campaign。
+- LEARN-3 probe correction 晶化候选：无。新增三类断点均已由确定性 helper 和 red -> green 回归承接。
+- LEARN-3 probe correction diff review round 1：fresh Paseo
+  `1b129156-e9c2-4a55-a10a-9e1ef63158a1`，`claude-fable-5` / `high`，冻结 staged patch
+  `7eebbd42...c96c`、tree `c7943d9d...a94f7f3a440`；`0 blocking / 2 important / 3 nit`。
+  important 指向 auth 派生 key 的 ambient route 歧义和稳定指令文件未做内容 hash，均已处理。
+- 同轮专项安全审计发现 `1 blocking / 3 important`：模型工具可读取临时 auth 与继承的 provider env；
+  当前 Codex 只认 `CODEX_API_KEY`；host config 缺 owner/写权限校验；失败 stderr 可能回显 key。新增测试先得
+  `10 failed, 42 deselected`，实现 owner/mode、route 与 stderr gate 后聚焦 `11 passed`。
+- 真实 Codex + 仅本机假 provider 回归进一步推翻两个假设：外层 Seatbelt 中的内层 `workspace-write`
+  会因嵌套 `sandbox_apply` 失败；仅用 `shell_environment_policy.inherit=core` 仍可从父进程信息读取 key。
+  现由外层 Seatbelt 独占 cell/sibling 文件边界，Codex 内层设 `danger-full-access` 避免嵌套，并禁用默认
+  `plugins` 后台 clone；本地 credential proxy 在内存中向上游注入 Bearer，Codex argv/env/home/父进程均无 key。
+- 真实 CLI 安全 oracle 已机械证明：两次请求只到 `127.0.0.1` 假 provider、Authorization 使用受控 dummy、
+  请求体不含 key、工具实际执行且其 env/父 PID/进程枚举均看不到 key、sibling read 仍被阻断；跨域 redirect
+  不携带 Authorization，local proxy 强制 `NO_PROXY`，非法 key 与不可信 route/config 均在调用前失败。
+- 正式 review 的 snapshot nits 同批收口：`CLAUDE.md` / `AGENTS.md` 纳入稳定内容 hash，未知顶层状态目录新增
+  会改变 snapshot，probe result 读取增加 `O_NONBLOCK`，Seatbelt listing 用例不再空验。
+- LEARN-3 hardened correction 验证：harness `58 passed`；四份 eval 定向 `259 passed`；全量
+  `353 passed, 1 skipped`；分发 `3 passed, 1 skipped`、seed verify `4 passed`，plugin package checker 与
+  `git diff --check` 通过；dry-run 仍为 240 invocation / 20 hook / `$3.41 [soft]`。
+- freeze 再次机械核对为 33 inputs / 26 external inputs 全匹配，保持 `prepared-awaiting-commit`、
+  `source_commit: pending`、probe pending、`real_llm_runs_started=false`；本轮没有运行真实 campaign。
+- LEARN-3 hardened correction 晶化候选：无。凭证穿透、route 歧义、snapshot 与 FIFO 风险均已有确定性
+  helper、真实 CLI 攻击回归或 freeze hash 承接，不另建 lesson。
+- LEARN-3 hardened correction diff review round 2：fresh Paseo
+  `f6a0b030-3fba-4fa0-81a3-7c7bf949d479`，`claude-fable-5` / `high`，冻结 staged patch
+  `5b658fa3...deeef4`、tree `71de77e1...c4d4`；`1 blocking / 0 important / 2 nit`。blocking 证实
+  `process-info-listpids` 只阻断枚举，工具仍可沿已知 PPID 读取祖先环境。
+- 进程隔离修复采用系统 profile 同类规则：`deny process-info*` 后只允许 `target self`；修复前已用真实
+  Codex + 本机 fake provider 的良性工具调用验证不会破坏执行。随后撤回会触发宿主安全拦截的 PPID 遍历
+  测试，仅保留严格 profile 文本契约与既有真实 CLI 行为证据，不再执行祖先凭证扫描。
+- 主流程另行复现并修复两条 proxy 边界：Codex 子进程不再继承可能含凭证的宿主 proxy env，只保留固定
+  loopback `NO_PROXY`；credential proxy 退出时先撤销 forwarding、停止接入并关闭存量连接，半请求不能在
+  invocation 结束后继续携带 Bearer。新增回归红态 `3 failed, 1 passed`，修复后纯本地聚焦 `4 passed`、
+  harness 非真实 CLI 子集 `56 passed, 3 deselected`、四份 eval `257 passed, 3 deselected`、全量
+  `351 passed, 1 skipped, 3 deselected`；分发 `3 passed, 1 skipped`、seed verify `4 passed`、package
+  checker 与 `git diff --check` 通过，dry-run 保持 240 invocation / 20 hook / `$3.41 [soft]`。
+- LEARN-3 process/proxy hardening 晶化候选：无。三条风险均由 Seatbelt 契约、proxy 生命周期 helper 和
+  确定性回归机械承接，不另建 lesson。
+- LEARN-3 process/proxy hardening diff review round 3：fresh Paseo
+  `65f7052b-2f2f-46fd-9985-4d7f7c9a40ea`，`claude-fable-5` / `high`，冻结 staged patch
+  `06ae07a8...b4b67`、tree `77dade41...c8607`；`0 blocking / 0 important / 4 nit`，结论可合。
+- owner 随后复现默认 pytest 节点会启动真实 Codex 并触发挂起/宿主安全拦截，故上一冻结结论不作为最终
+  提交依据。静态红态确认三项真实 CLI 用例没有 opt-in，且 Codex 用例仍含进程枚举与父进程环境探测。
+- 修复后 `real_cli` 测试默认 skip，仅显式 `--run-real-cli` 才执行；同时删除进程枚举和父进程环境读取。
+  owner 原命令为 `3 passed, 1 skipped`，harness `56 passed, 3 skipped`，四份 eval
+  `257 passed, 3 skipped`，全量 `351 passed, 4 skipped`；分发 `3 passed, 1 skipped`、seed verify
+  `4 passed`、package checker 与 `git diff --check` 通过，dry-run 仍为 240 invocation / 20 hook /
+  `$3.41 [soft]`，freeze 33 inputs / 26 external inputs 零漂移。
+- LEARN-3 real-CLI opt-in 修复晶化候选：无。默认禁跑由 pytest collection policy 与三处 marker
+  机械承接，不另建 lesson。
+- LEARN-3 real-CLI opt-in fresh review：Paseo `0667d2cf-d27c-4800-b048-fd6e1413a9d6`，
+  `claude-fable-5` / `high`，冻结 staged patch `f63d6476...f4f27`、tree `7ec517ac...e1f0`；
+  `0 blocking / 0 important / 3 nit`，结论可合。reviewer 未执行任何真实 CLI、模型调用或进程环境探测，
+  并独立复现三项 real-CLI node 默认全部 skipped、marker 覆盖完整及 freeze 33/26 零漂移。

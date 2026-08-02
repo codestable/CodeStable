@@ -110,8 +110,11 @@ def macos_sandbox_profile(
         f'        (subpath "{_sandbox_quote(path)}")'
         for path in readable_roots
     )
+    readable_parent = workdir.resolve().parent
     return f'''(version 1)
 (allow default)
+(deny process-info*)
+(allow process-info* (target self))
 (deny file-read*
   (require-all
     (require-any
@@ -126,6 +129,8 @@ def macos_sandbox_profile(
       (subpath "{_sandbox_quote(workdir.resolve())}")
       (subpath "{_sandbox_quote(runtime.resolve())}")
       (literal "/dev/null"))))
+(allow file-read-metadata
+  (literal "{_sandbox_quote(readable_parent)}"))
 '''
 
 

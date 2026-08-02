@@ -842,7 +842,7 @@ def test_codex_harness_runs_ephemerally(monkeypatch, tmp_path) -> None:
     assert "--ignore-user-config" in observed["command"]
     assert "--ignore-rules" in observed["command"]
     sandbox_index = observed["command"].index("--sandbox")
-    assert observed["command"][sandbox_index + 1] == "workspace-write"
+    assert observed["command"][sandbox_index + 1] == "danger-full-access"
     assert "ANTHROPIC_API_KEY" not in observed["env"]
 
 
