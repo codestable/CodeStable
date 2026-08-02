@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """llm_judge scorer：两轴打分（compliance 照做没 / quality 质量）。
 
-rubric 取自项目共享文档 `.codestable/reference/code-dimensions.md`（cs-onboard 复制的跨 skill
-共享口径，是 CLAUDE.md 认可的共享路径，非 sibling skill 私文件）。
+若 v1 项目保留 `.codestable/reference/code-dimensions.md`，可将其作为 repo-local rubric；
+文件不存在时使用内置 rubric，不依赖 shipped skill 或集中式 onboard runtime。
 judge 模型须独立于被测模型（避免同源偏差）。judge 分数默认 [soft]，
 经 sanity 集校准（calibration.md）后方可在结论中升为 [measured]。
 mock/离线：用确定性启发式，不发 LLM 调用。

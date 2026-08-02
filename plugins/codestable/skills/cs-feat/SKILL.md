@@ -1,300 +1,88 @@
 ---
 name: cs-feat
-description: "Feature 主入口。用于新功能或功能改造，先按风险自动选择 Quick、Standard 或 Goal lane，再恢复并推进对应流程。不要用于单纯 bug 修复(cs-issue)、行为等价重构(cs-refactor)、对外文档(cs-docs)、大需求拆解(cs-epic)。"
-argument-hint: "[--stage design|design-review|impl|qa|accept|goal-package] [--mode quick|standard|goal|fastforward] <feature>"
-contracts:
-  - grep: "restoreFeatureStage"
-  - grep: "classifyExecutionLane"
-  - grep: "DispatchGoalDriver"
-  - grep: "progressive reference loading"
-  - grep: "must not auto-approve design"
-  - grep: "独立 Task agent reviewer"
-  - grep: "design-review passed"
-  - grep: "不重复读取这些全局输入"
-  - not-grep: "git push"
-  - not-grep: "read all references"
+description: 实现新功能或功能改造。不用于纯 bug 修复（cs-issue）、行为等价重构（cs-refactor）、大需求拆解（cs-epic）。
+argument-hint: "[功能描述]"
 ---
 
 # cs-feat
 
-## 启动必读
+把一个功能做出来，流程强度与风险相称：普通改动直接做，高风险改动先对齐设计。
 
-动作前先跑 CodeStable preflight：读 `.codestable/attention.md`（缺失先 `cs-onboard`）；不要用 `AGENTS.md`/`CLAUDE.md` 等外部入口代替它；细则见 `.codestable/reference/execution-conventions.md`。
+## 开工
 
-`cs-feat` 是 feature 的唯一推荐入口。它先按任务事实选择执行 lane，再从仓库事实恢复阶段：Quick 直接实现；Standard 在当前 run 完成 design、implementation、review 和 accept-inline；Goal 才生成 goal package 并尝试通过可见 Task agent goal driver 长程执行。Standard / Goal 仍在 design gate 停下来等用户确认。真正的各阶段动作由对应 protocol 负责（见 Progressive Reference Loading）。
+- 有 `.codestable/attention.md` 就先读。
+- 按功能关键词检索 `.codestable/lessons/`、项目文档，以及存在的 v1 只读知识目录：`.codestable/roadmap/`、`.codestable/features/`、`.codestable/issues/`、`.codestable/refactors/`、`.codestable/goals/`、`.codestable/compound/`、`.codestable/audits/`、`.codestable/brainstorms/`、`.codestable/feedback/`；命中要报告来源路径。上述 v1 目录不得继续生成、原地改写或批量迁移，新结论按归属进入 v2 Epic、项目文档、ADR 或 lesson。
+- 既有 `.codestable/requirements/` 只有在 `.codestable/attention.md` 明确记录其为 canonical requirement 位置时才可维护；owner 在当前任务首次指定时，先把该项目事实写入 attention。没有显式记录时只读检索，不存在时不新建 `.codestable/requirements/`。
+- 同一会话由 `cs` 交入且带已确认 handoff 时，直接消费目标入口、原始诉求、目标或期望行为、范围/非目标、验收、已核实仓库事实及来源、owner 已确认的术语与决策、未决风险、canonical 资产指针或资产候选；packet 精确范围内已确认的事项不重复询问。handoff 只证明当前会话共识，不扩大实现、commit、发布或写入授权，也不替代本 skill 的 review、验证与确认门槛；字段缺失、仓库事实冲突、出现会改变结果的新风险、缺少会改变方向的事实或超出已确认边界时再按本 skill 规则确认。
+- 写代码前先看相邻实现，写得像这个项目原本的代码。
+- 动手前先定归属：这能力属于哪里、沿用现有词汇叫什么——不丢进最近的文件、不起新同义词。结构与取舍拿不准时读 `references/code-design.md` 与 `references/economy.md`（最小充分 ≠ 最小 diff；有界简化必须记上限、触发与方向）。
+- 对照检查：目标、现场上下文、边界与取舍、证据要求、验收标准。缺少会改变实现方向的事实时先问，一次最多 3 个问题，形成可执行共识即停；不问不影响方向的细节。
 
-## 入口意图
+## 持续学习
 
-本次调用参数：$ARGUMENTS
-意图来源按优先级：调用参数 flag > 兼容入口预设 > 用户话术。参数为空或未被替换（仍是字面 `$ARGUMENTS`）时跳过该来源；`--stage <stage>` 表示阶段意图，`--mode <mode>` 表示执行模式，其余文本作为需求描述。
+检索到 lesson 后先做 read-repair。只做一次有界、最低成本的定向核实，优先读取已有代码、测试或
+canonical 文档；不得仅为核实 lesson 运行大范围测试或反复复现。仍不足时跳过该 lesson，不阻塞正常任务。
+只有 scope 符合、未退役、当前事实成立，并真实改变计划或验证，或明确排除一个具体且合理的错误路径
+的条目才算有效命中；按
+`经验命中：{path}（{status}）；核验：{fact}；影响：{plan_or_check}` 报告。`retired` 不应用；
+`observed` / `validated` 先核实再用；旧 lesson 缺 `status` 按 `observed` 读取，不批量迁移。只是相关
+但没有改变行为时不制造复用证据；当前事实明确反证时立即停止应用，证据不足时不猜。
 
-| 参数 | 入口意图 |
-|---|---|
-| `--stage design` | `requested_stage: design` |
-| `--stage design-review` | `requested_stage: design-review` |
-| `--stage impl` | `requested_stage: implementation` |
-| `--stage qa` | `requested_stage: qa` |
-| `--stage accept` | `requested_stage: acceptance` |
-| `--stage goal-package` | `requested_stage: goal-package` |
-| `--mode quick` / `--mode fastforward` | `requested_mode: quick`（fastforward 是兼容别名） |
-| `--mode standard` | `requested_mode: standard` |
-| `--mode goal` | `requested_mode: goal` |
+任务内只在内存保留最多 3 条候选，按新证据替换低价值项，不暂停或询问。强信号只包括：owner
+纠正实际改变方案/代码/术语/验证；可复现证据推翻根因；同一路径失败两次后更换假设；
+blocking/important finding 暴露未编码不变量；新 red -> green 捕获可复发失败；lesson 真实改变本次行为
+或被反证；重复 workaround；方法显著降低重试、成本或风险。
 
-入口意图只是偏好；**仓库事实优先**（`restoreFeatureStage`），也优先于聊天历史。
+候选还必须同时有可追溯证据、能写成未来动作、适用于本次精确 diff 之外、且没有现成 canonical
+owner。网络波动、拼写、泛化口号、活动记录，以及已被机械 owner 完整覆盖的事实直接丢弃。
 
-无参数默认行为：没有 flag / 需求描述时，不猜阶段；扫描 `.codestable/features/`、目标产物与当前 git diff，用状态机恢复下一步。没有可恢复 feature 且用户原话也无新功能目标时，返回 `NeedsHuman` 问处理哪个 feature。
+创建、改写规则/scope、晋升、删除与跨项目反馈仍须用户显式授权。为不中断 read-repair，仅对已有且
+有效命中的 lesson 开放两种窄维护：`observed -> validated` 仅在独立后续任务确实采用并验证成功时
+发生，只补一次代表性证据；必须记录 lesson 实际改变的计划或验证，或明确排除的具体且合理错误路径，
+以及本次通过的验收证据。`observed|validated -> retired` 仅在当前仓库事实直接反证或发现已有
+canonical owner 时发生，只写原因与替代/反证指针。窄维护不新建事实、不改规则、不扩 scope、不新增
+gate，随当次代码、证据和
+游标进入同一语义原子 milestone；稳定 validated 命中不写文件。需要改写结论或证据不足时只给
+候选，新结论不得通过复活 retired 条目获得 validated 身份；窄维护必须在最终报告列出文件变化。
 
-## 风险分级
+当前任务范围内能直接落成 red -> green 测试/checker 的约束优先机械化，不另写重复 lesson；会扩大
+范围时只给候选。用户已明确说“记住 / 更新 / 退役”时，同轮按 `cs-keep` 处理，不重复确认。普通任务
+只在强信号成立时展示最高价值一条，首行固定 `晶化候选：{rule}`，并给出证据、范围和建议归宿；无
+强信号完全不显示模板，没有记忆写入授权时不落盘。
 
-```haskell
-data ExecutionLane = Quick | Standard | Goal
+## 默认执行
 
-classifyExecutionLane :: FeatureState -> EntryIntent -> ExecutionLane
-classifyExecutionLane(s, intent)
-  | s.epicChildBatch || hasGoalState(s) || hasRoadmapOwner(s)          = Goal
-  | hasExistingDesign(s)                                               = recordedLaneOrConfirmedReclassification(s, intent)
-  | explicitlyRequestsGoal(intent)                                     = Goal
-  | explicitlyRequestsStandard(intent)                                = Standard
-  | explicitlyRequestsQuick(intent) && quickEligible(s, intent)       = Quick
-  | explicitlyRequestsQuick(intent)                                   = Standard
-  | quickEligible(s, intent)                                           = Quick
-  | otherwise                                                          = Standard
-```
+理解相关事实 → 实现 → 运行相称的验证 → 交付结果。普通任务不生成 CodeStable 产物，git diff、测试输出和交付说明就是证据。
 
-`quickEligible` 必须同时满足：需求与验收行为明确；改动局部且挂载点已知；复用既有公开契约，不新增或改变跨系统协议；目标验证入口已知；不涉及 requirement/ADR 边界、迁移、权限/安全、并发或高风险数据语义。任一项未知就选 Standard，不按模型名称、推理档位或所谓“智商”选 lane。
+## 风险升级信号
 
-Standard 用于需要新契约、跨模块决策或正式 design，但适合当前 run 完成的单 feature。Goal lane 只在用户明确要求长程自主执行、显式 `--stage goal-package` / `--mode goal`、已有 `goal-state.yaml`，或 Epic 批量上下文时选择；任务较大本身不自动等于 Goal。
+出现任何一条，走设计对齐再动手：把方案要点（改什么、契约变化、取舍、影响面——影响面分**必须修改 / 需要验证 / 仍待调查**三层）写入 `.codestable/work/feat-{slug}.md` → 按硬门槛中的 reviewer lineage 完成 `cs-review` design review → 主流程处理 findings → 交用户确认后动手。存在会卡死方案的技术风险时，先按风险降序垂直打通主路径再铺开（穿刺协议见 `references/code-design.md`）。信号清单：
 
-用户说“这是小改动”“流程太重”“文档比代码多”或同义反馈时，必须暂停继续建产物并重新分类。满足 Quick 就立即降级；仍有风险条件时逐条说明为什么不能降级，不得沿既定流程无视反馈。
+- 公开 interface、持久化 schema 或跨模块协议变化；
+- 权限、信息安全、数据迁移、并发或不可恢复副作用；
+- 存在真实方案取舍，用户的选择会改变结果；
+- diff 范围大，或无法建立可信的现状理解；
+- 用户明确要求设计先行、独立 review 或正式验收。
 
-已有 design 时不允许入口参数静默越过已记录 lane。用户明确要求降级且重新核对仍满足 `quickEligible` 时，先把 `execution_lane: quick` 和降级原因写回 design，再进入 FastForward；已有 `goal-state.yaml` 时不得原地降级，必须先按 Goal 协议安全 handoff，再由 owner 决定是否重分类。
+## 硬门槛
 
-## Spec
+- 触发升级信号时**不得代替用户确认设计**，不 auto-approve，不因对话历史推断同意。
+- 项目已有测试设施时优先测试先行：先写能表达验收行为的失败测试再实现；确实无法自动化时与用户确认验证方式。
+- 声称完成前必须给出**与声明相称的可核验证据**：目标行为的观察结果、测试输出；只说"应该可以"不算完成。
+- 当前主流程创建 reviewer 前，先发现当前会话可调用的 subagent 创建与管理能力。项目上下文有显式创建方式/model 约束时先遵守。达到审查质量基线后，优先选择与实现者异构的 agent，并显式指定最强稳定 `model`；创建方式依次使用受管理的结构化委派能力、宿主 subagent、本机有界 agent CLI 回退，不得只扫 PATH。
+- 没有合格异构候选时回退同构最强模型。把最终创建方式、agent/model 与回退原因写入 task packet，禁止依赖默认模型。
+- 审查前冻结一个明确目标（diff review 优先 staged diff，也可用明确 range/patch；design review 冻结对应文档版本；audit 冻结 commit + 范围标识），把目标标识写入 task packet；reviewer 返回前不改目标或对应工作树。有 blocking 或未被用户明确接受的 important 时不提交当前候选，也不得创建正式里程碑 commit；处理后重跑验证并重新冻结完整审查目标。
+- 仅在跨会话恢复、agent 交接或隔离 reviewer 需要不可变基线时，且已有 commit 授权，才可在私有工作分支创建明确标记的 WIP/checkpoint commit；它不代表 review 通过或任务完成，交付前按仓库策略 fixup/squash。
+- 本 skill 的确认与验证门槛均满足、blocking 清零且其余 important 已处理或被用户明确接受后，已有 commit 授权时才创建语义原子的正式里程碑 commit；未获授权则只报告可提交状态，不自行提交。
+- 一个独立审查阶段由单一审查目的界定；design review、change review、contract review 与 Epic final acceptance 是不同阶段。只有为本阶段 findings 所作修复的复审，才属于同一阶段并沿用原 reviewer lineage；审查目的变化时开启新阶段。
+- 改动完成后默认进入 change review 审查阶段；仅文案级微小改动可说明后跳过。
+- 每个独立审查阶段的首轮必须由当前主流程创建一个 fresh reviewer，与实现者保持独立；reviewer 单轮执行 `cs-review`，其内部不得创建子 agent。
+- 主流程处理 findings 后先修复并重跑验证，再冻结新的完整审查目标；仅因处理 findings 产生的修复，复审必须沿用同一 reviewer 的同一 session，以 follow-up 继续。复审同时检查完整当前候选与本轮修复增量，逐项报告 `resolved` / `unresolved` / `new findings`；不得只核对旧 finding 或机械打勾。reviewer 独立性要求它独立于实现者，不要求对自身上一轮审查失忆。
+- 同一审查阶段累计最多 3 个有终态报告的轮次；更换 reviewer 不重置计数。只有原 run/session 失败或不可恢复、能力不满足、目标、范围、设计或核心路径发生重大变化、reviewer 声明无法继续独立判断，或 owner 要求第二意见时，才可更换 reviewer；更换时创建 fresh reviewer。超限仍有 blocking 或分歧时交用户裁决，不得继续对轮或宣称完成。
+- reviewer 创建后绑定该运行并记录 run identity：目标有效、能力仍满足，且 reviewer 状态为 running，或 `Awaiting` 携带可查询的同一 run identity 且查询仍为活动态时为健康；状态健康时等待终态报告，不因后来发现更优创建方式而取消、重复创建或并行补发。仅在运行明确失败或终止无报告、idle / `Awaiting` 且无可恢复 run identity、能力不满足或目标失效时，本轮失败且不计轮次；不得盲目重发，先检查 task packet 与 agent 状态，再决定一次有界重试、更换创建方式或交用户。
 
-```haskell
-csFeat :: FeatureRequest -> FeatureOutcome
-csFeat = workflow
-data FeatureRequest = FeatureRequest
-  { requestedStage : Maybe Stage
-  , requestedMode  : Maybe ExecutionLane -- quick | standard | goal；fastforward -> quick
-  , userGoal       : Maybe Text
-  , resumeInput    : Maybe ResumeInput
-  , repoFacts      : RepoFacts           -- 优先于 args / 聊天历史
-  }
+## 收尾
 
-data Stage = Design | DesignReview | GoalPackage | Implementation | CodeReview | QA | Acceptance | FastForward
-data ResumeInput
-  = ResumeDesign DesignDecision | ApproveScopeChange | ResumeReview OwnerApproval | AuthorizeGoalAcceptance ApprovalRef
-  | ResumeAcceptance AcceptanceDecision | ResumeQARunner OwnerApproval | ResumeAcceptanceAuditor OwnerApproval | ResumeEffect EffectDecision | RejectCheckpoint
-data DesignDecision = ApproveDesign | RequestDesignChanges
-data AcceptanceDecision = ApproveAcceptance | RequestAcceptanceChanges FixKind
-data EffectDecision = EffectAccepted | EffectRejected
-data FixKind = CompleteFeature | QAFix | OwnerRequestedChanges
-data EntryIntent = EntryIntent (Maybe Stage) (Maybe ExecutionLane) (Maybe Text) (Maybe ResumeInput)
-data DesignReviewStatus
-  = ReviewMissing | ReviewPassed | ChangesRequested | ReviewAwaiting AgentRef
-  | ReviewNeedsOwnerApproval Reason | ReviewerFailed Reason | ReviewBlocked Reason
-data QuickRunState = QuickImplementationPending | QuickReviewReady | QuickReviewFixing | QuickComplete
-data StandardRunState = StandardImplementationPending | StandardReviewReady | StandardReviewFixing
-                      | StandardAcceptanceReady | StandardComplete
-
-data GoalRunState                        -- 从 goal-state.yaml 的 stage/status/driver 字段恢复
-  = GoalMissing | GoalReadyToDispatch ApprovalRef | GoalAuthorizationMissing | GoalDriverActive DriverInfo
-  | GoalImplementationRunning | GoalReviewReady | GoalReviewFixing
-  | GoalQAReady | GoalQAFixing | GoalAcceptanceReady
-  | GoalComplete ApprovalRef | GoalHandoffBlocked Reason | GoalUnknown Text
-
-data FeatureState = FeatureState          -- 从 feature 目录及 parent roadmap items / goal-state 恢复
-  { featureDir         : Maybe Path
-  , executionLane      : Maybe ExecutionLane
-  , designStatus       : Missing | Draft | Approved
-  , designReviewStatus : DesignReviewStatus
-  , quickRunState      : QuickRunState
-  , standardRunState   : StandardRunState
-  , goalRunState       : GoalRunState
-  , roadmapOwner       : Maybe EpicOwnership
-  , epicChildBatch     : Bool             -- cs-epic 批量上下文，非公开参数
-  }
-
-data FeatureOutcome
-  = RoutedTo Stage
-  | HumanCheckpoint CheckpointReason
-  | Awaiting WaitReason
-  | Blocked Reason
-  | DispatchGoalDriver Command            -- 先尝试可见 Task agent；失败才降级为 GoalHandoff
-  | GoalHandoff Command                   -- 可粘贴 `/goal` 或 driver handoff
-  | Completed FeatureSummary
-  | NeedsHuman Reason
-
-data CheckpointReason
-  = ConfirmDesign | ConfirmScopeChange | ConfirmAcceptance | ConfirmGoalAcceptanceAuthorization | ConfirmEffect | ApproveReviewFallback Reason
-data WaitReason = DesignReviewerRunning AgentRef | AwaitGoalDriver DriverInfo
-```
-
-`restoreFeatureStage` 从仓库事实选下一步（**must not auto-approve design**：design-review passed 后必须停等用户确认）：
-
-```haskell
-restoreFeatureStage :: FeatureState -> EntryIntent -> FeatureOutcome
-restoreFeatureStage(s, intent)
-  | ambiguousTarget(s, intent)                     -> NeedsHuman "which feature?"
-  | rejectsPendingCheckpoint(s, intent)            -> Blocked OwnerRejectedCheckpoint
-  | changesApprovedScope(s, intent) && resumeInput intent == Just ApproveScopeChange
-                                                    -> RoutedTo Design
-  | changesApprovedScope(s, intent)                -> HumanCheckpoint ConfirmScopeChange
-  | lane == Quick && s.quickRunState == QuickImplementationPending -> RoutedTo FastForward
-  | lane == Quick && s.quickRunState == QuickReviewReady           -> RoutedTo CodeReview
-  | lane == Quick && s.quickRunState == QuickReviewFixing          -> RoutedTo FastForward
-  | lane == Quick && s.quickRunState == QuickComplete               -> Completed summary
-  | s.designStatus == Missing                      -> RoutedTo Design
-  | s.designStatus == Approved && s.designReviewStatus /= ReviewPassed
-      -> Blocked "approved design lacks passed design-review" -- approved 后复审未完成同样 fail-closed
-  | s.designReviewStatus == ChangesRequested          -> RoutedTo Design
-  | s.designReviewStatus is ReviewAwaiting agent      -> Awaiting (DesignReviewerRunning agent)
-  | s.designReviewStatus is ReviewNeedsOwnerApproval reason
-      -> if resumeInput intent == Just (ResumeReview ApproveLocalOnly)
-         then RoutedTo DesignReview else HumanCheckpoint (ApproveReviewFallback reason)
-  | s.designReviewStatus is ReviewerFailed reason     -> Blocked reason
-  | s.designReviewStatus is ReviewBlocked reason      -> Blocked reason
-  | s.designStatus == Draft && s.designReviewStatus == ReviewMissing -> RoutedTo DesignReview
-  | hasRoadmapOwner(s) && s.designReviewStatus == ReviewPassed -> RoutedTo <return-to-cs-epic>
-  | s.designStatus == Draft && s.designReviewStatus == ReviewPassed && resumeInput intent == Just (ResumeDesign RequestDesignChanges) -> RoutedTo Design
-  | s.designStatus == Draft && s.designReviewStatus == ReviewPassed && resumeInput intent == Just (ResumeDesign ApproveDesign) -> RoutedTo Design
-  | s.designReviewStatus == ReviewPassed && s.designStatus /= Approved
-      -> if s.epicChildBatch then RoutedTo <return-to-cs-epic> else HumanCheckpoint ConfirmDesign
-  | lane == Standard && s.standardRunState == StandardImplementationPending -> RoutedTo Implementation
-  | lane == Standard && s.standardRunState == StandardReviewReady           -> RoutedTo CodeReview
-  | lane == Standard && s.standardRunState == StandardReviewFixing          -> RoutedTo Implementation
-  | lane == Standard && s.standardRunState == StandardAcceptanceReady       -> RoutedTo Acceptance
-  | lane == Standard && s.standardRunState == StandardComplete              -> Completed summary
-  | lane == Goal && s.goalRunState == GoalMissing -> RoutedTo GoalPackage
-  | lane == Goal && s.goalRunState is GoalComplete _            -> Completed summary
-  | lane == Goal && s.goalRunState is GoalHandoffBlocked reason -> GoalHandoff (handoffCommand reason)
-  | lane == Goal && s.goalRunState is GoalDriverActive driver   -> Awaiting (AwaitGoalDriver driver)
-  | lane == Goal && s.goalRunState == GoalAuthorizationMissing  -> HumanCheckpoint ConfirmGoalAcceptanceAuthorization
-  | lane == Goal && s.goalRunState is GoalReadyToDispatch _     -> DispatchGoalDriver "/goal"
-  | lane == Goal && s.goalRunState == GoalImplementationRunning -> RoutedTo Implementation
-  | lane == Goal && s.goalRunState == GoalReviewReady           -> RoutedTo CodeReview
-  | lane == Goal && s.goalRunState == GoalReviewFixing          -> RoutedTo Implementation
-  | lane == Goal && s.goalRunState == GoalQAReady               -> RoutedTo QA
-  | lane == Goal && s.goalRunState == GoalQAFixing              -> RoutedTo Implementation
-  | lane == Goal && s.goalRunState == GoalAcceptanceReady       -> RoutedTo Acceptance
-  | lane == Goal && s.goalRunState is GoalUnknown raw           -> Blocked ("unknown goal-state: " <> raw)
-  | otherwise                                                   -> Blocked InvalidFeatureState
-  where lane = classifyExecutionLane(s, intent)
-```
-
-DesignReviewStatus 从 design-review 的 `review_state/review_reason/reviewer_id` 恢复；旧 `blocked` 无 `review_state` 时 fail-closed。QuickRunState 从 ff-note/review 恢复；StandardRunState 从 checklist、review、可选 QA 和 acceptance 恢复；GoalRunState 恢复时 rejected 归一为 handoff，其他非 handoff 状态缺少可验证 `ApprovalRef` 才归一为 `GoalAuthorizationMissing`。旧 design 缺 `execution_lane` 且没有 goal state 时按 Standard，已有 goal state 始终按 Goal。
-
-## Workflow
-
-主执行主线（每次调用按序走；各 stage "怎么做" 的厚规则见对应 protocol，本节只定顺序与边界）：
-
-```haskell
-workflow :: FeatureRequest -> FeatureOutcome
-workflow = preflight >=> parseEntryIntent >=> restoreFeatureState >=> applyResumeInput
-       >=> restoreFeatureStage >=> loadStageProtocol >=> executeOrRoute >=> exitRecoverable
-
-preflight           -- 读 .codestable/attention.md；缺失 -> route to cs-onboard；不得用 AGENTS.md/CLAUDE.md 代替
-parseEntryIntent    -- flag > compat-preset > utterance；repoFacts override requestedStage；空参不推断 stage
-restoreFeatureState -- 扫 .codestable/features/ + artifact + git diff；applyResumeInput 先持久化匹配 pending checkpoint 的回答
-loadStageProtocol   -- stageProtocol 映射（见下节）；进 stage 才加载该 stage 一个 protocol
-executeOrRoute      -- authoring stage 落盘 artifact；DispatchGoalDriver 先尝试可见 driver，失败才 GoalHandoff；HumanCheckpoint 必停
-exitRecoverable     -- durable artifact/state 已落盘，且 next stage / checkpoint / resume action 明确
-```
-
-## 文件放哪儿
-
-产物统一放 `.codestable/features/{YYYY-MM-DD}-{slug}/`：design/checklist/design-review、review/acceptance，Goal 另有 goal-plan/state/protocol 和 QA，Quick 只有 ff-note + 横切 review。目录日期取首次创建当天，slug 用小写字母/数字/连字符；过程发现的 bug 另开 issue。
-
-## Progressive Reference Loading
-
-```haskell
-stageProtocol :: Stage -> Protocol
-stageProtocol Design         = "references/design/protocol.md"          -- 必要时 support/intent-template.md、codebase-design.md
-stageProtocol DesignReview   = "references/design-review/protocol.md"   -- gate 纪律见下
-stageProtocol GoalPackage    = "references/goal/protocol.md"
-stageProtocol Implementation = "references/implementation/protocol.md"  -- 必要时 support/reference.md、tdd.md
-stageProtocol CodeReview     = skill "cs-code-review"                   -- 公开横切 skill
-stageProtocol QA             = "references/qa/protocol.md"
-stageProtocol Acceptance     = "references/acceptance/protocol.md"
-stageProtocol FastForward    = "references/fastforward/protocol.md"
-
--- 惰性加载（progressive reference loading）：进入某阶段才加载该阶段一个 protocol，不在启动时读全部
--- 禁止：启动即读全部 references；用 implementation 协议做 design；code review 未过就进 QA
-```
-
-design-review 首轮和实质变化后的复审必须使用独立 Task agent reviewer；只改文字、编号、链接、格式或不改变契约的映射时走 focused closure，不启动新 reviewer。无法确定是否实质变化时完整独立复审，细则见 protocol。
-
-## Human Checkpoints
-
-触发时机以 Spec 的 `restoreFeatureStage` 为唯一权威；本节只定义停下后的行为：
-
-```haskell
-onCheckpoint :: CheckpointReason -> Action
-onCheckpoint ConfirmDesign          = 停等用户对 design 整体确认   -- must not auto-approve design，不得直接进 GoalPackage
-onCheckpoint ConfirmScopeChange     = 停等用户确认范围变更
-onCheckpoint ConfirmAcceptance      = 停等用户终审 acceptance
-onCheckpoint ConfirmGoalAcceptanceAuthorization = 写 pending approval-report 并停等 owner 独立授权 Goal acceptance
-onCheckpoint ConfirmEffect          = 停等用户确认 Quick 的用户可见效果
-onCheckpoint (ApproveReviewFallback reason) = 停等 owner 决定是否批准 local-only design review；记录 reason
-  -- ConfirmScopeChange 仅用于 approved design 后改范围/公开契约；入口 fastforward 不合格直接 RoutedTo Design
-```
-
-恢复输入必须显式进入 `FeatureRequest.resumeInput`；各 `Resume*` 原样交对应 stage protocol，`ResumeQARunner` / `ResumeAcceptanceAuditor` 只授权匹配的 pending runner/auditor fallback，`ApproveScopeChange` 回 design；`AuthorizeGoalAcceptance ref` 写同 unit 命名 approval 再由 goal protocol 持久化。仅拒绝 pending Goal acceptance authorization 时写 rejected 并 handoff；其他 `RejectCheckpoint` 保持原状态并返回 `Blocked OwnerRejectedCheckpoint`。任何确认都不靠聊天记忆猜测。
-
-Goal lane 的 implementation / code review / QA / acceptance 阻塞由 goal driver 按协议循环修复。Standard 在当前 run 继续，review passed 后直接进入带 Inline Verification Matrix 的 acceptance；独立 QA 报告不是默认阶段。
-driver 不可见、派发失败或 driver 返回 handoff 时走 `GoalHandoff`，不是 `HumanCheckpoint` / `NeedsHuman` 的第二种写法。
-
-## Failure Behavior
-
-```haskell
-needsHuman :: Situation -> Bool
-needsHuman s = noRecoverableFeature s    -- 无可恢复 feature 目标
-            || ambiguousScope s          -- feature 范围模糊
-            || stageConflictsRepoFacts s -- requested stage 与仓库事实冲突
-
-blocked :: Situation -> Bool
-blocked s = invalidArtifactState s || unknownGoalState s || ownerRejectedCheckpoint s
-```
-
-报告：当前 feature 目录、阻塞原因、下一步用户动作、已写文件、是否可安全重试。
-
-## Output Contract
-
-```haskell
-mustContinue, mustStop :: FeatureOutcome -> Bool
-mustContinue (RoutedTo _)            = True
-mustContinue (DispatchGoalDriver _)  = True
-mustContinue _                       = False
-mustStop outcome                     = not (mustContinue outcome)
-```
-
-退出或交接时必须报告：feature 目录、`executionLane`、对应 run state、本轮写入文件、下一动作或 checkpoint、已运行验证。`Awaiting` 还要报告可见 driver id 和恢复方式。Goal 的 `DispatchGoalDriver` 不得直接退化成 `/goal`：先按 agent conventions 尝试可见 driver，只有不可用或派发失败才输出 `GoalHandoff`。
-
-完成 marker：Quick 为 `CS_FEATURE_QUICK_COMPLETE`，Standard 为 `CS_FEATURE_STANDARD_COMPLETE`，Goal 为 `CS_FEATURE_GOAL_COMPLETE`；Standard 的 accept-inline 模式通过公开入口 `cs-feat --stage accept` 进入。
-
-## Quick / Fastforward
-
-Quick 默认按任务事实自动选择；`requested_mode: quick|fastforward` 只是显式偏好，不是跳过安全的许可。不合格则解释命中的风险条件并进入 Standard design。新 Quick 的业务产物只有 `{slug}-ff-note.md`；从已有 design 降级时保留历史 design 并记录 `execution_lane: quick`，不再维护 checklist/QA/acceptance，但已存在的 QA/acceptance 只有 `passed` 可兼容保留，其他状态必须先解决冲突。横切 review 仍写 `{slug}-review.md`。`cs-feat-ff` 是兼容入口。
-
-## Epic 子 Feature 批量上下文
-
-`cs-epic` 批量生成子 feature design 时以内部上下文 `epicChildBatch: true` 调用；该上下文强制 Goal lane，并表示 CONTEXT / adrs / compound 已由 `cs-epic` 统一加载，design 阶段不重复读取这些全局输入。design-review passed 后 design 保持 `draft`，不执行单 feature 的人工整体 review checkpoint；不在这里停，回到 `cs-epic` 继续下一个子 feature，最终由 Epic 批量确认。不得用 final answer 要用户确认单个 child。恢复 child 时，design 的 `roadmap` / `roadmap_item` 必须同时为空或成对存在；成对 metadata 经 parent `items.yaml` 唯一条目及其 `feature` 指针证明，或 parent items 按同一指针/精确目录 slug、roadmap goal-state 按 `features[].feature_dir` 反向唯一认领当前目录时，即使没有 batch flag 也必须交回 `cs-epic`；错误 items/goal-state 结构或路径、forward/reverse 不一致、任意第二 claim 都 fail-closed。退出前运行 `codestable-workflow-next.py feature --epic-child-batch`，按 `next_action` 交回 `cs-epic`。
-
-## 兼容入口
-
-旧阶段技能保留为兼容入口（`cs-feat-design`、`cs-feat-design-review`、`cs-feat-impl`、`cs-feat-qa`、`cs-feat-accept`、`cs-feat-ff`）：只传入 `requested_stage` / `requested_mode`，不维护独立规则。新文档与新调用一律用 `--stage` / `--mode`。
-
-## 退出条件
-
-```haskell
-mayExit :: State -> Bool
-mayExit s = artifactPersistedAndRecoverable s   -- 当前阶段产物已落盘，状态可由 restoreFeatureStage 从仓库事实恢复
-         && nextClearlyStated s                 -- 阻塞项、HumanCheckpoint 或下一阶段已明确说明
-
-fullyDone :: FeatureState -> Bool
-fullyDone s = case executionLane s of
-  Quick    -> ffNoteWritten s && reviewPassed s
-  Standard -> designApproved s && reviewPassed s && acceptancePassed s
-  Goal     -> designApproved s && reviewPassed s && qaPassed s && acceptancePassed s
-```
+- 报告：做了什么、改动文件、验证结果、遗留事项。
+- 高风险任务的 work 文档在设计对齐时已建立；其余任务需要跨会话继续、多人交接或用户要求留痕时补建 `.codestable/work/feat-{slug}.md`（work 文档一律带类型前缀 feat- / issue- / refactor- / epic-，整理时按前缀分流去向）。work 文档含目标 / 现场 / 边界 / 证据 / 验收 / 状态与未决六节，随进展更新（"状态与未决"记录进度与待用户确认项，供跨会话恢复）；完成后先在最终报告列**毕业清单**——哪条结论进了哪个项目文档、沉了哪条 lesson，无可毕业内容则明说——然后才删除 work 文档；不列清单不得删。毕业目标位置不存在时不擅自发明目录：清单中给出建议落点请用户拍板，**拍板前 work 文档保留不删**。用户要求留档则保留。
+- 属于某个 Epic 的子功能时：独立子功能 work 文档的 frontmatter 标 `epic: {epic-slug}`；日常进展和完成状态只更新 Epic work 游标中对应稳定 ID 的进度与证据指针。永久 Epic 文档在 `active` 期间保持冻结，不因日常进度或子功能 work 回链而修改；需要改变子项定义、依赖或验收时交 `cs-epic` 走边界重确认。

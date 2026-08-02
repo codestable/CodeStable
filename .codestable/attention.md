@@ -16,6 +16,12 @@ CodeStable 所有落盘产出的正文用**中文**：plan / design、plan revie
 
 ### 测试
 
+- 默认 v2 产品与发布回归：`PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q tests -rs`。该命令不运行
+  repo-local maintainer eval。
+- 修改 `.claude/skills/eval-cs-skill/` 的 scripts、harness 或 experiment 时，显式运行
+  `PYTHONDONTWRITEBYTECODE=1 python3 -m pytest --strict-markers -q .claude/skills/eval-cs-skill/tests -rs`。
+- eval suite 中的 `real_cli` 用例默认 skip；只有明确需要真实 CLI 验证时才传 `--run-real-cli`。
+
 ### 命令与脚本陷阱
 
 ### 路径与目录约定
@@ -24,4 +30,4 @@ CodeStable 所有落盘产出的正文用**中文**：plan / design、plan revie
 
 ### 其他
 
-- 本仓库所有 CodeStable review gate（含 design review、code review 和修复后复审）统一使用 Paseo `provider=claude`、`model=claude-fable-5`、`thinkingOptionId=high`；不可用时停下报告，不静默降级
+- 调用 `cs-review`（含本仓库所有 CodeStable design review、code review 和修复后复审）时，发起者优先通过 Paseo 创建 fresh reviewer subagent，并与当前主 agent 异构：主 agent 为 Codex 时，首选 `provider=claude`、`model=claude-fable-5`、`thinkingOptionId=high`，不可用则回退 `provider=claude`、`model=claude-opus-5`；主 agent 为 Claude 时，使用 `provider=codex`、`model=gpt-5.6-sol`。指定路径均不可用时停下报告，不静默改用其他 reviewer

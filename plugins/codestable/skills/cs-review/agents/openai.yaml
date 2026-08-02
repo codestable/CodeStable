@@ -1,0 +1,4 @@
+interface:
+  display_name: "CodeStable Review"
+  short_description: "只读叶子审查：diff / design / repo audit"
+  default_prompt: "使用 $cs-review 单轮审查当前 diff，直接返回分级发现与结论，不创建任何子 agent。"

@@ -6,6 +6,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 
 MODULE_PATH = Path(__file__).resolve().parents[1] / "tools/check-plugin-package.py"
 
@@ -90,10 +92,23 @@ def make_repo(tmp_path: Path) -> Path:
                 [
                     "codex plugin marketplace add codestable/CodeStable",
                     "codex plugin add codestable@codestable",
+                    "/plugin marketplace add codestable/CodeStable",
+                    "/plugin install codestable@codestable",
+                    "npx skills@latest add codestable/CodeStable/plugins/codestable",
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+        )
+    for upgrade in ["UPGRADE.md", "UPGRADE.en.md"]:
+        (repo / upgrade).write_text(
+            "\n".join(
+                [
                     "codex plugin marketplace upgrade codestable",
+                    "codex plugin add codestable@codestable",
                     "/plugin marketplace update",
                     "/plugin update codestable@codestable",
-                    "npx skills@latest add codestable/CodeStable/plugins/codestable",
+                    "npx skills@latest remove cs-old -g -y",
                     "npx skills@latest add codestable/CodeStable/plugins/codestable --skill '*' -g",
                     "",
                 ]
@@ -366,7 +381,7 @@ def test_ignored_codestable_fails(tmp_path: Path) -> None:
     assert ".codestable must not be ignored" in messages(findings)
 
 
-def test_readme_commands_stay_current(tmp_path: Path) -> None:
+def test_readme_install_commands_stay_current(tmp_path: Path) -> None:
     repo = make_repo(tmp_path)
     (repo / "README.md").write_text("codex plugin install codestable\n", encoding="utf-8")
 
@@ -377,9 +392,9 @@ def test_readme_commands_stay_current(tmp_path: Path) -> None:
     assert any("missing documented command: codex plugin add codestable@codestable" in message for message in finding_messages)
 
 
-def test_readme_rejects_unqualified_claude_update_command(tmp_path: Path) -> None:
+def test_upgrade_rejects_unqualified_claude_update_command(tmp_path: Path) -> None:
     repo = make_repo(tmp_path)
-    (repo / "README.md").write_text("/plugin update codestable\n", encoding="utf-8")
+    (repo / "UPGRADE.md").write_text("/plugin update codestable\n", encoding="utf-8")
 
     findings = checker.check_repo(repo)
     finding_messages = messages(findings)
@@ -388,12 +403,91 @@ def test_readme_rejects_unqualified_claude_update_command(tmp_path: Path) -> Non
     assert any("missing documented command: /plugin update codestable@codestable" in message for message in finding_messages)
 
 
-def test_readme_rejects_unsafe_bare_skills_update(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "filename",
+    ("README.md", "README.en.md", "UPGRADE.md", "UPGRADE.en.md"),
+)
+def test_public_command_docs_reject_unsafe_bare_skills_update(
+    tmp_path: Path, filename: str
+) -> None:
     repo = make_repo(tmp_path)
-    for filename in ("README.md", "README.en.md"):
-        path = repo / filename
-        path.write_text(path.read_text(encoding="utf-8") + "npx skills@latest update\n", encoding="utf-8")
+    path = repo / filename
+    path.write_text(
+        path.read_text(encoding="utf-8") + "npx skills@latest update\n",
+        encoding="utf-8",
+    )
 
     findings = checker.check_repo(repo)
 
-    assert any("unsafe documented command: npx skills@latest update" in message for message in messages(findings))
+    assert any(
+        finding.path == filename
+        and finding.message == "unsafe documented command: npx skills@latest update"
+        for finding in findings
+    )
+
+
+@pytest.mark.parametrize(
+    ("command", "message"),
+    (
+        (
+            "npx skills@latest update --all",
+            "unsafe documented command: npx skills@latest update",
+        ),
+        (
+            "/plugin update codestable --force",
+            "obsolete documented command: /plugin update codestable",
+        ),
+    ),
+)
+def test_command_docs_reject_unsafe_update_variants(
+    tmp_path: Path, command: str, message: str
+) -> None:
+    repo = make_repo(tmp_path)
+    path = repo / "UPGRADE.md"
+    path.write_text(path.read_text(encoding="utf-8") + command + "\n", encoding="utf-8")
+
+    findings = checker.check_repo(repo)
+
+    assert any(
+        finding.path == "UPGRADE.md" and finding.message == message
+        for finding in findings
+    )
+
+
+def test_missing_upgrade_doc_fails(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path)
+    (repo / "UPGRADE.md").unlink()
+
+    findings = checker.check_repo(repo)
+
+    assert any(finding.path == "UPGRADE.md" and "file is missing" in finding.message for finding in findings)
+
+
+def test_upgrade_commands_do_not_count_when_only_present_in_readme(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path)
+    upgrade = (repo / "UPGRADE.md").read_text(encoding="utf-8")
+    readme = repo / "README.md"
+    readme.write_text(readme.read_text(encoding="utf-8") + upgrade, encoding="utf-8")
+    (repo / "UPGRADE.md").write_text("# Upgrade\n", encoding="utf-8")
+
+    findings = checker.check_repo(repo)
+
+    assert any(
+        finding.path == "UPGRADE.md" and "missing documented command" in finding.message
+        for finding in findings
+    )
+
+
+def test_install_commands_do_not_count_when_only_present_in_upgrade(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path)
+    readme = (repo / "README.md").read_text(encoding="utf-8")
+    upgrade = repo / "UPGRADE.md"
+    upgrade.write_text(upgrade.read_text(encoding="utf-8") + readme, encoding="utf-8")
+    (repo / "README.md").write_text("# CodeStable\n", encoding="utf-8")
+
+    findings = checker.check_repo(repo)
+
+    assert any(
+        finding.path == "README.md" and "missing documented command" in finding.message
+        for finding in findings
+    )

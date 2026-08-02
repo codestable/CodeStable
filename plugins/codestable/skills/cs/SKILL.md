@@ -1,143 +1,53 @@
 ---
 name: cs
-description: CodeStable 路由入口。触发：用户显式调用 cs、询问该用哪个 skill、请求介绍体系，或诉求未收敛；明确行动请求路由后在当前 run 继续。
-argument-hint: "[request]"
-contracts:
-  - grep: "HumanCheckpoint ClarifyRoute"
-  - grep: "当前 run 继续"
-  - grep: "Dispatch: continuing-current-run | recommendation-only"
-  - grep: "原始诉求原样传递"
-  - not-grep: "L0-L4"
+description: CodeStable 入口。触发：用户调用 cs、想先讨论或对齐、想了解体系、问该用哪个 skill，或带着诉求未选入口。明确行动同轮直转；先讨论的请求收敛后同轮移交。
+argument-hint: "[诉求]"
 ---
 
 # cs
 
-## 启动必读
+判断用户此刻要执行、先讨论、咨询还是了解体系。**明确行动默认直接执行，不先加讨论 gate。**
 
-动作前先跑 CodeStable preflight：读 `.codestable/attention.md`（缺失先 `cs-onboard`）；不要用 `AGENTS.md`/`CLAUDE.md` 等外部入口代替它；细则见 `.codestable/reference/execution-conventions.md`。
+## 判别与行为
 
-这里 preflight 只记录缺失状态，不在入口模式判定前自动转交：仅 Execute 进入 onboard 串行前置 gate，Advise / Explain 保持只读。
-
-`cs` 是窄路由入口：先判断用户要执行、咨询、了解体系还是补充信息，再选择一个推荐主 skill。它不写下游产物、不模拟目标 workflow，也不绕过目标 skill 的 checkpoint。
-
-旧阶段技能继续作为兼容入口存在，但 `cs` 只选择主入口。
-
-## 入口意图与最小恢复
-
-本次调用参数：$ARGUMENTS
-
-参数非空且不是字面 `$ARGUMENTS` 时，把它作为本轮诉求；否则使用用户原话。无参数默认行为：用户原话也没有具体诉求时进入 Explain，输出体系速读。
-
-入口模式先于路由目标。完成首次 preflight 后，同一会话复用 attention / runtime 结论：
-
-- 明确的新行动或咨询不扫描全部活动目录；目标 skill 自己恢复所需仓库事实。
-- 只有“继续”“下一步”“接着做”这类续作请求，才浅扫 `features/issues/roadmap/goals/refactors/audits/brainstorms/feedback`。
-- 续作只有一个活动单元时按其类型选主入口；多个候选时返回 `HumanCheckpoint ClarifyRoute`，只问一个聚焦问题。
-- `.codestable/attention.md` 缺失不授权 `cs` 创建文件；Execute 按“onboard 串行前置 gate”处理，Advise / Explain 不自动接入仓库。
-
-## Spec
-
-```haskell
-data Ambiguity = MissingActionIntent | RouteChoice [SkillName]
-data IntakeMode = Execute | Advise | Explain | Ambiguous Ambiguity
-data RouterBlocker = ActionIntentMissing | TargetUnavailable
-
-data RouterOutcome
-  = RoutedTo SkillName
-  | Completed Recommendation
-  | Completed Overview
-  | HumanCheckpoint ClarifyRoute
-  | NeedsHuman RouterBlocker
-
-route :: Request -> RouterOutcome
-route request = classifyIntake request >>= selectTarget >>= dispatch
-
-Execute   -> RoutedTo target
-Advise    -> Completed Recommendation
-Explain   -> Completed Overview
-Ambiguous MissingActionIntent -> NeedsHuman ActionIntentMissing
-Ambiguous (RouteChoice _)     -> HumanCheckpoint ClarifyRoute
-```
-
-模式判定：
-
-| 信号 | IntakeMode | 行为 |
-|---|---|---|
-| “修复 / 实现 / 更新 / 扫描 / 继续”等明确行动 | Execute | 选唯一主入口并同轮转交 |
-| “该用哪个 skill / 应该走什么流程 / 你建议怎么做” | Advise | 只推荐，不启动 workflow |
-| 只说 `cs`、请求介绍 CodeStable、没有具体诉求 | Explain | 输出体系速读 |
-| 只有“帮我改一下”等字样，连行动类型都无法判断 | `Ambiguous MissingActionIntent` | 返回 `NeedsHuman ActionIntentMissing`，只问缺失事实 |
-| 已知有多个可行路线或多个活动单元，需要 owner 选一个 | `Ambiguous (RouteChoice candidates)` | 返回 `HumanCheckpoint ClarifyRoute`，只问一个路线选择 |
-
-不要只按问句形式判断。比如“能帮我修这个报错吗”仍是 Execute；“这种报错该走哪个 skill”是 Advise；“帮我改一下”连行动类型都缺，属于 `MissingActionIntent`，不是 owner route approval。
-
-## 路由优先级
-
-专用 workflow 优先于 `cs-goal`：诉求已经明确属于 feature / issue / refactor / docs / epic 等生命周期时，即使用户说“持续做到完成”，仍进入专用入口。只有用户给出独立终点、验收或预算，且没有更具体 workflow 时才选 `cs-goal`。
-
-相邻路线按以下语义区分：
-
-| 用户目标 | 路由目标 |
+| 用户输入 | 行为 |
 |---|---|
-| 仓库接入、迁移、补 CodeStable 骨架 | `cs-onboard` |
-| 明确终点 / 验收 / 预算的自主达成，且无专用 workflow | `cs-goal` |
-| 想法模糊、先聊、方向摇摆 | `cs-brainstorm` |
+| 明确行动诉求（修这个 bug、实现 X、重构 Y、审一下、记住这个…） | **同轮直转**：报一句"按 `cs-xxx` 处理：{一句理由}"，随即在当前回合按该 skill 的纪律继续执行，不要求用户重新调用或再次确认 |
+| 用户显式要求先讨论，或调查仓库事实后仍无法安全判断行动类型 / owning skill，且产品决策会实质改变建档或改代码路径 | 在当前会话对齐；用户没有要求先讨论且 owning skill 已可判定时，直接转入，不在入口层细化目标或验收 |
+| 咨询（该用哪个 / 流程怎么走 / 你建议怎么做） | 只推荐入口并说明理由，不启动执行 |
+| 只说 cs、想了解体系、无具体诉求 | 输出体系速读 |
+| 诉求含糊但一个分类问题即可判断 | 先调查可核实事实，只问一个聚焦问题，不默认重流程 |
+
+## 会话内讨论与 handoff
+
+- Execute 默认优先级最高；明确行动仍同轮直转。用户显式要求先讨论时才覆盖该默认；owning skill 已可判定时，目标与验收细化留给该 skill。
+- 讨论只存在于当前会话。仓库可核实的事实由 agent 自行调查；一次只问一个真正需要 owner 决定的问题，给出建议与理由，并用精确术语、具体场景和边界案例检验理解。
+- handoff-ready 时形成内存 packet：目标入口、原始诉求、目标或期望行为、范围、非目标、验收口径、已核实仓库事实及来源、owner 已确认的术语与决策、未决风险、canonical 资产指针或资产候选。
+- 已有执行授权时同轮移交给三个已确认出口 `cs-feat` / `cs-issue` / `cs-epic`，不再询问“是否继续”；只授权讨论时返回已确认结论，并推荐由 `cs-keep` 或对应 owning skill 完成资产毕业。
+- 讨论过程本身不产生授权；handoff 不扩大实现、commit、发布或写入授权，也不替代目标 skill 的硬门槛。收敛到其他入口时按既有 Execute / Advise 规则处理，不附带 handoff 的不重复确认契约。
+- 不创建 `.codestable/work/discussion-*`、transcript 或新状态；未收敛讨论不跨会话恢复，原始问答、未决讨论和候选分支不落盘。
+- 稳定术语交给项目已有 canonical 术语归宿；难逆转、缺少上下文会令人意外且源于真实取舍的决定才进入 ADR；任务契约、永久 Epic 文档、`attention.md` 与 `lessons/` 由 owning skill 按各自规则毕业。
+
+## 入口表
+
+| 诉求 | 入口 |
+|---|---|
 | 新功能、功能改造 | `cs-feat` |
-| bug、报错、既有行为异常 | `cs-issue` |
-| 已知优化目标、行为等价的重构 / 拆分 / 性能改进 | `cs-refactor` |
-| 主动扫描未知问题、系统审计、寻找可优化处 | `cs-audit` |
-| 起草或更新 capability / requirement | `cs-req` |
-| canonical 决策、ADR、术语或 context 边界 | `cs-domain` |
-| 可复用经验、踩坑、调研结论 | `cs-keep` |
-| 一两行每次都要知道的 attention 规则 | `cs-note` |
-| 多 feature 系统能力、epic、roadmap | `cs-epic` |
-| 本轮 diff / 合并前的 code review | `cs-code-review` |
-| CodeStable skill 跑偏、规则不清、工具失败 | `cs-feedback` |
-| 开发者 / 用户指南、API 参考 | `cs-docs` |
-| 阶段收尾、全局文档与记忆卫生 | `cs-docs-neat` |
+| bug、报错、行为异常 | `cs-issue` |
+| 行为等价的重构、优化 | `cs-refactor` |
+| 审查 diff 或按需审计代码 | `cs-review` |
+| 大需求拆解与长程推进 | `cs-epic` |
+| 沉淀经验、教训、"记住这个" | `cs-keep` |
+| 仓库接入 / v1 升级 | `cs-onboard` |
 
-`cs` 只决定工作类型；转交 `cs-feat` 后由它做风险分级，自动选择 Quick、Standard 或 Goal。不要因为请求属于“新功能”就预设完整 design/goal 流程。
+一次只转一个入口；用户同时给出两个独立诉求时，问先做哪个。转入不扩大授权：目标 skill 的硬门槛、checkpoint 与写入规则照常生效。
 
-一个请求同一时刻只转交一个主入口。若用户同时给出两个独立诉求，返回 `HumanCheckpoint ClarifyRoute` 询问先后顺序，不并行加载两个目标。
+## 体系速读
 
-## 转交协议
+CodeStable 是一层薄研发纪律加一个项目记忆闭环。项目记忆在 `.codestable/`：attention.md（每次必读）、lessons/（按关键词检索的经验）、work/（活动中的跨会话任务）。普通任务零产物，证据是 diff 与测试。
 
-route brief 只用于 Execute / Advise：
+Epic 采用职责互斥的双层文档：永久 Epic 上下文优先沿用项目已有 Epic / RFC / initiative 归宿，否则首次使用时按需创建 `.codestable/epics/`；临时 `.codestable/work/epic-{slug}.md` 只保存执行游标，完成后清理。`cs-goal` 中有价值的目标契约、恢复、人工门槛和终态验收已并入 `cs-epic`，但不恢复 `cs-goal` 入口、goal package、`state.yaml`、逐轮 iteration 报告或 runtime gate。
 
-```text
-Route: {目标主入口}
-Reason: {一句话判别依据}
-Dispatch: continuing-current-run | recommendation-only
-```
+v1 的 24 个旧入口（cs-feat-design、cs-goal、cs-audit、cs-note、cs-feedback、cs-roadmap 系等）已并入上表：设计与需求澄清是 cs-feat / cs-epic 的内置步骤，审计是 cs-review 的模式，沉淀统一走 cs-keep。
 
-- Execute：输出 `continuing-current-run` 后，按已安装 skill 名称加载目标协议，原始诉求原样传递，并在当前 run 继续；route brief 不是最终答复。
-- Advise：输出 `recommendation-only` 后结束，不加载目标协议、不写产物。
-- Explain：直接输出体系速读，不伪造 route brief。
-- `Ambiguous MissingActionIntent`：返回 `NeedsHuman ActionIntentMissing`，不伪造 route brief；用户补充事实后同轮继续判定。
-- `Ambiguous (RouteChoice _)`：返回 `HumanCheckpoint ClarifyRoute`；owner 选择后同轮转交，不要求重新调用命令。
-- 目标 skill 无法加载时返回 `NeedsHuman TargetUnavailable`，报告目标与失败原因，不在 `cs` 内模拟目标流程。
-
-`cs-onboard` 是串行前置 gate：未接入仓库收到 Execute 时，先判明原目标，再同轮加载 `cs-onboard`。onboard 自身的确认与写入 checkpoint 完整生效；完成后保留原始诉求和原目标，串行加载原目标 skill。若会话停在 checkpoint，本轮不越过它；后续轮次恢复时继续携带原始诉求和原目标，缺失时先向用户确认而不硬猜。
-
-转交只加载协议，不扩大授权：目标 skill 的写入、外部通信、Task agent 和人工 checkpoint 规则继续生效。已完成的 preflight 结论可幂等复用，但目标 skill 仍按自己的协议恢复业务事实。
-
-## Explain 输出
-
-体系速读保持简短，并只介绍推荐主入口：
-
-- 生命周期：`cs-feat` 先做风险分级；Quick 走实现/验证/一次 review，Standard 在当前 run 走 design/impl/review/accept-inline，Goal 才走 goal 包、impl、code review、QA、accept 并可由可见 driver 长程执行；另有 `cs-issue`、`cs-refactor`、`cs-epic`。
-- 横切能力：`cs-code-review`、`cs-audit`、`cs-docs`、`cs-docs-neat`、`cs-feedback`。
-- 需求与知识：`cs-req`、`cs-domain`、`cs-keep`、`cs-note`。
-- 启动与探索：`cs-onboard`、`cs-brainstorm`、`cs-goal`。
-
-主要产物位于 `.codestable/requirements/`、`roadmap/`、`goals/`、`features/`、`issues/`、`refactors/`、`audits/`、`brainstorms/`、`feedback/` 与 `compound/`。
-
-## 兼容入口
-
-以下旧技能名仍可直接使用，但只转入主入口；新文档和新提示词不得推荐它们：
-
-- Feature：`cs-feat-design`、`cs-feat-design-review`、`cs-feat-impl`、`cs-feat-qa`、`cs-feat-accept`、`cs-feat-ff`
-- Issue：`cs-issue-report`、`cs-issue-analyze`、`cs-issue-fix`
-- Refactor：`cs-refactor-ff`
-- Docs：`cs-doc-tutorial`、`cs-doc-api`
-- Epic：`cs-roadmap`、`cs-roadmap-review`、`cs-roadmap-impl-goal`
+导览与推荐本身不写任何文件。

@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Promote a cs-feedback candidate into a repo-local experiment fixture."""
+"""Legacy-only importer for frozen v1 cs-feedback experiment candidates.
+
+This script is not a CodeStable v2 production-feedback entry. It preserves the old candidate schema
+only so maintainers can explicitly import historical evidence into repo-local experiments.
+"""
 
 from __future__ import annotations
 
@@ -20,6 +24,7 @@ from config import ExperimentConfig  # noqa: E402
 from fixtures import validate_fixture_dict  # noqa: E402
 
 
+LEGACY_ONLY = True
 ROUTING_INCIDENT_KINDS = {
     "wrong-route",
     "skipped-gate",

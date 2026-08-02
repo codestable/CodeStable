@@ -1,300 +1,128 @@
 ---
 name: cs-epic
-description: "Epic 主入口。用于大需求或系统级能力的端到端拆解与长程执行：planning、review、子 feature design（批量）、goal 包。不要用于单个功能(cs-feat)、bug 修复(cs-issue)、行为等价重构(cs-refactor)、对外文档(cs-docs)。"
-argument-hint: "[--stage planning|review|goal-package] <epic>"
-contracts:
-  - grep: "restoreEpicStage"
-  - grep: "DispatchGoalDriver"
-  - grep: "epic_child_batch: true"
-  - grep: "codestable-workflow-next.py epic"
-  - grep: "统一确认所有 design"
-  - grep: "ConfirmGoalExecutionAuthorization"
-  - grep: "独立 Task agent reviewer"
-  - grep: "final_answer_allowed: false"
-  - not-grep: "ConfirmGoalCommitAuthorization"
-  - not-grep: "git push"
-  - not-grep: "read all references"
+description: 大需求或系统级能力的拆解与长程推进。单个功能走 cs-feat，bug 走 cs-issue。
+argument-hint: "[大需求描述]"
 ---
 
 # cs-epic
 
-## 启动必读
+把一个大需求拆成可交付的子项，逐个做完，并让用户始终看得到全景。
 
-动作前先跑 CodeStable preflight：读 `.codestable/attention.md`（缺失先 `cs-onboard`）；不要用 `AGENTS.md`/`CLAUDE.md` 等外部入口代替它；细则见 `.codestable/reference/execution-conventions.md`。
+## 开工
 
-`cs-epic` 是大需求端到端入口。用户文档统一叫 epic；为兼容历史产物，第一版内部目录、frontmatter 和工具仍使用 `roadmap`。用户确认 roadmap 和所有子 feature design 后，默认生成 goal 包并尝试通过可见 Task agent goal driver 长程执行；派发失败则打印 `/goal` 指令让用户粘贴执行。
+- 有 `.codestable/attention.md` 就先读。
+- 按任务关键词在存在的 `.codestable/lessons/`、项目文档以及 v1 只读知识目录 `.codestable/roadmap/`、`.codestable/features/`、`.codestable/issues/`、`.codestable/refactors/`、`.codestable/goals/`、`.codestable/compound/`、`.codestable/audits/`、`.codestable/brainstorms/`、`.codestable/feedback/` 中 grep；命中要报告来源路径。上述 v1 目录只读，不得继续生成、原地改写或批量迁移；新结论毕业到永久 Epic、项目文档、ADR 或 lesson。
+- `.codestable/requirements/` 仅在 `.codestable/attention.md` 明确记录为 canonical requirement 位置时才可维护；owner 首次指定时先把该项目事实写入 attention。未记录时只读，不存在时不新建 `.codestable/requirements/`；新项目沿用项目自身文档结构，归宿未定的稳定契约先留在永久 Epic。
+- 有匹配的 `.codestable/work/epic-{slug}.md` 时先恢复：读取其永久 Epic 指针、`phase`、`approved_revision`、`item_progression`、`milestone_commit` 与 `remote_publish`，核对 active 永久文档的当前 SHA-256。仓库事实优先于聊天历史；hash、策略字段或仓库事实不一致时先修复或请求上下文，不创建重复 Epic。
+- 同一会话由 `cs` 交入且带已确认 handoff 时，直接消费目标入口、原始诉求、目标或期望行为、范围/非目标、验收、已核实仓库事实及来源、owner 已确认的术语与决策、未决风险、canonical 资产指针或资产候选；packet 精确范围内已确认的事项不重复询问。handoff 只证明当前会话共识，不扩大实现、commit、发布或写入授权，也不替代本 skill 的 review、验证与确认门槛；字段缺失、仓库事实冲突、出现会改变结果的新风险、缺少会改变方向的事实或超出已确认边界时再按本 skill 规则确认。
+- handoff 只用于起草 proposed 永久 Epic 文档，不替代 fresh design review、批准 hash 或第一道 owner gate。
+- 澄清需求：只问会改变拆解方向的问题（目标边界、优先级、验收口径），一次最多 3 个，形成共识即停。
 
-旧技能 `cs-roadmap`、`cs-roadmap-review`、`cs-roadmap-impl-goal` 长期保留为兼容入口，只传入 `requested_stage`。
-## 入口意图
+## 持续学习
 
-本次调用参数：$ARGUMENTS
+检索到 lesson 后先做 read-repair。只做一次有界、最低成本的定向核实，优先读取已有代码、测试或
+canonical 文档；不得仅为核实 lesson 运行大范围测试或反复复现。仍不足时跳过该 lesson，不阻塞正常任务。
+只有 scope 符合、未退役、当前事实成立，并真实改变计划或验证，或明确排除一个具体且合理的错误路径
+的条目才算有效命中；按
+`经验命中：{path}（{status}）；核验：{fact}；影响：{plan_or_check}` 报告。`retired` 不应用；
+`observed` / `validated` 先核实再用；旧 lesson 缺 `status` 按 `observed` 读取，不批量迁移。只是相关
+但没有改变行为时不制造复用证据；当前事实明确反证时立即停止应用，证据不足时不猜。
 
-意图来源按优先级：调用参数 flag > 兼容入口预设 > 用户话术。参数为空或未被替换（仍是字面 `$ARGUMENTS`）时跳过该来源；调用参数用 `--stage planning|review|goal-package` 表示阶段意图，其余文本作为大需求描述。旧裸 token（如 `review`）只作为历史提示词兼容识别；新文档和新调用一律用 `--stage`。
+任务内只在内存保留最多 3 条候选，按新证据替换低价值项，不暂停或询问。强信号只包括：owner
+纠正实际改变方案/代码/术语/验证；可复现证据推翻根因；同一路径失败两次后更换假设；
+blocking/important finding 暴露未编码不变量；新 red -> green 捕获可复发失败；lesson 真实改变本次行为
+或被反证；重复 workaround；方法显著降低重试、成本或风险。
 
-无参数默认行为：没有 stage / epic 描述时，扫描 `.codestable/roadmap/`、子 feature design 和 goal 包状态，用状态机恢复；若没有可恢复 epic 且用户原话也没有大需求目标，先问用户要规划哪个 epic。
+候选还必须同时有可追溯证据、能写成未来动作、适用于本次精确 diff 之外、且没有现成 canonical
+owner。网络波动、拼写、泛化口号、活动记录，以及已被机械 owner 完整覆盖的事实直接丢弃。
 
-入口意图不覆盖仓库事实。已有 roadmap review 未通过时先修规划；已有 feature design 未确认时不生成 goal 包。
-## Spec
+创建、改写规则/scope、晋升、删除与跨项目反馈仍须用户显式授权。为不中断 read-repair，仅对已有且
+有效命中的 lesson 开放两种窄维护：`observed -> validated` 仅在独立后续任务确实采用并验证成功时
+发生，只补一次代表性证据；必须记录 lesson 实际改变的计划或验证，或明确排除的具体且合理错误路径，
+以及本次通过的验收证据。`observed|validated -> retired` 仅在当前仓库事实直接反证或发现已有
+canonical owner 时发生，只写原因与替代/反证指针。窄维护不新建事实、不改规则、不扩 scope、不新增
+gate，随当次代码、证据和
+游标进入同一语义原子 milestone；稳定 validated 命中不写文件。需要改写结论或证据不足时只给
+候选，新结论不得通过复活 retired 条目获得 validated 身份；窄维护必须在最终报告列出文件变化。
 
-```haskell
-csEpic :: EpicInput -> EpicOutcome
-csEpic = workflow
-data EpicInput
-  = Start EpicRequest | Resume RepoFacts | ResumePlanningInput PlanningResume
-  | ConfirmRoadmapInput | ConfirmAllChildDesignInput | ApproveLocalReviewInput
-  | AuthorizeGoalExecutionInput ConfirmationId ApprovalRef ApprovalRef | RejectGoalExecutionInput
-data EpicRequest = EpicRequest
-  { requestedStage : Maybe EntryStage, userGoal : Maybe Text -- planning | review | goal-package
-  , repoFacts : RepoFacts }                                  -- 优先于 args / 聊天历史
-data EntryStage = PlanningEntry | ReviewEntry | GoalPackageEntry
-data Stage = Planning | Review | ChildDesignBatch | GoalPackage
-data RoadmapReviewState
-  = ReviewMissing | ReviewPassed | ReviewChangesRequested
-  | ReviewAwaiting AgentRef | ReviewNeedsOwnerApproval Reason
-  | ReviewerFailed Reason | ReviewBlocked Reason
-data GoalExecutionAuthorization
-  = GroupApproved ConfirmationId ApprovalRef ApprovalRef | StrictLegacy104 ApprovalRef ApprovalRef
-data EpicGoalRunState                     -- 从 canonical group + goal-state projection 恢复
-  = GoalMissing | GoalReadyToDispatch GoalExecutionAuthorization
-  | GoalAuthorizationMissing | GoalAuthorizationNeedsRepair WorkflowEvidence | GoalDriverActive DriverInfo
-  | GoalComplete GoalExecutionAuthorization
-  | GoalHandoffBlocked Reason | GoalUnknown Text
-data EpicState = EpicState                -- 从 .codestable/roadmap/{slug}/ 与子 features/ 恢复
-  { roadmapStatus       : Missing | Draft | Confirmed  -- frontmatter status: active 归一为 Confirmed
-  , roadmapReviewState  : RoadmapReviewState           -- 从 roadmap-review review_state 恢复
-  , childrenDesign      : AllPassed | Pending          -- 未 dropped child 均有 design+checklist+passed review
-  , allDesignApproved   : Bool
-  , goalRunState        : EpicGoalRunState
-  , pendingCheckpoint   : Maybe CheckpointReason
-  }
-data EpicOutcome
-  = RoutedTo Stage | Awaiting WaitReason
-  | HumanCheckpoint CheckpointReason
-  | RepairGoalExecutionAuthorization WorkflowEvidence | DispatchGoalDriver Command
-  | GoalHandoff Command | Completed EpicSummary
-  | NeedsHuman Reason | Blocked Reason
-data WaitReason = RoadmapReviewerRunning AgentRef | GoalDriverRunning DriverInfo | WorkflowWait Text
-data CheckpointReason
-  = ConfirmRoadmap | ConfirmAllChildDesign | ConfirmGoalExecutionAuthorization Command | ApproveReviewFallback Reason
-data CheckpointResume
-  = PersistRoadmapConfirmed | PersistAllDesignsApproved | DelegatePlanningResume PlanningResume
-  | PersistGoalExecutionAuthorization ConfirmationId ApprovalRef ApprovalRef | PersistGoalExecutionRejection
-  | RerunReview OwnerApproval | RejectResume Reason
-resumeCheckpoint :: EpicInput -> CheckpointResume
-resumeCheckpoint ConfirmRoadmapInput                = PersistRoadmapConfirmed
-resumeCheckpoint ConfirmAllChildDesignInput         = PersistAllDesignsApproved
-resumeCheckpoint (ResumePlanningInput resume)         = DelegatePlanningResume resume
-resumeCheckpoint (AuthorizeGoalExecutionInput confirmationId acceptanceRef commitRef) = PersistGoalExecutionAuthorization confirmationId acceptanceRef commitRef
-resumeCheckpoint RejectGoalExecutionInput            = PersistGoalExecutionRejection
-resumeCheckpoint ApproveLocalReviewInput             = RerunReview ApproveLocalOnly
-resumeCheckpoint _                                  = RejectResume InvalidCheckpointResume
-resumeMatches :: EpicInput -> CheckpointReason -> Bool
-resumeMatches ConfirmRoadmapInput ConfirmRoadmap = True
-resumeMatches ConfirmAllChildDesignInput ConfirmAllChildDesign = True
-resumeMatches input (ConfirmGoalExecutionAuthorization _) = input is AuthorizeGoalExecutionInput _ _ _ || input == RejectGoalExecutionInput
-resumeMatches ApproveLocalReviewInput (ApproveReviewFallback _) = True
-resumeMatches _ _ = False
-applyCheckpointResume :: EpicInput -> EpicState -> Either Reason EpicState
-applyCheckpointResume (Start _) s = Right s
-applyCheckpointResume (Resume _) s = Right s
-applyCheckpointResume (ResumePlanningInput r) s = persistPlanningResume s <$> resumePlanning (planningState s) r
-applyCheckpointResume input s
-  | Just reason <- s.pendingCheckpoint, resumeMatches input reason = Right (persistCheckpointResume (resumeCheckpoint input) s)
-  | otherwise = Left InvalidCheckpointResume
-restoreGoalAuthorization :: GoalArtifacts -> EpicGoalRunState
-restoreGoalAuthorization a
-  | canonicalAuthorizationRejected a = GoalHandoffBlocked "goal execution authorization rejected"
-  | approvedGroupWithMatchingProjection a = GoalReadyToDispatch (GroupApproved a.confirmationId a.acceptanceRef a.commitRef)
-  | canonicalGroupApprovedWithNonEmptyId a = GoalAuthorizationNeedsRepair (goalProjectionRepairEvidence a)
-  | stateProjectionRejected a = GoalHandoffBlocked "goal execution authorization projection rejected"
-  | strictLegacy104Artifact a = GoalReadyToDispatch (StrictLegacy104 a.acceptanceRef a.commitRef)
-  | otherwise = GoalAuthorizationMissing
-persistGoalExecutionAuthorization :: ConfirmationId -> ApprovalRefs -> EpicState -> EpicState
-persistGoalExecutionAuthorization confirmationId refs s = atomicReplaceApprovalReport (approvedGoalExecutionGroup confirmationId) >> syncApprovedGoalProjection confirmationId refs s
-repairGoalExecutionAuthorization :: WorkflowEvidence -> EpicState -> EpicState
-repairGoalExecutionAuthorization evidence s = repairGoalProjectionWhenGroupApproved "goal-execution" evidence s
-```
-```haskell
-restoreEpicStage :: EpicState -> EpicRequest -> EpicOutcome
-restoreEpicStage(s, request)
-  | ambiguousTarget(s, request)                             -> NeedsHuman "which epic?"
-  | noRecoverableEpic s && isNothing request.userGoal      -> NeedsHuman "which epic?"
-  | s.roadmapStatus == Missing                              -> RoutedTo Planning      -- 大需求未拆解
-  | s.roadmapReviewState == ReviewChangesRequested          -> RoutedTo Planning
-  | s.roadmapReviewState is ReviewAwaiting agent            -> Awaiting (RoadmapReviewerRunning agent)
-  | s.roadmapReviewState is ReviewNeedsOwnerApproval reason -> HumanCheckpoint (ApproveReviewFallback reason)
-  | s.roadmapReviewState is ReviewerFailed reason           -> Blocked reason
-  | s.roadmapReviewState is ReviewBlocked reason            -> Blocked reason
-  | s.roadmapStatus == Draft && s.roadmapReviewState == ReviewMissing -> RoutedTo Review
-  | s.roadmapReviewState == ReviewPassed && s.roadmapStatus /= Confirmed
-      -> HumanCheckpoint ConfirmRoadmap        -- roadmap review passed 但用户未确认：停下让用户确认 epic 规划
-  | s.roadmapStatus == Confirmed && s.roadmapReviewState /= ReviewPassed
-      -> Blocked "confirmed roadmap lacks passed review"
-  | s.roadmapStatus == Confirmed && s.childrenDesign == Pending
-      -> RoutedTo ChildDesignBatch             -- 逐项进 cs-feat（epic_child_batch: true）；design 保持 `draft`，不逐个让用户确认
-                                               -- 仍有子 feature 未完成 design-review 就继续下一个，不停用户
-  | s.childrenDesign == AllPassed && not s.allDesignApproved
-      -> HumanCheckpoint ConfirmAllChildDesign -- 停下让用户统一确认所有 design，确认后逐份标 approved
-  | s.allDesignApproved && s.goalRunState == GoalMissing     -> RoutedTo GoalPackage
-  | s.goalRunState is GoalComplete _                         -> Completed EpicSummary
-  | s.goalRunState is GoalHandoffBlocked reason              -> GoalHandoff (handoffCommand reason)
-  | s.goalRunState is GoalDriverActive driver                -> Awaiting (GoalDriverRunning driver)
-  | s.goalRunState is GoalAuthorizationNeedsRepair evidence   -> RepairGoalExecutionAuthorization evidence
-  | s.goalRunState == GoalAuthorizationMissing                -> HumanCheckpoint (ConfirmGoalExecutionAuthorization (goalCommand s))
-  | s.goalRunState is GoalReadyToDispatch _                  -> DispatchGoalDriver "/goal"
-  | s.goalRunState is GoalUnknown raw                        -> Blocked ("unknown goal-state: " <> raw)
-  | otherwise                                                -> Blocked InvalidEpicState
+当前任务范围内能直接落成 red -> green 测试/checker 的约束优先机械化，不另写重复 lesson；会扩大
+范围时只给候选。用户已明确说“记住 / 更新 / 退役”时，同轮按 `cs-keep` 处理，不重复确认。Epic
+子项不展示、不询问；每个子项至多把一条去重候选写入既有游标证据区，使用 `晶化候选：{rule}`
+marker，最终毕业清单一次处理并复用最终 owner gate。
+
+## 双层 Epic 文档
+
+Epic 天然跨会话，但稳定上下文和活动状态不得混写：
+
+- **永久 Epic 文档**：项目已有明确 Epic、RFC 或 initiative 归宿时沿用；否则首次创建时按需建立 `.codestable/epics/{slug}.md`，`cs-onboard` 不预建该目录。它是起点、目标、范围、非目标、验收标准、带稳定 ID/依赖/验收要点的子项契约、关键决策、最终交付索引、整体验收、遗留风险与长期 `status` 的唯一 owner。
+- **执行游标**：`.codestable/work/epic-{slug}.md` 只保存永久文档指针、`approved_revision`、执行 `phase`、当前子项 ID、各 ID 进度、下一步、`blocked_by`、`item_progression`、`milestone_commit`、`remote_publish`、临时决策及证据/commit 指针；不得复制目标、验收、子项定义或最终结论。
+
+永久文档最小结构：
+
+```markdown
+---
+status: proposed
+created: YYYY-MM-DD
+work: ../work/epic-{slug}.md
+---
+# {epic 名}
+起点 / 目标 / 范围 / 非目标 / 验收标准
+## 子项契约
+- ITEM-1：{类型；依赖；验收要点；必要的设计要点}
+## 关键决策
+## 最终交付索引
+## 整体验收
+## 遗留风险
 ```
 
-`restoreEpicStage` 是唯一路由真相：扫 roadmap 与子 features 恢复 `EpicState`；`restoreGoalAuthorization` 只允许 canonical group approved 且 confirmation/ref projection 匹配，或没有新 marker 的严格 1.0.4 legacy artifact，构造 `GoalReadyToDispatch`，state-first 不得放行。任一 group / named decision rejected 归一为 handoff；group 已 approved 但 projection 未同步时归一为 `GoalAuthorizationNeedsRepair`，自动修复且不再次询问；其余缺失或不可验证才归一为 `GoalAuthorizationMissing`。`DelegatePlanningResume` 先精确恢复 planning checkpoint。用户确认同一条 `/goal` 后，先 atomic replace canonical approval report 形成 durable commit point，再幂等同步 goal-state。两份证据都可验证才派发。子 design 是连续 batch loop，在统一确认前不得 final answer；stage protocol 见后文。
+work 游标最小结构：
 
-`cs-epic` 不在主线程直接执行长程 goal；只能通过可见 Task agent goal driver 派发。没有可见 driver 或派发失败时，回退为用户手动粘贴 `/goal`。
-
-## Workflow
-
-主执行主线（每次调用按序走；planning/review/goal 的厚规则见对应 protocol，本节只定顺序与边界）：
-
-```haskell
-workflow :: EpicInput -> EpicOutcome
-workflow = preflight >=> parseEntryIntent >=> restoreEpicState >=> applyCheckpointResume
-       >=> restoreEpicStage >=> loadStageProtocol >=> executeStage >=> exitRecoverable
-
-preflight        -- 读 .codestable/attention.md；缺失 -> route to cs-onboard；不得用 AGENTS.md/CLAUDE.md 代替
-parseEntryIntent -- flag > compat-preset > utterance；repoFacts override requestedStage；空参不推断 stage
-restoreEpicStage -- 扫 .codestable/roadmap/ + 子 features/ + goal 包恢复 EpicState，选 next stage（见 Spec）
-loadStageProtocol -- 「Reference 加载」映射；进 stage 才加载该 stage 一个 protocol，禁止 eager 读全部 references
-executeStage     -- ChildDesignBatch 走连续 batch loop（下节为唯一权威）；
-                 -- 全部 child passed 后 HumanCheckpoint 统一确认所有 design，确认后逐份标 approved；
-                 -- DispatchGoalDriver 先尝试可见 driver，失败才输出 GoalHandoff
-exitRecoverable  -- artifact 已落盘 / next stage 明确 / checkpoint reason 明确，任一即可让下次调用从 repoFacts 恢复
+```markdown
+---
+epic: ../epics/{slug}.md
+phase: planning
+approved_revision: pending
+current_item: ITEM-1
+next_action: review and confirm the proposed Epic
+blocked_by: null
+item_progression: pending
+milestone_commit: pending
+remote_publish: pending
+---
+## 子项进度
+- [ ] ITEM-1
+## 临时决策与证据
 ```
 
-## 文件放哪儿
+永久 `status` 只允许 `proposed -> active -> accepted`，owner 放弃或用后继 Epic 取代时转 `cancelled` / `superseded`；work `phase` 只允许 `planning -> executing -> acceptance`，阻塞只写 `blocked_by`。拆解确认本身不等于版本控制授权；首次 owner gate 同时一次性确定 `item_progression: continuous | per-item`、`milestone_commit: authorized | manual` 与 `remote_publish: each-milestone | final | manual`，说明选择 `manual` commit 会逐项暂停，并写入 work 游标。`milestone_commit: manual` 只能搭配 `item_progression: per-item`；`milestone_commit: manual` 只能搭配 `remote_publish: manual`；`remote_publish: each-milestone` 只能搭配 `milestone_commit: authorized`。`authorized + per-item` 是合法的显式逐项暂停策略。进入 executing 前不得保留 `pending` 或非法组合。
 
-```text
-.codestable/roadmap/{slug}/
-├── {slug}-roadmap.md
-├── {slug}-items.yaml
-├── {slug}-roadmap-review.md
-├── goal-plan.md
-├── goal-state.yaml
-├── goal-protocol*.md
-├── goal-audit.md
-└── goal-features/
-```
+owner 确认 proposed 文档与上述策略后，主流程机械置 `active`，用 `shasum -a 256 <epic-file>` 计算完整文件 SHA-256，只写入 work 的 `approved_revision` 并进入 executing；确认前保持 `pending`。active 期间永久文档冻结，日常进度与临时决策只写 work；目标、范围、非目标、验收、子项定义或重大风险变化时，按相同规则更新永久文档、重新 review/确认并替换 hash。版本控制策略变化只按 owner 的显式表达更新游标字段，不修改永久文档或批准 hash，也不得从历史操作推断授权。Epic 内的已有 commit 授权只指 `milestone_commit: authorized`；其他值或仅有会话历史均不算。旧游标缺字段或组合非法时暂停一次补记/修正。
 
-普通子 feature 仍放 `.codestable/features/YYYY-MM-DD-{feature-slug}/`。
+子项设计就近优先：简要设计属于永久文档的子项契约；高风险细节可独立落 `work/feat-{slug}.md`，frontmatter 标 `epic: {epic-slug}`，work 游标只记录路径和进度。子项增删、依赖或验收变化属于契约变化；不改变依赖/验收的顺序微调只更新游标。
 
-## Child design batch loop
+## 硬门槛
 
-roadmap 已确认后，子 feature design 阶段是一个连续 batch loop，不是单次子任务：
+- **拆解方案必须经用户确认**（目标、边界、验收、子项契约）后才开始执行；交确认前进入 design review 审查阶段，按下述 reviewer lineage 完成 `cs-review`。永久文档已批准后的执行中，要改变目标、范围、非目标、验收、子项定义或重大风险时，契约变化形成新的 contract review 审查阶段：先更新永久文档，由 fresh reviewer 重新 review 并征得同意。
+- 当前主流程创建 reviewer 前，先发现当前会话可调用的 subagent 创建与管理能力。项目上下文有显式创建方式/model 约束时先遵守。达到审查质量基线后，优先选择与实现者异构的 agent，并显式指定最强稳定 `model`；创建方式依次使用受管理的结构化委派能力、宿主 subagent、本机有界 agent CLI 回退，不得只扫 PATH。
+- 没有合格异构候选时回退同构最强模型。把最终创建方式、agent/model 与回退原因写入 task packet，禁止依赖默认模型。
+- 审查前冻结一个明确目标（diff review 优先 staged diff，也可用明确 range/patch；design review 冻结对应文档版本；audit 冻结 commit + 范围标识），把目标标识写入 task packet；reviewer 返回前不改目标或对应工作树。有 blocking 或未被用户明确接受的 important 时不提交当前候选，也不得创建正式里程碑 commit；处理后重跑验证并重新冻结完整审查目标。
+- 仅在跨会话恢复、agent 交接或隔离 reviewer 需要不可变基线时，且已有 commit 授权，才可在私有工作分支创建明确标记的 WIP/checkpoint commit；它不代表 review 通过或任务完成，交付前按仓库策略 fixup/squash。
+- 本 skill 的确认与验证门槛均满足、blocking 清零且其余 important 已处理或被用户明确接受后，已有 commit 授权时才创建语义原子的正式里程碑 commit；未获授权则只报告可提交状态，不自行提交。
+- 一个独立审查阶段由单一审查目的界定；design review、change review、contract review 与 Epic final acceptance 是不同阶段。只有为本阶段 findings 所作修复的复审，才属于同一阶段并沿用原 reviewer lineage；审查目的变化时开启新阶段。
+- 每个独立审查阶段的首轮必须由当前主流程创建一个 fresh reviewer，与实现者保持独立；reviewer 单轮执行 `cs-review`，其内部不得创建子 agent。
+- 主流程处理 findings 后先修复并重跑验证，再冻结新的完整审查目标；仅因处理 findings 产生的修复，复审必须沿用同一 reviewer 的同一 session，以 follow-up 继续。复审同时检查完整当前候选与本轮修复增量，逐项报告 `resolved` / `unresolved` / `new findings`；不得只核对旧 finding 或机械打勾。reviewer 独立性要求它独立于实现者，不要求对自身上一轮审查失忆。
+- 同一审查阶段累计最多 3 个有终态报告的轮次；更换 reviewer 不重置计数。只有原 run/session 失败或不可恢复、能力不满足、目标、范围、设计或核心路径发生重大变化、reviewer 声明无法继续独立判断，或 owner 要求第二意见时，才可更换 reviewer；更换时创建 fresh reviewer。超限仍有 blocking 或分歧时交用户裁决，不得继续对轮或宣称完成。
+- 同一时间只允许一个 `current_item`；这是串行约束，不是每个子项的人工 gate。`active` 且批准 hash 有效表示可执行已批准子项，恢复后沿用游标策略，不重新询问是否继续。
+- 子项通过其 owning skill 的验证与审查后，按 `milestone_commit` 把代码、证据和 work 游标更新收成一个语义原子里程碑，不把多个子项堆进同一 diff。`item_progression: continuous` 时，非最终子项完成后自动选择永久文档顺序中第一个依赖已满足的未完成子项，更新 `current_item` / `next_action`，并在同一受托主流程中继续执行；仍有未完成子项但无可运行候选时按阻塞暂停。不得询问“是否继续下一项”，不得把普通子项完成当作终态返回。
+- `item_progression: per-item` 时，完成当前里程碑后按已记录的逐项 checkpoint 策略暂停；它是 owner 在首次 gate 或后续显式变更中选择的行为，不得伪装成默认连续模式。`milestone_commit: manual` 时只交付可提交 checkpoint，不自行 commit。
+- `remote_publish: each-milestone` 时，每个语义原子 commit 后按项目、宿主或 owner 已确定的 branch/remote 策略发布；`final` 时，在集成验证与 final acceptance review 通过后、请求 owner 最终接受前发布一次；`manual` 时 agent 不执行远端发布。branch/remote 未明确时暂停请求上下文，不自行选择；发布失败时写入 `blocked_by` 并暂停，不静默继续。
+- Epic 编排只在以下情况新增暂停：契约或重大风险变化、无法自行解除的阻塞/产品决策、新增权限、需要 owner 明确接受的 important findings、review 超限仍有分歧、旧游标策略缺失或非法、用户明确要求暂停，以及全部子项完成后的最终 owner gate。子项 owning skill 自身的确认门槛照常生效；已批准子项契约覆盖同一决策时不得重复确认，新出现且会改变结果的风险仍按 owning skill 或 Epic 重确认处理。
+- reviewer 创建后绑定该运行并记录 run identity：目标有效、能力仍满足，且 reviewer 状态为 running，或 `Awaiting` 携带可查询的同一 run identity 且查询仍为活动态时为健康；状态健康时等待终态报告，不因后来发现更优创建方式而取消、重复创建或并行补发。仅在运行明确失败或终止无报告、idle / `Awaiting` 且无可恢复 run identity、能力不满足或目标失效时，本轮失败且不计轮次；不得盲目重发，先检查 task packet 与 agent 状态，再决定一次有界重试、更换创建方式或交用户。
+- 每个子项按其类型的纪律执行（cs-feat / cs-issue / cs-refactor 的门槛照常生效），完成即更新 work 游标的 ID 进度、证据和 commit 指针；文档与事实不一致时以仓库事实为准并修正文档。
+- 全部子项完成后把 phase 置为 acceptance 并运行集成验证。final acceptance 是独立审查阶段，必须由当前主流程另建 fresh reviewer 开始新的 lineage，不得沿用子项、此前 design review 或 contract review 的 reviewer lineage；它对最新 owner 已批准的验收标准做 `cs-review` audit/acceptance review。主流程按同一 lineage 处理该阶段 findings，门槛通过后给出各子项结果、验证证据与遗留项，**不代替用户做整体验收**，停下等 owner 最终接受。
 
-```haskell
-childDesignBatch :: Slug -> Loop
-childDesignBatch slug = loop
-  where
-    loop = do
-      -- 每轮开始、每个 child design-review 后、以及准备 final answer 前都先跑 hook：
-      next <- run "python3 <cs-onboard skill 目录>/tools/codestable-workflow-next.py epic \
-                  \--roadmap .codestable/roadmap/{slug} --json"
-      case next.status of
-        continue      -> step next.next_action >> loop
-        goal_package  -> step next.next_action >> loop
-        dispatch_goal -> step next.next_action >> loop
-        user_gate | next.next_action == "all-feature-designs-confirmation"
-                      -> stopAt (HumanCheckpoint ConfirmAllChildDesign)
-        user_gate | next.next_action == "authorize-epic-goal-execution"
-                      -> stopAt (HumanCheckpoint (ConfirmGoalExecutionAuthorization (goalCommand slug)))
-        user_gate     -> stopAt (Blocked UnexpectedWorkflowUserGate)
-        awaiting      -> stopAt (Awaiting (WorkflowWait next.next_action))
-        handoff       -> stopAt (GoalHandoff next.next_action)
-        blocked       -> stopAt (Blocked next.reason)
-        _             -> stopAt (Blocked InvalidWorkflowNext)
-      -- hook 输出 must_continue: true 或 final_answer_allowed: false 时只能来自前三个继续态；不得 final answer
-      -- repair-epic-goal-execution-authorization 只消费已 approved 的 durable confirmation evidence，
-      -- 幂等同步 goal-state 后继续 loop；不得再次请求 owner，也不得修改 approval commit point。
-      -- 每轮先扫 {slug}-items.yaml：按 DAG 取下一个 design-ready 且缺 design、checklist
-      -- 或 passed design-review 的 item，调用 cs-feat（epic_child_batch: true）推进；design-ready
-      -- 允许依赖 done / dropped / design-review passed，但实现前仍要求依赖严格 done
-```
+## 收尾
 
-- 完成某一个 child 的 design + design-review `passed` 只是内部进度；不得 final answer、不得要求用户确认该 child、不得进入实现。
-- 只有 items.yaml 里所有未 dropped child 都已有 design + checklist + `passed` design-review，才允许触发"所有 design 统一确认"的人工 checkpoint。
-- 若下一条 child 可继续推进，本轮必须继续调用 `cs-feat`，而不是用"下一步继续处理下一个 child"作为结束汇报。
-- child batch 只放宽 design admission；不得把 `dropped` 或仅 design-review passed 的依赖当成 implementation-ready。
-- 若 preflight 刚完成 runtime 同步，从仓库事实恢复 batch loop，不靠对话记忆。
-
-## Reference 加载
-
-```haskell
-stageProtocol :: Stage -> Protocol
-stageProtocol Planning         = "references/planning/protocol.md"   -- 必要时 reference.md、support/codebase-design.md
-stageProtocol Review           = "references/review/protocol.md"     -- gate 纪律见下
-stageProtocol GoalPackage      = "references/goal/protocol.md"       -- 并复制 support/protocol*.md 和 support/goal-command-template.md
-stageProtocol ChildDesignBatch = skill "cs-feat" (epic_child_batch: true)
-  -- 子 feature 通过 cs-feat 主入口推进，不直接调用旧阶段技能；
-  -- 内部上下文让单 feature 人工 checkpoint 推迟到 cs-epic 的批量确认
-
--- goal driver 派发规则见 .codestable/reference/agent-conventions.md 的 Goal driver 一节
-```
-
-review **gate 必需独立 Task agent reviewer**：主 agent 本地审查不得定稿、不得给 `passed`；roadmap 修订后的**每一轮重审同样适用**，降级须 approval-report + 用户明确授权（细则见 protocol）。子 feature design-review 经 `cs-feat` 同受此约束。
-## 人工 checkpoint
-
-触发时机以 Spec 的 `restoreEpicStage` 为唯一权威；本节只定义停下后的行为：
-
-```haskell
-onCheckpoint :: CheckpointReason -> Action
-onCheckpoint ConfirmRoadmap        = 停等用户确认 epic 规划            -- roadmap/epic planning review passed 后
-onCheckpoint ConfirmAllChildDesign = 停等用户统一确认所有 design，确认后逐份标 approved
-onCheckpoint (ConfirmGoalExecutionAuthorization command) = 展示 command 及 acceptance/scoped-commit 范围；写两项 pending decision，停等 owner 一次确认
-onCheckpoint (ApproveReviewFallback reason) = 停等 owner 决定是否批准 local-only review；记录 reason
-```
-
-所有 `onCheckpoint` 都先把完整 reason 写入 canonical `approval-report.md` pending decision，再停等输入；无法恢复出同一 pending reason 时，任何 resume 都 fail-closed。Goal 启动确认批准时，生成一个 `ConfirmationId`，先原子写入 `approval_groups.goal-execution` 与两项 approved named decision，再幂等同步 goal-state 的相同 id、两份不同 ref 和 ready 状态；不得先写 goal-state，不得只批准一项，也不得再次询问。checkpoint 的 `Non-Automatic Actions` 必须明确：不会自动执行 remote push、merge、publish、release、deploy、promotion 或 production cutover，这些仍需各自授权。拒绝则把 goal execution 持久化为 handoff，且不得派发。
-
-不要在第一个或任一单独子 feature design-review passed 后停下来要求用户确认执行；那是 `cs-feat` 普通单 feature 行为，在 `cs-epic` 子流程里必须延后到所有子 feature 都完成 design-review 后统一处理。
-driver 不可见、派发失败或返回 `CS_ROADMAP_GOAL_HANDOFF` 时走 `GoalHandoff`，不是 `HumanCheckpoint` / `NeedsHuman` 的第二种写法。
-## Failure Behavior
-
-```haskell
-needsHuman :: Situation -> Bool
-needsHuman s = noRecoverableEpic s
-            || ambiguousEpicTarget s
-            || stageConflictsRepoFacts s
-
-isBlocked :: Situation -> Bool
-isBlocked s = invalidArtifactState s    -- 例如 active roadmap 没有 passed review
-           || unknownGoalState s
-           || reviewerFailed s
-```
-
-报告：当前 roadmap 目录、阻塞原因、下一步用户动作、已写文件、是否可安全重试。可安全回退为 fenced `/goal` 的 driver 不可用不算 `NeedsHuman`，统一返回 `GoalHandoff`。
-
-## Output Contract
-
-```haskell
-data ExitPolicy = ContinueRun | StopRecoverable
-
-exitPolicy :: EpicOutcome -> ExitPolicy
-exitPolicy (RoutedTo _)           = ContinueRun
-exitPolicy (DispatchGoalDriver _) = ContinueRun
-exitPolicy (Awaiting _)           = StopRecoverable
-exitPolicy (HumanCheckpoint _)    = StopRecoverable
-exitPolicy (GoalHandoff _)        = StopRecoverable
-exitPolicy (NeedsHuman _)         = StopRecoverable
-exitPolicy (Blocked _)            = StopRecoverable
-exitPolicy (Completed _)          = StopRecoverable
-```
-
-退出或交接时必须报告：roadmap 目录、恢复出的 `goalRunState`、child batch 进度、本轮写入文件、下一动作或 checkpoint、已运行验证。`DispatchGoalDriver` 不得直接退化成 `/goal`：先按 agent conventions 尝试可见 driver，只有不可用或派发失败才输出 `GoalHandoff`。
-## 退出条件
-
-```haskell
-mayExit :: State -> Bool
-mayExit s = workflowNext(s).final_answer_allowed        -- codestable-workflow-next.py 返回 final_answer_allowed: false 时当前 run 不能退出
-         && batchLoopSettled s   -- child design batch loop 只在全部 child design-review passed、遇到 blocking / pending / 授权问题、或用户明确要求停止时才可结束
-         && stateRecoverable s   -- 规划、审查、子 feature design 和 goal 包状态能从仓库事实恢复
-```
-
-历史 `roadmap` 命名只作为内部兼容说明出现；用户主路径称为 epic。需要同步文档或记忆时提示 `cs-docs-neat`。
+- owner 接受后先把最终范围、关键决策、交付索引、整体验收、遗留风险与毕业清单写入永久 Epic，再用终态更新置 `accepted` 并移除 `work` 指针。稳定产品契约进 canonical requirement/项目文档，结构性决策进 ADR，经验进 lessons；目标位置不存在时请 owner 选择，确定前结论留在永久 Epic。
+- 终态 `accepted` / `superseded` / `cancelled` 是不可恢复执行的持久信号。无论中断时还剩 work 指针、游标或所属子项 work，都从仓库事实幂等续做：补齐终态记录与毕业清单、移除指针、删除 Epic 游标，再按 frontmatter `epic:` 清理全部子项 work；不得恢复执行或创建重复 Epic，永久 Epic 文档不得删除。
+- 不恢复 `cs-goal` 入口、goal package、`state.yaml`、逐轮 iteration 报告或 legacy runtime gate；目标契约、恢复游标、owner gate 和终态验收都由上述双层文档承担。

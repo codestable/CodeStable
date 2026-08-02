@@ -1,5 +1,5 @@
 {
-  "source_commit": "cd7e1d3^",
+  "source_ref": "v1.0.4",
   "skills": [
     "cs",
     "cs-audit",
@@ -7,8 +7,10 @@
     "cs-code-review",
     "cs-doc-api",
     "cs-doc-tutorial",
+    "cs-docs",
     "cs-docs-neat",
     "cs-domain",
+    "cs-epic",
     "cs-feat",
     "cs-feat-accept",
     "cs-feat-design",
@@ -16,6 +18,7 @@
     "cs-feat-ff",
     "cs-feat-impl",
     "cs-feat-qa",
+    "cs-feedback",
     "cs-goal",
     "cs-issue",
     "cs-issue-analyze",

@@ -249,24 +249,20 @@ def check_source_plugin_skills_only(root: Path, findings: list[Finding]) -> None
             findings.append(Finding(filename, "source plugin manifest must remain skills-only; MCP registration belongs to optional runtime integrations"))
 
 
-def check_readme_commands(root: Path, findings: list[Finding]) -> None:
-    required = [
-        "codex plugin marketplace add codestable/CodeStable",
-        "codex plugin add codestable@codestable",
-        "codex plugin marketplace upgrade codestable",
-        "/plugin marketplace update",
-        "/plugin update codestable@codestable",
-    ]
-    forbidden = ["codex plugin install codestable"]
-    required_lines = [
-        "npx skills@latest add codestable/CodeStable/plugins/codestable",
-        "npx skills@latest add codestable/CodeStable/plugins/codestable --skill '*' -g",
-    ]
-    forbidden_lines = ["/plugin update codestable", "npx skills@latest update"]
-    for filename in ["README.md", "README.en.md"]:
+def check_command_docs(
+    root: Path,
+    filenames: tuple[str, ...],
+    findings: list[Finding],
+    *,
+    required: tuple[str, ...],
+    required_lines: tuple[str, ...] = (),
+) -> None:
+    forbidden = ("codex plugin install codestable",)
+    forbidden_command_prefixes = ("/plugin update codestable", "npx skills@latest update")
+    for filename in filenames:
         path = root / filename
         if not path.exists():
-            findings.append(Finding(filename, "README file is missing"))
+            findings.append(Finding(filename, "command documentation file is missing"))
             continue
         text = path.read_text(encoding="utf-8")
         for command in required:
@@ -279,10 +275,42 @@ def check_readme_commands(root: Path, findings: list[Finding]) -> None:
         for command in required_lines:
             if command not in lines:
                 findings.append(Finding(filename, f"missing documented command: {command}"))
-        for command in forbidden_lines:
-            if command in lines:
+        for command in forbidden_command_prefixes:
+            if any(line == command or line.startswith(f"{command} ") for line in lines):
                 prefix = "unsafe" if command == "npx skills@latest update" else "obsolete"
                 findings.append(Finding(filename, f"{prefix} documented command: {command}"))
+
+
+def check_documented_commands(root: Path, findings: list[Finding]) -> None:
+    check_command_docs(
+        root,
+        ("README.md", "README.en.md"),
+        findings,
+        required=(
+            "codex plugin marketplace add codestable/CodeStable",
+            "codex plugin add codestable@codestable",
+            "/plugin marketplace add codestable/CodeStable",
+            "/plugin install codestable@codestable",
+        ),
+        required_lines=(
+            "npx skills@latest add codestable/CodeStable/plugins/codestable",
+        ),
+    )
+    check_command_docs(
+        root,
+        ("UPGRADE.md", "UPGRADE.en.md"),
+        findings,
+        required=(
+            "codex plugin marketplace upgrade codestable",
+            "codex plugin add codestable@codestable",
+            "/plugin marketplace update",
+            "/plugin update codestable@codestable",
+            "npx skills@latest remove",
+        ),
+        required_lines=(
+            "npx skills@latest add codestable/CodeStable/plugins/codestable --skill '*' -g",
+        ),
+    )
 
 
 def check_repo(root: Path) -> list[Finding]:
@@ -299,7 +327,7 @@ def check_repo(root: Path) -> list[Finding]:
     check_codestable_not_ignored(root, findings)
     check_generated_exclusions(root, findings)
     check_source_plugin_skills_only(root, findings)
-    check_readme_commands(root, findings)
+    check_documented_commands(root, findings)
     return findings
 
 

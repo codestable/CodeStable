@@ -1,275 +1,74 @@
 ---
 name: cs-refactor
-description: "Refactor 主入口。触发：优化/重构/拆分/性能/代码太长，且不改变行为、不新增需求。不要用于新增功能(cs-feat)、修复 bug(cs-issue)、对外文档(cs-docs)、大需求拆解(cs-epic)。"
-argument-hint: "[--stage scan|design|apply] [--mode standard|fastforward] <target>"
-contracts:
-  - grep: "restoreRefactorStage"
-  - grep: "progressive reference loading"
-  - grep: "行为等价"
-  - not-grep: "git push"
-  - not-grep: "read all references"
+description: 行为等价的重构、拆分、性能优化。会改变外部可观察行为的诉求走 cs-feat 或 cs-issue。
+argument-hint: "[重构目标]"
 ---
 
 # cs-refactor
 
-## 启动必读
+改结构，不改行为，并且能证明行为没变。
 
-动作前先跑 CodeStable preflight：读 `.codestable/attention.md`（缺失先 `cs-onboard`）；不要用 `AGENTS.md`/`CLAUDE.md` 等外部入口代替它；细则见 `.codestable/reference/execution-conventions.md`。
+## 开工
 
-`cs-refactor` 是重构的唯一推荐入口。它统一判定标准模式和 fastforward 模式，核心底线是行为等价：一旦会改变外部可观察行为，就转 `cs-feat` 或 `cs-issue`。
+- 有 `.codestable/attention.md` 就先读。
+- 按目标模块关键词检索 `.codestable/lessons/`、项目文档，以及存在的 v1 只读知识目录：`.codestable/roadmap/`、`.codestable/features/`、`.codestable/issues/`、`.codestable/refactors/`、`.codestable/goals/`、`.codestable/compound/`、`.codestable/audits/`、`.codestable/brainstorms/`、`.codestable/feedback/`；命中要报告来源路径。上述 v1 目录不得继续生成、原地改写或批量迁移，新结论按归属进入 v2 Epic、项目文档、ADR 或 lesson。
+- 先确认诉求真是行为不变：一旦包含"顺便支持 X / 改成 Y"，把那部分拆出去转 `cs-feat` 或 `cs-issue`，不夹带。
+- 结构好坏用**深度**衡量：小接口承载大行为是深，接口和实现一样复杂是浅；重构应让调用方用更少认知换更多能力，不为"看起来干净"搬家，不把模块越拆越碎。
 
-`cs-refactor-ff` 长期保留为兼容入口，只传入 `requested_mode: fastforward`。
+## 持续学习
 
----
+检索到 lesson 后先做 read-repair。只做一次有界、最低成本的定向核实，优先读取已有代码、测试或
+canonical 文档；不得仅为核实 lesson 运行大范围测试或反复复现。仍不足时跳过该 lesson，不阻塞正常任务。
+只有 scope 符合、未退役、当前事实成立，并真实改变计划或验证，或明确排除一个具体且合理的错误路径
+的条目才算有效命中；按
+`经验命中：{path}（{status}）；核验：{fact}；影响：{plan_or_check}` 报告。`retired` 不应用；
+`observed` / `validated` 先核实再用；旧 lesson 缺 `status` 按 `observed` 读取，不批量迁移。只是相关
+但没有改变行为时不制造复用证据；当前事实明确反证时立即停止应用，证据不足时不猜。
 
-## 入口意图
+任务内只在内存保留最多 3 条候选，按新证据替换低价值项，不暂停或询问。强信号只包括：owner
+纠正实际改变方案/代码/术语/验证；可复现证据推翻根因；同一路径失败两次后更换假设；
+blocking/important finding 暴露未编码不变量；新 red -> green 捕获可复发失败；lesson 真实改变本次行为
+或被反证；重复 workaround；方法显著降低重试、成本或风险。
 
-本次调用参数：$ARGUMENTS
+候选还必须同时有可追溯证据、能写成未来动作、适用于本次精确 diff 之外、且没有现成 canonical
+owner。网络波动、拼写、泛化口号、活动记录，以及已被机械 owner 完整覆盖的事实直接丢弃。
 
-意图来源按优先级：调用参数 flag > 兼容入口预设 > 用户话术。参数为空或未被替换（仍是字面 `$ARGUMENTS`）时跳过该来源；调用参数用 `--stage <stage>` 表示阶段意图，用 `--mode <mode>` 表示执行模式，其余文本作为重构目标。
+创建、改写规则/scope、晋升、删除与跨项目反馈仍须用户显式授权。为不中断 read-repair，仅对已有且
+有效命中的 lesson 开放两种窄维护：`observed -> validated` 仅在独立后续任务确实采用并验证成功时
+发生，只补一次代表性证据；必须记录 lesson 实际改变的计划或验证，或明确排除的具体且合理错误路径，
+以及本次通过的验收证据。`observed|validated -> retired` 仅在当前仓库事实直接反证或发现已有
+canonical owner 时发生，只写原因与替代/反证指针。窄维护不新建事实、不改规则、不扩 scope、不新增
+gate，随当次代码、证据和
+游标进入同一语义原子 milestone；稳定 validated 命中不写文件。需要改写结论或证据不足时只给
+候选，新结论不得通过复活 retired 条目获得 validated 身份；窄维护必须在最终报告列出文件变化。
 
-| 参数 | 入口意图 |
-|---|---|
-| `--stage scan` | `requested_stage: scan` |
-| `--stage design` | `requested_stage: design` |
-| `--stage apply` | `requested_stage: apply` |
-| `--mode standard` | `requested_mode: standard` |
-| `--mode fastforward` | `requested_mode: fastforward` |
+当前任务范围内能直接落成 red -> green 测试/checker 的约束优先机械化，不另写重复 lesson；会扩大
+范围时只给候选。用户已明确说“记住 / 更新 / 退役”时，同轮按 `cs-keep` 处理，不重复确认。普通任务
+只在强信号成立时展示最高价值一条，首行固定 `晶化候选：{rule}`，并给出证据、范围和建议归宿；无
+强信号完全不显示模板，没有记忆写入授权时不落盘。
 
-旧裸 token（如 `ff`、`scan`）只作为历史提示词兼容识别；新文档和新调用一律用 `--stage` / `--mode`。
+## 硬门槛
 
-无参数默认行为：没有 flag / 目标描述时，先按 `.codestable/refactors/`、scan/design/checklist/apply-notes 和当前 git diff 恢复；若没有可恢复重构且用户原话也没有目标，先问用户要优化哪个范围。
+- **先有能自证等价的验证，再动代码**：覆盖目标行为的测试、类型检查或可对照的输出基线。没有就先补验证或与用户确认等价判据，不许裸改。
+- 行为等价是底线：过程中发现必须改变外部可观察行为时停下报告，让用户决定转向，不擅自继续。
+- 分步改，每步之后跑验证；全部完成后跑完整验证并附输出。验证变红时先恢复绿再继续。
 
-入口意图只是偏好。仓库事实优先：已有 scan/design/checklist/apply-notes 时按真实状态续跑。
+## 风险升级
 
----
+跨模块大范围重构、改公开 interface 内部实现、或影响性能敏感路径时，动手前先给用户一页改动清单（动哪些点、顺序、每步验证方式）确认。完成后进入 change review 审查阶段并按下述 reviewer lineage 审查；仅微小整理可说明后跳过。
 
-## Spec
+- 当前主流程创建 reviewer 前，先发现当前会话可调用的 subagent 创建与管理能力。项目上下文有显式创建方式/model 约束时先遵守。达到审查质量基线后，优先选择与实现者异构的 agent，并显式指定最强稳定 `model`；创建方式依次使用受管理的结构化委派能力、宿主 subagent、本机有界 agent CLI 回退，不得只扫 PATH。
+- 没有合格异构候选时回退同构最强模型。把最终创建方式、agent/model 与回退原因写入 task packet，禁止依赖默认模型。
+- 审查前冻结一个明确目标（diff review 优先 staged diff，也可用明确 range/patch；design review 冻结对应文档版本；audit 冻结 commit + 范围标识），把目标标识写入 task packet；reviewer 返回前不改目标或对应工作树。有 blocking 或未被用户明确接受的 important 时不提交当前候选，也不得创建正式里程碑 commit；处理后重跑验证并重新冻结完整审查目标。
+- 仅在跨会话恢复、agent 交接或隔离 reviewer 需要不可变基线时，且已有 commit 授权，才可在私有工作分支创建明确标记的 WIP/checkpoint commit；它不代表 review 通过或任务完成，交付前按仓库策略 fixup/squash。
+- 本 skill 的确认与验证门槛均满足、blocking 清零且其余 important 已处理或被用户明确接受后，已有 commit 授权时才创建语义原子的正式里程碑 commit；未获授权则只报告可提交状态，不自行提交。
+- 一个独立审查阶段由单一审查目的界定；design review、change review、contract review 与 Epic final acceptance 是不同阶段。只有为本阶段 findings 所作修复的复审，才属于同一阶段并沿用原 reviewer lineage；审查目的变化时开启新阶段。
+- 每个独立审查阶段的首轮必须由当前主流程创建一个 fresh reviewer，与实现者保持独立；reviewer 单轮执行 `cs-review`，其内部不得创建子 agent。
+- 主流程处理 findings 后先修复并重跑验证，再冻结新的完整审查目标；仅因处理 findings 产生的修复，复审必须沿用同一 reviewer 的同一 session，以 follow-up 继续。复审同时检查完整当前候选与本轮修复增量，逐项报告 `resolved` / `unresolved` / `new findings`；不得只核对旧 finding 或机械打勾。reviewer 独立性要求它独立于实现者，不要求对自身上一轮审查失忆。
+- 同一审查阶段累计最多 3 个有终态报告的轮次；更换 reviewer 不重置计数。只有原 run/session 失败或不可恢复、能力不满足、目标、范围、设计或核心路径发生重大变化、reviewer 声明无法继续独立判断，或 owner 要求第二意见时，才可更换 reviewer；更换时创建 fresh reviewer。超限仍有 blocking 或分歧时交用户裁决，不得继续对轮或宣称完成。
+- reviewer 创建后绑定该运行并记录 run identity：目标有效、能力仍满足，且 reviewer 状态为 running，或 `Awaiting` 携带可查询的同一 run identity 且查询仍为活动态时为健康；状态健康时等待终态报告，不因后来发现更优创建方式而取消、重复创建或并行补发。仅在运行明确失败或终止无报告、idle / `Awaiting` 且无可恢复 run identity、能力不满足或目标失效时，本轮失败且不计轮次；不得盲目重发，先检查 task packet 与 agent 状态，再决定一次有界重试、更换创建方式或交用户。
 
-```haskell
-csRefactor :: RefactorRequest -> RefactorOutcome
+## 收尾
 
-data RefactorRequest = RefactorRequest
-  { requestedStage : Maybe Stage         -- scan | design | apply
-  , requestedMode  : Maybe Mode          -- standard | fastforward
-  , userGoal       : Maybe Text
-  , checkpointResume : Maybe RefactorResume
-  , repoFacts      : RepoFacts           -- 优先于 args / 聊天历史
-  }
-
-data Stage = Scan | Design | Apply | CodeReview
-data Mode  = Standard | Fastforward
-data RouteTarget = StandardStage Stage | FastforwardStage Stage | ExternalSkill SkillName
-data DesignStatus = Draft | Approved
-data ReviewStatus = Missing | Passed | Blocking
-data VerificationOwner = AIVerification | HumanVerification
-data StepState
-  = NoCurrentStep | PendingApply StepId VerificationOwner
-  | AppliedAwaitingHuman StepId | StepVerified StepId
-data FastforwardStatus = FastforwardInactive | FastforwardActive | FastforwardSwitchRequired | FastforwardComplete
-
-data RefactorState = RefactorState       -- 全部从 .codestable/refactors/{slug}/ 恢复
-  { refactorDir    : Maybe Path
-  , mode           : Mode
-  , hasScan        : Bool
-  , scanSelected   : Bool                -- 用户已勾选 ✓/✗
-  , hasDesign      : Bool
-  , designStatus   : DesignStatus        -- {slug}-refactor-design.md 的 status
-  , hasChecklist   : Bool                -- {slug}-checklist.yaml
-  , currentStep    : StepState           -- checklist + apply-notes 恢复；只有 AppliedAwaitingHuman 才停
-  , applyDone      : Bool                -- apply-notes 每步验证齐
-  , fullVerificationPassed : Bool
-  , finalValidationPending : Bool
-  , reviewStatus   : ReviewStatus
-  , fastforwardStatus : FastforwardStatus -- {slug}-ff-state.yaml
-  , pendingCheckpoint : Maybe CheckpointReason
-  }
-
-data RefactorOutcome
-  = RoutedTo RouteTarget
-  | HumanCheckpoint CheckpointReason
-  | Completed RefactorSummary
-  | NeedsHuman Reason
-  | Blocked Reason
-
-data CheckpointReason
-  = ScanSelection            -- scan 产物待用户勾选
-  | DesignConfirmation       -- design 整体待用户 review 放行
-  | HumanValidation StepId   -- 该步已应用，HUMAN 验证待确认
-  | FinalValidation          -- 全量验证和 code review 后的最终人工确认
-  | ConfirmMethodAndScope    -- fastforward 对齐
-  | ConfirmEffect            -- fastforward 完成效果确认
-  | PartialChangeDisposition -- fastforward 退回 standard 时处理本轮部分改动
-
-data CheckpointAnswer = ApproveCheckpoint | RejectCheckpoint | ReviseCheckpoint | KeepPartialChanges | DiscardPartialChanges
-data RefactorResume = ResumeRefactorCheckpoint CheckpointReason CheckpointAnswer
-validRefactorAnswer :: CheckpointReason -> CheckpointAnswer -> Bool
-validRefactorAnswer PartialChangeDisposition answer = answer `elem` [KeepPartialChanges, DiscardPartialChanges]
-validRefactorAnswer _ answer = answer `elem` [ApproveCheckpoint, RejectCheckpoint, ReviseCheckpoint]
-resumeCheckpoint :: RefactorState -> CheckpointReason -> CheckpointAnswer -> RefactorState
-resumeCheckpoint s reason answer = persistApprovalAnswer s reason answer
-
-applyRefactorResume :: Maybe RefactorResume -> RefactorState -> Either Reason RefactorState
-applyRefactorResume Nothing s = Right s
-applyRefactorResume (Just (ResumeRefactorCheckpoint reason answer)) s
-  | s.pendingCheckpoint == Just reason && validRefactorAnswer reason answer = Right (resumeCheckpoint s reason answer)
-  | otherwise                          = Left InvalidCheckpointResume
-```
-
-`restoreRefactorStage` 从仓库事实选下一步（一旦会改外部可观察行为 → 转 `cs-feat` 新需求或 `cs-issue` 修 bug，行为等价是底线）：
-
-```haskell
-restoreRefactorStage :: RefactorState -> EntryIntent -> RefactorOutcome
-restoreRefactorStage(s, intent)
-  | changesBehavior intent                            -> RoutedTo (ExternalSkill (behaviorRoute intent))
-  | Just reason <- s.pendingCheckpoint                -> HumanCheckpoint reason
-  | s.mode == Fastforward && s.fastforwardStatus == FastforwardComplete
-                                                       -> Completed summary
-  | s.mode == Fastforward && s.fastforwardStatus == FastforwardSwitchRequired
-                                                       -> RoutedTo (StandardStage Scan)
-  | s.mode == Fastforward && smallSafe s              -> RoutedTo (FastforwardStage Apply)
-  | s.mode == Fastforward                              -> RoutedTo (StandardStage Scan)
-  | not s.hasScan                                     -> RoutedTo (StandardStage Scan)
-  | s.hasScan && not s.scanSelected                  -> HumanCheckpoint ScanSelection
-  | s.scanSelected && not s.hasDesign                -> RoutedTo (StandardStage Design)
-  | s.hasDesign && s.designStatus == Draft           -> HumanCheckpoint DesignConfirmation
-  | AppliedAwaitingHuman step <- s.currentStep        -> HumanCheckpoint (HumanValidation step)
-  | s.designStatus == Approved && not s.applyDone    -> RoutedTo (StandardStage Apply)
-  | s.applyDone && not s.fullVerificationPassed      -> RoutedTo (StandardStage Apply)
-  | s.applyDone && s.reviewStatus == Missing         -> RoutedTo (StandardStage CodeReview)
-  | s.reviewStatus == Blocking                       -> RoutedTo (StandardStage Apply)
-  | s.reviewStatus == Passed && s.finalValidationPending
-                                                       -> HumanCheckpoint FinalValidation
-  | s.reviewStatus == Passed                         -> Completed summary
-  | otherwise                                        -> Blocked InvalidRefactorState
-```
-
-## Workflow
-
-主执行主线（每次调用按序走；各 stage "怎么做" 的厚规则见对应 protocol，本节只定顺序与边界）：
-
-```haskell
-workflow :: RefactorRequest -> RefactorOutcome
-workflow req = do
-  intent <- preflight req >>= parseEntryIntent
-  state <- restoreRefactorState req.repoFacts
-  resumed <- fromEither Blocked (applyRefactorResume req.checkpointResume state)
-  executeOrRoute (restoreRefactorStage resumed intent) >>= exitRecoverable
-
-preflight            -- 读 .codestable/attention.md；缺失 -> route to cs-onboard；不得用 AGENTS.md/CLAUDE.md 代替
-parseEntryIntent     -- flag > compat-preset > utterance；repoFacts override requestedStage/requestedMode；空参不推断 stage
-restoreRefactorState -- preflight 后扫 .codestable/refactors/ + scan/design/checklist/apply-notes + git diff；typed resume 先匹配 pending checkpoint 并持久化
-restoreRefactorStage -- 从已应用 resume 的 state 选 next stage（见 Spec）；会改外部可观察行为 -> route to cs-feat 或 cs-issue
-loadStageProtocol    -- 「Reference 加载」映射（见下节）；进 stage 才加载该 stage 所需文件
-executeOrRoute       -- scan 落盘清单待勾选；design 起草+抽 checklist 待整体放行；
-                     -- apply 逐条改+验证+记 apply-notes；遇 HumanCheckpoint 必停
-exitRecoverable      -- apply-notes 每步验证齐、design status: approved、next stage 或 checkpoint reason 明确；
-                     -- 不夹带 feature / issue 改动
-```
-
----
-
-## 文件放哪儿
-
-```text
-.codestable/refactors/{YYYY-MM-DD}-{slug}/
-├── {slug}-scan.md
-├── {slug}-refactor-design.md
-├── {slug}-checklist.yaml
-└── {slug}-apply-notes.md
-```
-
-fastforward 不生成 scan / design / checklist，但始终写
-`.codestable/refactors/{YYYY-MM-DD}-{slug}/{slug}-ff-state.yaml` 保存 scope、method、approval、验证、
-review 和 completion 状态；用户要求留人读记录时再加 `{slug}-refactor-note.md`。
-
----
-
-## 模式选择
-
-启动后先确认用户诉求是否真是行为不变的重构，再检查范围和测试自证能力。
-
-标准模式读取 `references/standard/protocol.md`，流程是：
-
-```text
-scan → 用户勾选 → design → 用户确认 → apply → cs-code-review
-```
-
-fastforward 模式读取 `references/fastforward/protocol.md`。必须同时满足：
-
-1. 行为真的不变，没有“顺便支持 X / 改成 Y”。
-2. 范围小：单函数/单组件/少量动点，不跨模块。
-3. 有测试、类型检查或等价证据能自证。
-
-任何一条不满足，回标准模式；不能因为用户说“快点”就跳过安全边界。
-
----
-
-## Reference 加载
-
-```haskell
-modeProtocol :: Mode -> Protocol
-modeProtocol Standard    = "references/standard/protocol.md"
-modeProtocol Fastforward = "references/fastforward/protocol.md"
-
-stageSupport :: Stage -> [Support]
-stageSupport Scan       = [ "references/library/methods.md"                 -- 方法库，scan 时才全量加载
-                          , "references/library/methods-l4.md"
-                          , "references/library/methods-architecture.md"
-                          , "references/library/scan-checklist-format.md"   -- scan 格式
-                          , "references/library/refusal-routing.md" ]       -- 拒绝路由
-stageSupport CodeReview = [ skill "cs-code-review" ]                        -- 公开横切技能
-stageSupport _          = []
-
--- 惰性加载（progressive reference loading）：按阶段加载，进 stage 才读该 stage 所需文件，不在启动时读全部
-```
-
----
-
-## 人工 checkpoint
-
-触发时机以 Spec 的 `restoreRefactorStage` 为唯一权威；本节只定义停下后的行为：
-
-```haskell
-onCheckpoint :: CheckpointReason -> Action
-onCheckpoint ScanSelection      = 停等用户勾选 scan 产物       -- AI 不替用户勾选
-onCheckpoint DesignConfirmation = 停等用户整体 review design   -- 放行后才进入 apply
-onCheckpoint (HumanValidation step) = 停等用户验证已应用的 step
-onCheckpoint FinalValidation        = 停等用户做最终整体确认
-onCheckpoint ConfirmMethodAndScope  = 停等用户批准 ff 方法与范围
-onCheckpoint ConfirmEffect          = 停等用户确认 ff 结果
-onCheckpoint PartialChangeDisposition = 停等用户选择保留并转 standard / 丢弃本轮部分改动
-```
-
-每个 checkpoint 的候选 artifact / state 和 pending approval 必须先落盘；owner 回答后以
-`ResumeRefactorCheckpoint reason answer` 调用 `applyRefactorResume`。reason 不匹配或没有 pending checkpoint 时返回 `Blocked InvalidCheckpointResume`。apply 完成后进入 `cs-code-review`；blocking 未清零、important 未处理或未被明确接受时不提交。
-
----
-
-## Failure Behavior
-
-```haskell
-needsHuman :: Situation -> Bool
-needsHuman s = attentionMissing s          -- .codestable/attention.md 缺失 -> 先 cs-onboard
-            || noRecoverableRefactor s     -- 无可恢复重构目标
-            || ambiguousScope s            -- 重构范围模糊
-            || stageConflictsRepoFacts s   -- requested stage 与仓库事实冲突
-            || changesBehavior s           -- 诉求其实会改外部可观察行为 -> cs-feat 或 cs-issue
-            || ffTurnedComplex s           -- fastforward 途中发现变复杂需切回标准模式
-```
-
-报告：当前产物（scan/design/checklist/apply-notes）、阻塞原因、下一步用户动作、已写文件、是否可安全重试。
-
-## 退出条件
-
-```haskell
-mayExit :: State -> Bool
-mayExit s
-  | s.mode == Standard    = scanSelected s && designApproved s
-                         && applyNotesEachStepVerified s && testsPassed s && reviewPassed s
-                         && finalValidationSettled s
-  | s.mode == Fastforward = s.fastforwardStatus == FastforwardComplete
-                         && testsPassed s && reviewPassed s && effectConfirmed s
-```
-
-不夹带 feature 或 issue 改动。
+- 报告：改了什么结构、等价性证据（验证输出）、遗留事项。
+- 需要跨会话继续时写 `.codestable/work/refactor-{slug}.md`（目标 / 现场 / 边界 / 证据 / 验收 / 状态与未决六节；work 文档一律带类型前缀）。完成后先在报告列毕业去向（结论进哪、lesson 沉哪，或明说无可毕业）再删除；目标位置不存在时在清单中建议落点请用户拍板，拍板前不删。用户要求留档则保留。

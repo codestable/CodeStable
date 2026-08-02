@@ -1,4 +1,4 @@
 interface:
   display_name: "Build CS Skill"
-  short_description: "Author and refactor CodeStable skills with testable contracts."
-  default_prompt: "Use build-cs-skill to design or refactor a CodeStable skill."
+  short_description: "Build thin CodeStable harnesses backed by relevant context."
+  default_prompt: "Use $build-cs-skill to create or evolve a thin-harness, thick-context CodeStable skill with explicit rule placement, context loading, and evidence gates."

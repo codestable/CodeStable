@@ -1,4 +1,0 @@
-interface:
-  display_name: "CodeStable Feature QA"
-  short_description: "代码审查后运行 QA 验证并产出报告，可用独立 Task agent 辅助"
-  default_prompt: "使用 $cs-feat --stage qa 对已通过代码审查的 feature 做 QA 验证，并输出 QA 报告。"

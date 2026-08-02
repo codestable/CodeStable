@@ -1,297 +1,39 @@
 ---
 name: cs-onboard
-description: CodeStable 接入。触发：初始化/迁移/搭骨架，自动判断空仓库或已有文档。
-argument-hint: "[--mode refresh-runtime]"
+description: 仓库接入 CodeStable：创建最小骨架，或为 v1 存量项目做无损升级说明。
 ---
 
 # cs-onboard
 
-把仓库接入 CodeStable：搭骨架、归旧档或刷新 runtime 资产。
+给仓库一个最小的 CodeStable 骨架。规则和纪律都在 skill 包里，项目目录只放项目自己的知识。
 
----
+## 骨架（目标状态）
 
-## Spec
-
-本次调用参数：$ARGUMENTS
-
-参数为空或仍是字面 `$ARGUMENTS` 时走 `Auto`。无参数默认行为：扫描一次后由仓库事实选路，
-不让用户猜；只有事实歧义才提问。
-
-```haskell
-data OnboardMode  = Auto | RefreshRuntime
-data RepoState    = Empty | ExistingDocs | Installed | Ambiguous
-data ManagedAssets = NoManagedAssets | ManagedClean | ManagedDirty [Path]
-data OnboardDecision
-  = ApproveManagedOverwrite | PreserveManagedAssets
-  | ApproveMigrationMapping | SkipMigrationMapping
-  | ApproveGlobalInstall | SkipGlobalInstall
-data CheckpointReason = ConfirmManagedOverwrite [Path] | ConfirmMigrationMapping Path [Path] | ConfirmGlobalInstall
-data OnboardOutcome = Scaffold | Migrate | Refresh | HumanCheckpoint CheckpointReason | NeedsHuman Reason | Blocked Reason
-data ResumeAction = RetrySelectedPath | StopPreservingFiles | ApplyMigrationMapping | KeepOriginalFile | InstallOptionalTool | ContinueWithoutOcr
-
-selectOnboardPath :: OnboardMode -> RepoState -> ManagedAssets -> OnboardOutcome
-selectOnboardPath _ _ (ManagedDirty paths)    = HumanCheckpoint (ConfirmManagedOverwrite paths)
-selectOnboardPath RefreshRuntime Installed _  = Refresh
-selectOnboardPath RefreshRuntime _ _          = NeedsHuman NotInstalled
-selectOnboardPath Auto Empty _                = Scaffold
-selectOnboardPath Auto ExistingDocs _         = Migrate
-selectOnboardPath Auto Installed _            = Migrate  -- 补骨架并 refresh
-selectOnboardPath Auto Ambiguous _            = NeedsHuman ClarifyRepoState
-
-resumeOnboard :: CheckpointReason -> OnboardDecision -> Either Reason ResumeAction
-resumeOnboard (ConfirmManagedOverwrite _) ApproveManagedOverwrite = Right RetrySelectedPath
-resumeOnboard (ConfirmManagedOverwrite _) PreserveManagedAssets = Right StopPreservingFiles
-resumeOnboard (ConfirmMigrationMapping _ _) ApproveMigrationMapping = Right ApplyMigrationMapping
-resumeOnboard (ConfirmMigrationMapping _ _) SkipMigrationMapping = Right KeepOriginalFile
-resumeOnboard ConfirmGlobalInstall ApproveGlobalInstall = Right InstallOptionalTool
-resumeOnboard ConfirmGlobalInstall SkipGlobalInstall = Right ContinueWithoutOcr
-resumeOnboard _ _ = Left InvalidOnboardDecision
-```
-
-## 标准骨架（目标状态）
-
-> 共享路径与命名约定的权威版本是项目里的 `.codestable/reference/shared-conventions.md`——本技能从技能包内 `references/` 复制过去。下面只列 onboard 创建 / 检查的骨架文件。
-
-```
+```text
 .codestable/
-├── .gitignore                  忽略 CodeStable 运行期 Python 缓存等机器产物
-├── attention.md                CodeStable 技能启动必读的项目注意事项
-├── requirements/               需求聚合根（空目录 .gitkeep）
-│                               （CONTEXT.md / adrs/ 由 cs-domain 按需 lazy 创建）
-├── roadmap/                    规划层聚合根
-├── goals/                      目标聚合根（bounded goal 自主迭代 + 功能验收）
-├── features/                   feature 聚合根
-├── issues/                     issue 聚合根
-├── refactors/                  重构聚合根（beta）
-├── audits/                     审计聚合根
-├── feedback/                   CodeStable skill 使用反馈和上报证据
-├── brainstorms/                脑暴 / interview 持久记录聚合根
-├── compound/                   沉淀类统一目录（cs-keep 写自由 markdown，grep 检索）
-├── gates/                      workflow gate 配置（onboard 释放）
-│   └── roadmap-goal-gates.yaml roadmap goal 阶段 gate policy
-└── reference/                  跨子技能共享参考（onboard 整目录释放）
-    ├── shared-conventions.md / tools.md / maintainer-notes.md
-    ├── approval-conventions.md / goal-conventions.md / execution-conventions.md
-    ├── agent-conventions.md / tools-context.md
-    └── spec-governance-tools.md
+├── attention.md    # 每次会话必读的项目事实，≤25 条，从空开始
+├── lessons/        # 沉淀的经验，一条一文件（cs-keep 写入）
+└── work/           # 活动中的跨会话任务文档，完成即清
 ```
 
-> `gates/` 与 `reference/` 由 onboard 复制。Python 工具脚本从当前 `cs-onboard` skill 包的 `tools/` 目录运行，不再安装到每个 repo；旧项目已有 `.codestable/tools/` 只作兼容副本，不删除、不覆盖。分支与检出策略不属于 CodeStable 默认流程；需要时由宿主或独立技能决定。
+创建后确认 `.codestable/` 未被 .gitignore 忽略（它必须入库共享）；发现被忽略时停下报告，由用户决定怎么改，不擅自修改 .gitignore。attention.md 初始只写一行标题和一句用途说明，不预置分节模板。`.codestable/epics/` 不属于基础骨架：首次 Epic 优先沿用项目已有 Epic / RFC / initiative 归宿，没有时才由 `cs-epic` 按需创建。
 
----
+## 硬门槛
 
-## 启动检查
+- **存量文件一律不动**：v1 知识目录 `.codestable/roadmap/`、`.codestable/features/`、`.codestable/issues/`、`.codestable/refactors/`、`.codestable/goals/`、`.codestable/compound/`、`.codestable/audits/`、`.codestable/brainstorms/`、`.codestable/feedback/`，既有 `.codestable/requirements/`，以及 legacy runtime 资产 `.codestable/reference/`、`.codestable/tools/`、`.codestable/gates/`、`.codestable/hooks/`、`.codestable/runtime-manifest.json` 全部原样保留，不删除、不覆盖、不迁移格式。
+- 上述 9 个 v1 知识目录及其他未被 v2 明确拥有的既有 `.codestable/` 目录默认只读：不得继续生成、原地改写或批量迁移；新结论进入 v2 Epic、项目文档、ADR 或 lesson。owning task skills 只按当前任务关键词检索存在的历史目录，命中时报告来源路径。
+- 既有 `.codestable/requirements/` 仅在 `.codestable/attention.md` 明确记录其为 canonical requirement 位置时可继续维护；owner 首次指定时先记录 attention，否则按只读历史处理。目录不存在时不默认创建。
+- **不复制**任何 skill 包内文件到项目（v1 的 reference/gates/tools 分发机制已废止）。
+- 已有 `.codestable/` 的仓库只补缺失的 `attention.md`、`lessons/` 与 `work/`，其余不碰。
 
-**先检查一次现状**：
+## v1 项目升级说明
 
-1. **检查 `.codestable/`**：不存在 → 空仓库候选；存在 → 迁移（部分补齐并刷新 runtime 资产）；用户显式传 `--mode refresh-runtime` → 只刷新 runtime
-2. **旧 CodeStable 兼容** CodeStable 经过多次改名，从 `easysdd/` 到 `codestable/` 再到 `.codestable/`。先检测实际存在的旧根目录：只存在一个且 `.codestable/` 不存在时记为 `<legacy-root>`；两个旧根同时存在，或任一旧根与 `.codestable/` 并存时，停止并让用户选择迁移源/内容，不输出 `git mv` 建议，不能合并或猜测。只有安全的单旧根场景才提示用户：
+对存量 v1 项目，创建缺失目录后向用户说明三点即可：
 
-   > 检测到旧版 `<legacy-root>/`。建议直接 `git mv <legacy-root> .codestable`，结构 / frontmatter 完全兼容，rename 后即用。要我执行吗？
+1. 旧产物与旧沉淀全部保留；owning task skills 按任务关键词只读检索存在的历史目录并报告命中路径；
+2. 新工作不再生成 v1 形态产物（阶段文档、checklist、goal 包），普通任务零产物，跨会话任务一个 work 文档；
+3. gate 与 runtime 工具不再由 skill 调用；项目侧 `.codestable/tools/` 若被用户自己的 hook 引用则继续自行维护。
 
-   同意 → 将 `<legacy-root>` 替换为检测到的 `easysdd` 或 `codestable` 后执行，按迁移路径走（这时只需补齐可能缺失的 `attention.md`、`gates/` 和 `reference/`）。想保留旧目录 → 告诉他子技能只读 `.codestable/`，旧目录不会被读；按空仓库路径走新骨架
+## 收尾
 
-3. **Glob 全仓库 `.md`**（排除 `node_modules/` `.git/`）：根目录 `DESIGN.md` / `ARCHITECTURE.md` / `SPEC.md` / `README.md`；`docs/` `doc/` `design/` `spec/` `wiki/`；现有 `.codestable/` 下文件
-4. **检查 `.codestable/attention.md`**：缺失则列为骨架待补齐项
-5. **汇报扫描结论**：找到的相关文档（列路径）+ 走哪条路径 + 判断依据 + 不确定项
-
----
-
-## Runtime refresh 路径
-
-`cs-onboard --mode refresh-runtime` 可重复执行，用来把已接入项目升级到当前技能包的 repo-local runtime。它只覆盖技能包维护的资产：`.codestable/gates/`、`.codestable/reference/`、`.codestable/.gitignore` 和 `.codestable/runtime-manifest.json`；不重新审计 / 迁移文档，不移动用户文件，不改 `attention.md` 的实质内容，不删除或覆盖旧 `.codestable/tools/`。
-
-运行 `python3 <cs-onboard skill 目录>/tools/codestable-runtime-sync.py --root . --source-skill-dir <cs-onboard skill 目录>`。若报告 managed paths dirty，先让用户提交 / stash / 明确允许覆盖；不要静默覆盖本地改动。
-
----
-
-## 空仓库路径
-
-**步骤 1：和用户确认范围**
-
-- 项目名 / 简介（汇报时引用）
-- attention.md 只建最小骨架；用户已经给出的项目硬约束才写入，不凭空代填
-
-**步骤 2：创建目录骨架**
-
-按下面顺序执行，**不等用户逐步确认**——骨架是整体一次性的：
-
-- `.codestable/{requirements,roadmap,goals,features,issues,refactors,audits,feedback,brainstorms,compound}/.gitkeep`
-- `.codestable/.gitignore`（从当前 `cs-onboard` skill 目录的 `codestable.gitignore` 复制，忽略运行期缓存）
-- `.codestable/attention.md`（最小骨架模板见同目录 `reference.md`）
-- `.codestable/gates/`（用 `cp -rf` / `Copy-Item -Recurse -Force` 整目录拷贝当前 `cs-onboard` skill 目录的 `gates/`）
-- `.codestable/reference/`（用 `codestable-runtime-sync.py` 从当前 `cs-onboard` skill 目录复制，排除已迁出的分支 / 检出旧约定）
-- 运行 `codestable-runtime-sync.py --force` 写 `.codestable/runtime-manifest.json`
-
-`requirements/CONTEXT.md` 和 `requirements/adrs/` 不在骨架里——交给 `cs-domain` 在用户第一次需要术语 / ADR 时 lazy 创建。
-
-> **落盘用 shell 整目录覆盖**，不要 Read 再 Write——`gates/` 和 `reference/` 是机器共享资产，Read+Write 会截断大文件、改缩进、吃空行，还慢费 token。具体命令见迁移路径步骤 4。
-
-**步骤 3：attention.md 提醒**
-
-attention.md 已创建但默认只有空骨架。汇报时提醒用户：有编译前置、测试命令、目录禁区、凭证规则、报告语言偏好这类"每次 CodeStable 技能启动都必须知道"的信息，后续用 `cs-note` 一条条追加。
-
-**步骤 4：验收汇报**
-
-列建了哪些文件：
-
-> CodeStable 骨架已就绪。现在可以：开始新功能 `cs-feat` / 报告问题 `cs-issue` / 反馈 skill 问题 `cs-feedback` / 沉淀知识 `cs-keep`
-
----
-
-## 迁移路径
-
-**步骤 1：生成审计报告**
-
-| 现有文件 | 推测内容类型 | 建议归入 CodeStable | 置信度 |
-|---|---|---|---|
-| `docs/glossary.md` | 领域术语 | `.codestable/requirements/CONTEXT.md`（cs-domain 写） | 高 |
-| `docs/adr-*.md` | 架构决策 | `.codestable/requirements/adrs/NNN-{slug}.md` | 高 |
-| `docs/feature-auth.md` | 功能设计稿 | `.codestable/features/YYYY-MM-DD-auth/auth-design.md` | 中 |
-| `SPEC.md` | 功能需求？ | 需用户确认 | 低 |
-
-**置信度**：高 = 语义明确匹配；中 = 可推断有歧义；低 = 不明确或映射多个位置都合理。
-
-**步骤 2：逐条对齐**
-
-中 / 低置信度先写 pending approval，再返回 `HumanCheckpoint (ConfirmMigrationMapping source candidates)`；owner 回答映射为 `ApproveMigrationMapping` / `SkipMigrationMapping`，经 `resumeOnboard` 恢复：
-
-- 中：给推断理由，问"按这个方式归位？"
-- 低：描述文件内容，给 2-3 个候选位置 + "跳过"
-
-高置信度不逐条问但要在汇报里列，给用户复审机会——逐条问会让节奏失控。
-
-**步骤 3：处理已部分存在的 .codestable/**
-
-- 命名不符规范（`YYYY-MM-DD-{slug}` 格式）但有内容 → 提示用户问是否重命名
-- 空占位（`.gitkeep` / 空 `.md`）→ 直接补齐不问
-
-**步骤 4：补齐缺失骨架**
-
-对照标准骨架补齐**用户确认后仍缺失**的目录 / 文件。已有内容不覆盖。
-
-**`.codestable/gates/` 和 `.codestable/reference/` 以技能包新版本为权威**——这些目录是 package-owned repo-local 共享资产，运行时目录名固定为 `.codestable/reference/`。Python 工具脚本权威源是当前 skill 包 `tools/`，不再同步到项目 `.codestable/tools/`；旧副本只保留兼容，不作为新版技能入口。
-
-同步前先运行 runtime sync 的 `--check --json`。managed paths 干净时可同步；有本地改动时返回 `HumanCheckpoint (ConfirmManagedOverwrite paths)`，让用户先 commit / stash，或明确批准覆盖。没有明确批准不得使用 `--force`；其他已有文件同样遵守“不经确认不动”。
-
-**落盘命令**：
-
-```bash
-# macOS / Linux
-cp -rf <cs-onboard skill 目录>/gates/.      .codestable/gates/
-cp -f  <cs-onboard skill 目录>/codestable.gitignore .codestable/.gitignore
-python3 <cs-onboard skill 目录>/tools/codestable-runtime-sync.py --root . --source-skill-dir <cs-onboard skill 目录> --force
-
-# Windows PowerShell
-Copy-Item -Recurse -Force <cs-onboard skill 目录>\gates\*      .codestable\gates\
-Copy-Item -Force <cs-onboard skill 目录>\codestable.gitignore .codestable\.gitignore
-python <cs-onboard skill 目录>\tools\codestable-runtime-sync.py --root . --source-skill-dir <cs-onboard skill 目录> --force
-```
-
-不要：Read+Write 手工搬（截断 / 改缩进）、一个个 cp（多步骤多出错）、跳过 `--check` 直接覆盖。获批或确认干净后，`codestable-runtime-sync.py` 重做同步并写 `.codestable/runtime-manifest.json`。
-
-`<cs-onboard skill 目录>` 是已加载 `SKILL.md` 所在目录。不确定先 `ls` 定位。拷完 `ls .codestable/gates/ .codestable/reference/` 验证。
-
-**步骤 5：处理不迁移的文件**
-
-用户选"跳过"的文件：**不移动 / 不删除 / 不重命名**，汇报标"保留原位（未纳入 CodeStable）"。**绝不允许未经确认就动**——onboard 只允许 AI 整理不允许替用户做删除决定。
-
-**步骤 6：attention.md 提醒**（同空仓库路径步骤 3）
-
-**步骤 7：验收汇报**
-
-列：迁移文件清单（from → to）、新建骨架、未迁移文件（保留原位）、下一步建议。
-
----
-
-## 骨架文件模板
-
-`attention.md` 最小模板见同目录 `reference.md`。
-
----
-
-## Failure Behavior
-
-仓库未安装却请求 refresh、仓库事实无法判定时返回 `NeedsHuman`。managed assets 有本地改动、迁移映射需 owner 选择或全局安装需授权时返回 `HumanCheckpoint`，由对应 `OnboardDecision` 恢复；拒绝可保留现状退出。runtime sync、复制或校验实际失败时返回 `Blocked`，报告失败命令、受影响路径、已写文件和安全恢复动作，不把部分安装伪装成完成。
-
----
-
-## 行级代码审查工具 open-code-review（可选）
-
-`cs-code-review` 的审查分两环节：独立隔离 agent review（必需）+ OCR 行级扫描（增强）。OCR 用的是 [open-code-review](https://github.com/alibaba/open-code-review) 的 `ocr` CLI——装上后 `cs-code-review` 会自动检测并调用，没装则自然降级，不阻塞。
-
-本节只在 owner 主动要求配置 OCR，或 review 报告指出 OCR 未安装且 owner 选择启用增强时加载；它不属于 onboard 完成条件。普通接入不探测、不提示安装，也不因 OCR 缺失增加 checkpoint。
-
-### 1. 安装：先检测，已装就别重装
-
-```bash
-which ocr   # 已经有路径 → 跳过安装，直接进第 2 步
-```
-
-只有 `which ocr` 找不到时才返回 `HumanCheckpoint ConfirmGlobalInstall`；owner 的 `ApproveGlobalInstall` / `SkipGlobalInstall` 经 `resumeOnboard` 恢复，批准后才全局装：
-
-```bash
-npm install -g @alibaba-group/open-code-review
-```
-
-> 全局安装是 owner 环境改动（需联网），必须先确认再装，不自动执行。owner 拒绝 → 不装，`cs-code-review` 检测不到会记 `not-available` 并继续。
-
-### 2. 配置 LLM：用 provider 体系，别用旧 `llm.*` 块
-
-> ⚠️ **最容易踩的坑**：ocr v1.x 用的是 **`provider` / `providers` 体系**。网上 / 旧文档教的 `ocr config set llm.url ...`（`llm.*` 块）在新版**不生效**——配了也会被忽略，`ocr` 仍按默认 provider 连官方端点，表现为 `ocr llm test` 卡住超时（`context deadline exceeded`）。
-
-`ocr` 是**独立 CLI 进程**，不复用 codex / claude agent 的模型——agent 只是替它执行 `ocr review` 命令，`ocr` 自己去连配置好的 LLM backend，必须单独配。
-
-内置 provider 列表用 `ocr llm providers` 查。配置（以 anthropic 兼容网关为例）：
-
-```bash
-ocr config set provider anthropic
-ocr config set providers.anthropic.url <网关 base-url>   # 不含 /v1/messages，ocr 按协议自动拼
-ocr config set providers.anthropic.api_key <api-key>
-ocr config set model <model>                             # 如 claude-opus-4-8
-ocr llm test                                             # 必须看到 ✓ Connection test successful
-```
-
-- 字段名是 **`url`** 不是 `base_url`；anthropic 协议下 ocr 会自动拼 `/v1/messages`。
-- OpenAI 兼容网关同理：`ocr config set provider <name>`（用 openai 协议的内置 provider 或自定义）+ `providers.<name>.url` + `.api_key`。
-- 绝不替 owner 编造 / 硬编码 API key——只给命令模板，由 owner 自己填。
-
-### 3. 收尾自检
-
-跑 `python3 <cs-onboard skill 目录>/tools/codestable-doctor.py --root .`，输出末尾 `OCR tool:` 行会报 `configured` / `unconfigured` / `misconfigured` / `not-installed`，并对错配（如残留旧 `llm.*` 块、provider 缺失）给出精确修复指引。doctor 只做静态体检、不发网络请求，连通性仍以 `ocr llm test` 为准。
-
----
-
-## 退出条件
-
-- [ ] `.codestable/` 各聚合根目录（requirements/roadmap/goals/features/issues/refactors/audits/feedback/brainstorms/compound）都存在
-- [ ] `.codestable/.gitignore` 已安装
-- [ ] `.codestable/attention.md` 已建
-- [ ] `.codestable/gates/`、`.codestable/reference/` 已从技能包复制
-- [ ] `.codestable/runtime-manifest.json` 已写入当前技能包版本
-- [ ] 新版工具从 `<cs-onboard skill 目录>/tools/` 调用；旧 `.codestable/tools/` 未被删除或覆盖
-- [ ] 若 owner 本轮明确要求配置 OCR：已检测安装状态并记录结果；否则已跳过且不影响 onboard 完成
-- [ ] 迁移路径：每条映射都有明确处理结果（迁移 / 保留原位）
-- [ ] 迁移路径：没有未经确认就移动的文件
-- [ ] 验收汇报已给出
-
----
-
-## 容易踩的坑
-
-- **未经确认就移动 / 删除已有文件**——迁移核心原则是用户拍板
-- **替用户填 attention.md 实质内容**——必须项目 owner 来定，AI 只提供模板
-- **把 `AGENTS.md` / `CLAUDE.md` 当作 attention 替代源**——CodeStable 的启动注意事项入口固定为 `.codestable/attention.md`
-- **建完骨架立刻开始 feature/issue**——onboard 是"搭环境"不是"开始干活"
-- **低置信度直接执行**——低 = 必须问
-- **`.codestable/gates/` 和 `.codestable/reference/` 走"不覆盖"保守策略**——这两个目录**必须**用技能包新版本覆盖，否则升级后用户停留在过时口径
-- **用 Read + Write 手工搬**——必须 `cp -rf` / `Copy-Item -Recurse -Force` 整目录覆盖
-- **Glob 忘排 `node_modules/` `.git/`**——会引入无关噪声
-
----
-
-## 相关文档
-
-- `.codestable/reference/system-overview.md` — CodeStable 体系总览
-- `.codestable/reference/shared-conventions.md` — 目录结构和共享口径的权威版本
-- `.codestable/attention.md` — CodeStable 技能启动必读的项目注意事项
+报告创建了哪些文件、保留了哪些存量、`.codestable/` 的 git 状态。不写入任何业务判断。

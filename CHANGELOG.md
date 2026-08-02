@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.0.0
+
+- Reduced the shipped package from the 32 skills in v1.0.4 to 8 thin-harness skills: `cs`,
+  `cs-onboard`, `cs-feat`, `cs-issue`, `cs-refactor`, `cs-review`, `cs-epic`, and `cs-keep`.
+- Renamed `cs-code-review` to `cs-review` — it now reviews designs and runs audits, not only code.
+  `cs-code-review` ships as the single thin compatibility alias (forwarding only), the one exception
+  to the no-shim rule below.
+- Retired the other 24 v1 entry names without compatibility shims. A one-time exact-name removal is
+  required before the `skills` CLI full-package reinstall because that CLI does not prune removed
+  package members. Removal is name-based, so same-name custom skills require an explicit backup.
+- Replaced distributed project runtime assets with minimal project memory: `attention.md`, `lessons/`,
+  and `work/`. Existing v1 artifacts remain untouched and searchable, but v2 does not execute or
+  refresh legacy tools, gates, hooks, references, or manifests.
+- Reworked `build-cs-skill` around `thin harness, thick context`, direct semantic tests, explicit rule
+  ownership, context plans, and continuous compression; frontmatter `contracts` are no longer used.
+- Separated frozen v1 experiment fixtures from the active v2 contract and added v1.0.4-to-v2
+  distribution, architecture, and documentation coverage.
+
 ## 1.0.4
 
 - Hardened CodeStable workflow contracts across Epic dependency admission, Goal authorization, checkpoint resume, independent review, runtime safety, and release gates.

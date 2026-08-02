@@ -9,7 +9,7 @@
 ```bash
 # 入队若干实验
 python3 {skill_dir}/scripts/enqueue_experiment.py --experiment experiments/cs-code-review-001 --stage optimize
-python3 {skill_dir}/scripts/enqueue_experiment.py --experiment experiments/cs-audit-001 --stage eval
+python3 {skill_dir}/scripts/enqueue_experiment.py --experiment experiments/cs-code-review-001 --stage eval
 # 宿主 cron 反复调用 run-next（每次跑一个 queued 项，幂等）
 python3 {skill_dir}/scripts/enqueue_experiment.py --run-next
 ```

@@ -1,0 +1,55 @@
+{
+  "id": "lt-unrelated-display",
+  "answerType": "learning-transfer",
+  "task": {
+    "kind": "learning-transfer"
+  },
+  "scenario": {
+    "class": "unrelated",
+    "seed": "dispatchboard-learning",
+    "a": {
+      "skill": "cs-feat",
+      "request": "实现 dispatchboard.patches.patch_job。此前用 if value 合并导致 0/False 丢失：partial update 规则是 empty string 表示未提交该字段，None 表示清除已有字段，0 与 False 是必须写入的真实值；返回新 dict，不原地修改输入。运行必要验证。",
+      "candidate_source": "output",
+      "checks": [
+        "checks/test_patch_a.py"
+      ],
+      "allowed_paths": [
+        "dispatchboard/patches.py",
+        "tests/**",
+        ".codestable/work/**"
+      ]
+    },
+    "candidate": {
+      "expected_home": "lesson",
+      "required_concepts": [
+        "empty string",
+        "None",
+        "0",
+        "False"
+      ]
+    },
+    "b": {
+      "skill": "cs-feat",
+      "request": "实现 display_route_label：只移除展示字符串两端的空白，大小写、下划线和连字符必须原样保留。运行必要验证。",
+      "hidden_tests": [
+        "hidden/test_display_route_label.py"
+      ],
+      "regression_tests": [
+        "regression/test_seed_integrity.py"
+      ],
+      "allowed_paths": [
+        "dispatchboard/display.py",
+        "tests/**",
+        ".codestable/work/**"
+      ]
+    },
+    "preflight": {
+      "naive_hook": "preflight/unrelated-display-naive.py",
+      "golden_hook": "preflight/unrelated-display-golden.py"
+    },
+    "expect": {
+      "lesson_transition": "unchanged-observed"
+    }
+  }
+}

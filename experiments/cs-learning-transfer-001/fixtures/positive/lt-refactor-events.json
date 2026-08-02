@@ -1,0 +1,54 @@
+{
+  "id": "lt-refactor-events",
+  "answerType": "learning-transfer",
+  "task": {
+    "kind": "learning-transfer"
+  },
+  "scenario": {
+    "class": "positive",
+    "seed": "dispatchboard-learning",
+    "a": {
+      "skill": "cs-refactor",
+      "request": "对 group_jobs 做行为等价重构。上次抽共享 helper 时把 rows 按 id 去重并排序，造成回归；这次提取可复用的私有 helper 前先锁定这个 caller 的 first-seen group order 和 duplicate rows 语义。不得改变公开函数签名；运行必要验证。",
+      "candidate_source": "output",
+      "checks": [
+        "checks/test_grouping_a.py"
+      ],
+      "allowed_paths": [
+        "dispatchboard/grouping.py",
+        "tests/**",
+        ".codestable/work/**"
+      ]
+    },
+    "candidate": {
+      "expected_home": "lesson",
+      "required_concepts": [
+        "first-seen",
+        "duplicate",
+        "caller"
+      ]
+    },
+    "b": {
+      "skill": "cs-refactor",
+      "request": "让 group_routes 复用 grouping.py 中的新私有 helper，保持其当前可观察行为完全不变：group key 排序、重复 id 以后出现的 row 为准且只保留一次。运行必要验证。",
+      "hidden_tests": [
+        "hidden/test_group_routes.py"
+      ],
+      "regression_tests": [
+        "regression/test_seed_integrity.py"
+      ],
+      "allowed_paths": [
+        "dispatchboard/grouping.py",
+        "tests/**",
+        ".codestable/work/**"
+      ]
+    },
+    "preflight": {
+      "naive_hook": "preflight/refactor-events-naive.py",
+      "golden_hook": "preflight/refactor-events-golden.py"
+    },
+    "expect": {
+      "lesson_transition": "observed->validated"
+    }
+  }
+}

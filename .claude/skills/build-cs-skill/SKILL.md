@@ -1,117 +1,55 @@
 ---
 name: build-cs-skill
-description: "CodeStable skill authoring protocol. Use when creating, refactoring, simplifying, or reviewing cs-* skills under plugins/codestable/skills or .claude/skills. Applies the prompt-as-code framework: classify the skill, define Spec/types/state machine, separate operator rules from references, add machine-checkable contracts, and design decision fixtures. Do not use for normal feature implementation; use cs-feat/cs-issue/cs-docs for product work and eval-cs-skill for full measured experiment loops."
-contracts:
-  - grep: "selectRefactorDepth"
-  - grep: "selectProcessProtocol"
-  - grep: "full protocol refactor"
-  - grep: "minimal hardening patch"
-  - grep: "Runtime Alignment Gate"
-  - grep: "Haskell Contract Gate"
-  - grep: "Regression Ladder"
-  - grep: "Live Host Safety Gate"
-  - grep: "CompatibilityShim -> ShimRoute"
-  - grep: "Measured Rules"
-  - grep: "eval-cs-skill"
-  - not-grep: "read `.codestable/attention.md` just to author"
+description: "CodeStable skill authoring and evolution protocol. Use when creating, refactoring, simplifying, or reviewing cs-* skills under plugins/codestable/skills or .claude/skills. Produces a thin harness, an explicit context plan, evidence gates, and an optional agent collaboration contract. Do not use for product implementation; use eval-cs-skill only for measured experiment loops."
 ---
 
 # build-cs-skill
 
 ## Purpose
 
-Use this skill to turn a CodeStable skill into a small, recoverable, testable protocol. The output is either a new `SKILL.md` or a focused refactor plan for an existing `cs-*` skill.
+Build the smallest always-loaded control surface that lets an agent select relevant context, respect
+hard gates, collaborate safely, and leave recoverable evidence. `SKILL.md` is the **thin harness**;
+references and repository facts are **thick context**. Thick means decision-useful, not large.
 
-The governing principle: **SKILL.md is prompt-as-code — its quality is measured by behavior, recoverability, and testability, not by length.**
+Specify responsibility, authority, context selection, evidence, and stop conditions. Leave safe
+implementation choices to the executing agent.
 
-## Scope
+## Scope And References
 
-Target skill roots:
+Targets are `plugins/codestable/skills/<skill-name>/` or `.claude/skills/<local-skill-name>/`.
 
-- `plugins/codestable/skills/<skill-name>/`
-- `.claude/skills/<local-skill-name>/`
+Load only the reference needed for the current decision:
 
-Before changing a CodeStable skill, read the target `SKILL.md` and only the references needed for the current stage. Preserve user edits and existing compatibility entry points unless explicitly asked to remove them.
-
-## References
-
-Load these files only when the current task needs that layer:
-
-- `references/cs-skill-spec-standard.md`: read when writing or refactoring `description`, `## Spec`, Haskell-style decision contracts, state models, failure behavior, or output contracts.
-- `references/cs-skill-quality-gates.md`: read when reviewing a skill for prompt-as-code quality, P1/P3 separation, contracts, progressive loading, regression risk, or test-host safety.
-- `references/cs-skill-fixture-patterns.md`: read when designing decision fixtures for routing, checkpoints, forbidden actions, failure paths, fastforward, or compatibility entries.
+- `references/cs-skill-spec-standard.md`: contract definitions, typed decisions, recovery, and output semantics.
+- `references/cs-skill-quality-gates.md`: review algorithm for placement, context, evolution, runtime alignment, and validation safety.
+- `references/cs-skill-fixture-patterns.md`: risky routing, checkpoint, failure, compatibility, or
+  forbidden-action scenarios.
 
 ## Spec
 
 ```haskell
-buildCsSkill :: SkillWorkRequest -> SkillWorkOutcome
-
-data SkillWorkRequest = SkillWorkRequest
-  { targetSkill  : Path
-  , intent       : Create | Refactor | Simplify | Review | AddContracts | AddFixtures
-  , userIntent   : UserIntent
-  , targetRepo   : Path
-  , constraints  : [Constraint]
-  }
-
-data RefactorDepth
-  = MinimalHardeningPatch
-  | FullProtocolRefactor
-
-data ProcessProtocol
-  = WorkflowProtocol
-  | DomainProtocol
-  | LifecycleProtocol
-  | OperationProtocol
-  | AlgorithmProtocol
-  | ShimRoute
-  | ReferenceOnly
-
 data SkillKind
-  = OperatorSkill       -- narrow trigger, concrete artifact, explicit state/branching
-  | WorkflowSkill       -- orchestrates stages and loads references progressively
-  | MethodologySkill    -- broad guidance; should expose an operator entry plus references
-  | CompatibilityShim  -- passes legacy intent to one canonical skill
-  | ReferenceDoc        -- no stable user -> artifact path; should not be an active trigger
+  = OperatorSkill | WorkflowSkill | MethodologySkill | CompatibilityShim | ReferenceDoc
 
-data ValidationLayer
-  = Shape | ContractSemantics | CrossFile | Scenario | RuntimeConformance | ForwardTest
+data SkillShape = NoActiveSkill | ThinOperator | ContextualWorkflow | ToolBackedWorkflow
+                | ShimSkill | ReferenceSkill
+data ProcessProtocol = WorkflowProtocol | DomainProtocol | LifecycleProtocol
+                     | OperationProtocol | AlgorithmProtocol | ShimRoute | ReferenceOnly
+data RulePlacement = Harness | StageContext | ProjectContext | DeterministicGate | Remove
+data DelegationRole = Orchestrator | LeafExecutor
 
-data HostImpact = Hermetic | Isolated | LiveReadOnly | LiveMutating
-data ResourceBudget = Light | HeavySerial
+selectSkillShape :: SkillKind -> SkillSource -> SkillShape
+selectSkillShape kind source | not (independentSkillNeeded kind source) = NoActiveSkill
+selectSkillShape kind source =
+  case kind of
+    ReferenceDoc      -> ReferenceSkill
+    CompatibilityShim -> ShimSkill
+    OperatorSkill     -> ThinOperator
+    WorkflowSkill
+      | deterministicRouter source -> ToolBackedWorkflow
+      | otherwise                  -> ContextualWorkflow
+    MethodologySkill  -> ContextualWorkflow
 
-data ValidationPlan = ValidationPlan
-  { layers         : [ValidationLayer]
-  , hostImpact     : HostImpact
-  , resourceBudget : ResourceBudget
-  }
-
-data SkillShape = SkillShape
-  { trigger        : TriggerContract
-  , entryPoint     : FunctionSignature
-  , refactorDepth  : RefactorDepth
-  , process        : ProcessProtocol
-  , stateModel     : Maybe StateMachine
-  , runtimeRouter  : Maybe RuntimeContract
-  , outputContract : OutputContract
-  , failureModes   : [FailureMode]
-  , contracts      : [MachineContract]
-  , fixtures       : [DecisionFixture]
-  , validation     : ValidationPlan
-  }
-
-data SkillWorkOutcome
-  = PatchApplied [Path]
-  | RefactorPlan SkillShape
-  | ReviewReport SkillShape
-  | NeedsHuman Reason
-
-selectRefactorDepth :: UserIntent -> RefactorDepth
-selectRefactorDepth(intent)
-  | explicitMinimal(intent) -> MinimalHardeningPatch
-  | otherwise               -> FullProtocolRefactor
-
-classifySkill :: SkillSource -> SkillKind
 selectProcessProtocol :: SkillKind -> SkillSource -> ProcessProtocol
 selectProcessProtocol kind source =
   case kind of
@@ -121,172 +59,167 @@ selectProcessProtocol kind source =
     OperatorSkill
       | algorithmic source -> AlgorithmProtocol
       | otherwise          -> OperationProtocol
-    MethodologySkill -> DomainProtocol
+    MethodologySkill  -> DomainProtocol
     CompatibilityShim -> ShimRoute
-    ReferenceDoc     -> ReferenceOnly
+    ReferenceDoc      -> ReferenceOnly
 
-buildSkillShape :: SkillSource -> UserIntent -> SkillShape
-validateSkillShape :: SkillShape -> ValidationReport
+placeRule :: Rule -> RulePlacement
+placeRule r
+  | mechanizable r                                    = DeterministicGate
+  | nonMechanizableSafety r                           = Harness
+  | projectSpecific r                                 = ProjectContext
+  | stageSpecific r                                   = StageContext
+  | everyInvocationNeeds r && changesDecisionOrGate r = Harness
+  | otherwise                                         = Remove
+
+buildContextPlan :: SkillShape -> [PlacedRule] -> ContextPlan
+buildThinHarness :: SkillShape -> ResponsibilityContract -> ContextPlan -> Markdown
 ```
 
-## Workflow
+## Build Protocol
 
-### 1. Workspace safety
+### 1. Establish scope and responsibility
 
-`build-cs-skill` creates or edits skill files; it does not execute a product CodeStable workflow. Do not require `.codestable/attention.md` just to author or refactor a skill.
+Read the target and relevant repository design facts; inspect git status and preserve unrelated edits.
+State the one outcome the skill owns, its authority boundary, completion evidence, and unsafe stop
+conditions. Authoring itself does not require project preflight. A generated skill adds preflight only
+when its behavior depends on project setup, repository facts, artifact writes, or recovery.
 
-Before editing, check git status in the target repository. Preserve unrelated user changes. Do not revert or move existing skill files unless explicitly requested.
+If there is no independent installable responsibility, or an existing skill/reference/tool owns it,
+select `NoActiveSkill`. A retired v1 CodeStable name also selects `NoActiveSkill`; migration prose is
+not an instruction to recreate a compatibility shim. Use `ReferenceSkill` only when knowledge has an
+independent distribution contract.
 
-When authoring an active `cs-*` skill that will run inside CodeStable projects, include that target skill's CodeStable preflight rule. The generated target skill should read `.codestable/attention.md` when it depends on project setup, repo state, artifact writes, or recoverability. That rule belongs in the target skill, not in `build-cs-skill` itself.
+### 2. Choose the minimum shape
 
-### 2. Choose refactor depth
+Classify before writing; do not default to a full protocol refactor. Use `ThinOperator` for one
+action/artifact, `ContextualWorkflow` for staged or recoverable work, and `ToolBackedWorkflow` when a
+deterministic router/gate owns fragile choices. `ShimSkill` contains only a canonical target and
+preset, and is allowed only when a newly accepted distribution contract explicitly ships that alias.
+`ReferenceSkill` contains knowledge without an invented workflow.
 
-Default to `full protocol refactor` unless the user explicitly asks for a minimal patch, a small additive change, or no behavior-preserving rewrite.
+Use high freedom for safe implementation choices, medium for preferred patterns, and low only for
+fragile operations or invariant-sensitive ordering.
 
-Use these labels exactly:
+### 3. Place every rule once
 
-| Depth | Meaning | Completion bar |
-|---|---|---|
-| `minimal hardening patch` | Add a small safety layer while preserving the existing shape | trigger tightening, small `## Spec`, or contracts only |
-| `full protocol refactor` | Rewrite the active skill body into a complete prompt-as-code protocol while preserving behavior | all required protocol sections below |
+Inventory current and proposed rules before editing. Record each rule's source, affected decision,
+frequency, and `RulePlacement`; then apply `placeRule`.
 
-A change that only adds description exclusions, a small `## Spec`, and machine contracts is a `minimal hardening patch`, not a `full protocol refactor`. If the user asked to refactor, simplify, or apply the build-cs-skill framework, produce a full protocol refactor or clearly state that the current proposal is only minimal hardening and ask whether to continue.
+- Mechanizable safety and repeated transformations -> script, hook, or gate.
+- Stage methods, templates, and examples -> stage reference.
+- Project facts, ADRs, and learnings -> repository CodeStable artifacts.
+- Every-invocation decisions and non-mechanizable hard gates -> harness.
+- Generic advice, duplicated rationale, stale prose, and behavior-neutral steps -> remove.
 
-A full protocol refactor must include all of these, even when behavior is unchanged:
+Information must have one canonical home. Do not retain the same route, gate, or method in both the
+harness and a prose reference.
 
-1. tightened frontmatter description;
-2. `## Spec` with entry function, request, state, outcome, and failure types;
-3. process protocol appropriate to the skill kind;
-4. explicit state restoration and next-action selection functions;
-5. state machine mirrored as decision rules, not only left as a prose table;
-6. progressive reference loading with allowed and forbidden loading behavior;
-7. human checkpoint rules and non-bypass conditions;
-8. failure behavior;
-9. output contract;
-10. machine contracts or recommended frontmatter contracts;
-11. runtime alignment when a deterministic router / hook exists;
-12. decision fixture recommendations.
+### 4. Build the context plan before the harness
 
-### 3. Classify the skill
+Call `buildContextPlan` before writing the body. For every context source state when to load it, why
+it matters, how freshness is checked, when enough context has been gathered, and how an already
+loaded fact is reused.
 
-Classify the target before writing:
+Entry context is the minimum needed for a safe next action. After selection, load one stage protocol
+and only relevant facts/support. Do not preload every reference, ADR, note, or source file.
 
-| Kind | Use when | Required shape |
-|---|---|---|
-| `OperatorSkill` | User asks for one concrete artifact or action | `## Spec`, typed inputs/outputs, failure behavior, contracts |
-| `WorkflowSkill` | Skill routes through stages such as design/review/QA | state machine, progressive reference loading, checkpoints |
-| `MethodologySkill` | Skill contains broad engineering guidance | small operator front door plus reference sections/files |
-| `ReferenceDoc` | No clear trigger -> artifact path | remove from active trigger set or mark as reference material |
+### 5. Write the thin harness
 
-If a skill mixes kinds, split the active operator protocol from reference material instead of adding more prose.
+Write the runtime kernel in this order: trigger/frontmatter, responsibility, context contract,
+decision contract when needed, hard gates, collaboration when needed, and done/failure.
 
-### 4. Tighten the trigger
+Target review thresholds: 30-80 body lines for an operator, 60-120 for a workflow front door, and at
+most 40 for a shim. Exceeding them requires another placement pass and an explicit reason, not truncation.
 
-Write `description` as trigger + expected artifact/workflow + adjacent-skill exclusions. Avoid broad verbs alone (`optimize`, `improve`, `analyze`, `help`); use `references/cs-skill-spec-standard.md` for the boundary pattern.
+Do not include long rationale, historical narrative, broad checklists, templates, or ordinary coding
+steps in the harness. Preserve a compact `## Operation`, `## Workflow`, or `## Lifecycle` only when
+it helps a fresh agent orient from entry to recoverable exit.
 
-### 5. Write the operator protocol first
+### 6. Add collaboration only when useful
 
-Put execution-critical P1 content first: target preflight, entry intent, Spec, process, state restoration, checkpoints, failure, output. Workflow skills use a 5-7 step `Workflow` / `Protocol` / `Lifecycle`; operators use `Operation` / `Algorithm`; shims only pass intent; reference docs do not invent a workflow.
+Delegate only bounded work that has explicit ownership and an independent completion check. Do not
+pre-script provider-specific roles or a fixed agent count.
 
-For target skills, include a preflight step when the skill touches `.codestable/`, scans repo state, writes artifacts, dispatches agents, or depends on project initialization. For pure formatting, routing shims, or reference-only materials, a separate preflight step is usually unnecessary.
+Keep shipped harnesses backend-agnostic: describe capabilities, never product names; exact backend/model pins belong to `ProjectContext`.
+Before creating a reviewer, discover subagent creation and management capabilities callable in the current session. Do not substitute a `PATH` executable scan for capability discovery.
+Reviewer creation methods prefer managed structured delegation with fresh context, explicit model selection, workspace access, lifecycle control, and a terminal report; then a host subagent; use a bounded one-shot agent CLI only as fallback. Explicitly select the strongest stable qualified model, preferring heterogeneity only after the quality floor is met.
 
-For workflow skills, the process section should be shorter than the detailed decision rules and explain what the agent actually does from startup to recoverable exit. Do not replace it with only a type signature or only a routing table.
+A healthy running delegation stays bound to its run and target; a queryable active `Awaiting` run remains healthy, and a better creation method found later does not justify cancellation or duplicate dispatch.
+Switch only after terminal failure without a report, loss of recoverable run identity, a capability mismatch, or target invalidation.
 
-Cross-skill handoffs target the canonical main entry and let that skill restore state and select its own stage/lane. Only compatibility shims may pass an explicit legacy `requested_stage` / `requested_mode` preset.
+Classify topology before dispatch. A delegated agent defaults to `LeafExecutor` unless its explicit
+responsibility is orchestration. A `LeafExecutor` must not dispatch another agent, wake or follow up
+a child, or invoke itself or an alias. Only an `Orchestrator` owns further delegation.
 
-Move long examples, templates, rationale, and pattern libraries to `references/` or late sections. Do not let background material precede the protocol.
-
-### 6. Make state recoverable
-
-For workflow skills, define restoration from repository facts, not chat history:
+Use this packet contract:
 
 ```text
-repo facts -> state model -> next action
+contextPacket = goal + relevantContext + scopeOwnership + boundaries + evidence + returnContract
+mainAgentOwnsIntegration = true
 ```
 
-Every stage transition must leave durable evidence on disk, such as a status field, review artifact, checklist, result file, marker, or note. "The previous assistant said so" is not recoverable state.
+The delegated agent chooses its route. The calling orchestrator owns integration, conflict handling,
+final verification, and durable state. It waits for the return contract; treat idle without a return
+payload and no recoverable run identity as failed delegation, not permission to resend the task blindly.
+Worktree/branch policy remains host-owned.
 
-For staged workflows, audit resume coverage end to end: every stage-level checkpoint answer must fit the canonical main entry's tagged resume domain and reach that stage unchanged. Every `Awaiting` outcome must persist a machine-readable state, reason, and external run id before returning, and the real router must restore them without chat memory.
-
-The routing function must cover the **complete lifecycle** from trigger to exit — including entry (grill/intake), rebuild/degrade branches, iteration, checkpoints, and completion. Guard order is priority order; an unreachable tail branch is a bug. Measured: a model that keeps picking "the nearest enum" on one branch usually signals a missing guard, not bad wording (cs-goal rt-g02: two wording rounds 0.33→0.33, one added entry guard →0.89 — see quality-gates Measured Rules 6).
+### 7. Preserve hard contracts
 
 #### Haskell Contract Gate
 
-When adding or changing a Haskell-style block, read `references/cs-skill-spec-standard.md` and apply
-its Haskell Contract Standard. A fence alone is not a contract. A branched protocol must expose its
-entry signature, closed decision domains, prioritized and exhaustive decision function, explicit
-invalid/blocked outcome, and path-wide invariants or termination rule when they affect completion.
-Keep rationale in comments; keep executable branches in equations. Do not retain a prose routing
-table as a second source of truth.
+Use Haskell only for a real closed decision, transition, lifecycle, or invariant. Prompt-routed
+workflows keep one compact decision truth and no parallel prose router. Audit every stage checkpoint
+against the canonical main entry's tagged resume domain; persist `Awaiting` state, reason, and run
+identity. A locally closed stage type is insufficient.
 
 #### Runtime Alignment Gate
 
-When the target has a deterministic router, hook, or state file schema, treat it as executable enforcement of the prompt Spec, not an independent routing truth. Align state names, normalization, guard priority, terminal-state precedence, and outcomes across `SKILL.md`, runtime code, persisted artifacts, and decision fixtures. Add a mechanical conformance test; a green grep contract or a separately hand-written test router is not sufficient. Detailed checks live in `references/cs-skill-quality-gates.md`.
+For `ToolBackedWorkflow`, state the tool contract, invariant boundaries, outcomes, and failure
+behavior without copying its branch table. Align persisted schema, normalization, terminal
+precedence, and outcomes across harness, runtime, references, and tests.
 
-### 7. Add progressive reference loading
+Each skill remains independently installable: do not require sibling skill files or a centralized
+onboard runtime. Skill-specific context and deterministic helpers belong to the owning skill's
+`references/` and `scripts/`. Project context belongs in `.codestable/attention.md`,
+`.codestable/lessons/`, `.codestable/work/`, or the project's existing docs and ADRs. A v2 skill may
+search useful v1 artifacts, but must not execute their tools or treat them as current distribution
+surfaces. Shims stay thin. Branch/worktree policy and agent backends remain host-owned.
 
-State which reference file is loaded for each stage. The skill must not load all references at startup.
+### 8. Compress, validate, and finish
 
-Use this wording when relevant:
+For continuous evolution, feed every new lesson back through `placeRule`; never treat it as permission
+to append prose. Replace obsolete rules, move specialized knowledge to context, and run a whole-file
+deletion pass. Additive-only evolution is a failure mode.
 
-```text
-Load exactly one stage protocol before acting, plus only the support files that protocol requests.
-```
+Update related skills, shared references, tests, and ADR wording when the changed contract crosses
+those boundaries. Do not add changelog or migration narrative to the runtime skill.
 
-When a skill also loads project facts (`CONTEXT.md`, ADR, compound) across stages or batch fan-out, apply the **Idempotent Context Loading Gate** (`references/cs-skill-quality-gates.md`): reuse facts already loaded in-session instead of unconditional re-reads, and drive batch skips with a structural flag (e.g. reuse `epic_child_batch`), not wording.
+Load `references/cs-skill-quality-gates.md` and create a validation plan. Apply its `Regression Ladder`,
+`Live Host Safety Gate`, and family coverage as applicable. Structural contracts do not replace
+scenario or real runtime conformance tests.
 
-### 8. Add machine contracts
+Run relevant repository tests and `git diff --check`. Use `eval-cs-skill` only when the request
+explicitly includes a measured multi-model experiment or when release policy requires one.
 
-If the local validation system supports frontmatter contracts, add `contracts:`. If it does not, still include a `## Machine Contracts` section so the invariants are explicit and can later be wired into validation.
+## Failure Behavior
 
-Good contracts protect behavior, not documentation: routing function names, required checkpoint / artifact phrases, progressive loading, and forbidden actions.
-
-Do NOT anchor bare Spec type names (`FeatureState`, `HumanCheckpoint`, `CheckpointReason`) — they only prove the Spec block exists, not that any behavior is protected (measured; see quality-gates Contract Gate). Select terms that would be missing only if an important rule was lost. Avoid generic words like `quality`, `check`, `best`, or `review`.
-
-### 9. Design decision fixtures
-
-For important branch logic, write one-decision fixtures in the runnable eval-cs-skill schema under `experiments/<skill>-routing-001/fixtures/routing/*.json`; use `references/cs-skill-fixture-patterns.md` for shapes.
-
-Oracle discipline: use `result_type_any` / `target_any` to accept semantically equivalent phrasings (older variants lack Spec vocabulary); spot-check observed answers before trusting a verdict.
-
-Prioritize fixtures for: activation/routing; stage ordering; forbidden actions; human checkpoints; failure paths; fastforward or compatibility shortcuts.
-
-### 10. Define failure behavior
-
-Every skill must say what happens when it cannot safely continue. A good failure result includes the current artifact, blocking reason, next user action, files already written, and whether retry is safe.
-
-Do not silently continue when approved scope, public contracts, data shape, or user-visible behavior would change.
-
-For `build-cs-skill` itself, return `NeedsHuman` when the target/output is ambiguous, overlapping user edits cannot be preserved, behavior-equivalent constraints conflict with the required rewrite, or referenced protocols are missing. Route measured experiment requests to `eval-cs-skill`.
-
-### 11. Keep the file small
-
-Prefer a short `SKILL.md` plus references over a large always-loaded file. Rule of thumb: active protocol in the first 150-250 lines; examples and templates go to references; detailed rationale to docs; deterministic checks and repeated transformations to scripts.
-
-### 12. Plan validation and verify
-
-Create a `ValidationPlan` before running commands. Apply the `Regression Ladder` and
-`Live Host Safety Gate` in `references/cs-skill-quality-gates.md`: start with the cheapest hermetic
-layer, isolate integration state, and run heavy suites/builders serially. Never overlap full pytest,
-Go validation, multi-target builders, or package installs on a live developer host.
-
-Tests must not stop, restart, archive, close, signal, or rewrite a host-managed agent service.
-Cleanup is limited to processes created by the current test and revalidated immediately before the
-signal; uncertain ownership means preserve the process and report the leak. If a required layer
-cannot respect those bounds, mark it unrun with the reason instead of weakening the safety gate.
-
-Structural tests are necessary but not sufficient. After refactoring a core workflow/operator skill:
-
-1. run structural tests, runtime-alignment conformance tests, and `git diff --check`;
-2. re-check routing behavior via `eval-cs-skill`: routing-decision fixtures per Spec branch, >=2 models, k>=3, against a frozen pre-change variant snapshot;
-3. triage failures in this order before blaming the skill: oracle too strict > fixture ambiguity > skill defect > model behavior difference;
-4. cap live wording fixes at two rounds per fixture; wording-resistant failures signal a structural gap in the Spec (see quality-gates Measured Rules 6);
-5. write conclusions back into `references/cs-skill-quality-gates.md` Measured Rules when they generalize.
-
-CodeStable-specific shape patterns (main workflow skills, compatibility shims, fastforward modes, goal handoff) live in `references/cs-skill-spec-standard.md`.
+Return `NeedsHuman` when the target/output is ambiguous, overlapping edits cannot be preserved,
+authority boundaries conflict, required context cannot be identified, or the proposed compression
+would remove a recovery/safety contract. Report the current target, blocker, preserved files, and
+safe next action.
 
 ## Output Contract
 
-`build-cs-skill` final responses must include: target skill path; classification; refactor depth (`minimal hardening patch` | `full protocol refactor`); files changed or planned (distinguishing actual edits from sample fixtures); validation result, or reason validation was not run; missing confirmations or maintainer decisions; next concrete action.
+Report:
 
-Report rewrites with the section-by-section structure in `references/cs-skill-spec-standard.md` (Review Report Template). If the output is not a full protocol refactor, explicitly name which required sections are missing and why. Keep unrelated product changes out of the skill rewrite unless the user explicitly asks for them.
+- target skill path and `SkillShape`;
+- one-sentence responsibility and selected freedom;
+- rule placements: kept in harness, moved to stage/project context, mechanized, or removed;
+- context plan and collaboration contract, or why none is needed;
+- files changed;
+- validation results and skipped layers;
+- unresolved maintainer decisions and the next concrete action.
+
+Distinguish actual edits from recommendations. Do not claim success from line reduction alone; the
+result must remain safe, recoverable, and usable by a fresh agent without chat history.

@@ -1,37 +1,54 @@
-# CodeStable 技能目录
+# CodeStable v2 技能目录
 
-主入口调用时可带 flag 化的阶段 / 模式参数（如 `/cs-feat --stage qa`、`/cs-refactor --mode fastforward`、`/cs-docs --mode api 认证接口`）。参数只是意图提示，仓库事实始终优先；裸参数始终表示任务描述；不传参数时按仓库事实和用户原话恢复或路由。
+v2 只交付 8 个 skill。每个 skill 是独立安装单元，不依赖 sibling skill 文件或集中式 onboard
+runtime。
 
-## 推荐主入口
+## 当前入口
 
-| 分组 | 技能 | 用途 |
+| 分组 | Skill | 责任 |
 |---|---|---|
-| 根入口 | `cs` | 行动请求同轮直转，咨询请求只给建议；介绍与歧义请求不误启动 workflow |
-| 接入 | `cs-onboard` | 把 CodeStable 接入新仓库或已有零散文档仓库 |
-| 需求与领域 | `cs-req` | 整理和沉淀能力愿景文档 |
-| 需求与领域 | `cs-domain` | 维护领域模型、术语表、ADR 和多 context 拓扑 |
-| Epic | `cs-epic` | 大需求端到端入口：规划、review、子 feature design、goal 包和可见 driver 派发 |
-| 目标驱动 | `cs-goal` | 给定起点与期望终态后自主迭代到验收 |
-| 讨论入口 | `cs-brainstorm` | 想法模糊时分诊到 feature、epic 或 brainstorm note |
-| 特性流程 | `cs-feat` | 按风险自动选择 Quick / Standard / Goal；Goal 仅用于显式长程执行或 Epic |
-| 问题流程 | `cs-issue` | 问题修复端到端入口：report、analyze、fix、review |
-| 重构流程 | `cs-refactor` | 行为等价重构入口：标准模式或 fastforward mode |
-| 横切审查 | `cs-code-review` | 实现完成后的只读代码审查 gate |
-| 审计 | `cs-audit` | 主动扫描 bug、安全、性能、可维护性和架构偏离 |
-| 反馈 | `cs-feedback` | 显式采集当前会话为 local-private incident/triage；确认 preview 后才可上报 |
-| 知识沉淀 | `cs-keep` | 把坑点、技巧、决策、调研沉淀到 `.codestable/compound/` |
-| 知识沉淀 | `cs-note` | 把一两行启动必读项目注意事项追加到 `.codestable/attention.md` |
-| 对外文档 | `cs-docs` | 写或更新开发者指南、用户指南、API 参考 |
-| 文档收尾 | `cs-docs-neat` | 阶段收尾时同步 `.codestable/`、README/docs、agent 入口和记忆 |
+| 导航 | `cs` | 明确行动同轮直转；先讨论的请求在当前会话收敛后同轮移交；咨询只推荐；导览不写文件 |
+| 接入 | `cs-onboard` | 创建最小项目记忆骨架；无损说明 v1 升级边界 |
+| 功能 | `cs-feat` | 实现新功能；按风险决定是否先确认设计或做独立 review |
+| 问题 | `cs-issue` | 用红到绿的验证修复 bug 或既有行为异常 |
+| 重构 | `cs-refactor` | 在可核验的行为等价约束下调整结构或性能 |
+| 大需求 | `cs-epic` | 用永久 Epic 文档与临时 work 游标拆解、确认并串行连续推进多个可交付子项 |
+| 审查 | `cs-review` | 只读叶子执行器；单轮审查，不创建子 agent |
+| 记忆 | `cs-keep` | 管理有证据的项目事实、lesson 生命周期与 canonical 归宿 |
 
-## 长期兼容入口
+`cs-code-review` 作为 `cs-review` 的唯一兼容别名随包交付（v1 沿用名，只转发、不含独立规则）。
 
-这些技能名继续可用，但只转入对应主入口，不维护独立流程规则。
+讨论本身只存在于当前会话，不创建 work 游标或 transcript；稳定资产由 owning skill 按 canonical 归宿毕业，未收敛讨论不承诺跨会话恢复。
 
-| 兼容组 | 技能 | 转入 |
-|---|---|---|
-| Feature | `cs-feat-design`, `cs-feat-design-review`, `cs-feat-impl`, `cs-feat-qa`, `cs-feat-accept`, `cs-feat-ff` | `cs-feat` 的对应阶段或模式 |
-| Issue | `cs-issue-report`, `cs-issue-analyze`, `cs-issue-fix` | `cs-issue` 的对应阶段 |
-| Refactor | `cs-refactor-ff` | `cs-refactor` 的 fastforward mode |
-| Docs | `cs-doc-tutorial`, `cs-doc-api` | `cs-docs` 的 tutorial / api mode |
-| Epic | `cs-roadmap`, `cs-roadmap-review`, `cs-roadmap-impl-goal` | `cs-epic` 的 planning / review / goal-package 阶段 |
+task skill 静默识别强信号，普通任务最多展示一条晶化候选，Epic 子项统一在最终毕业清单处理。
+`cs-keep` 让 lesson 按 observed / validated / retired 演化；机械 guard 优先，新建与跨项目分享仍需显式授权。
+
+## 项目知识与 Epic 边界
+
+新项目仍只预建 `.codestable/attention.md`、`lessons/` 与 `work/`。Epic 优先沿用项目已有归宿，否则首次需要时才创建 `.codestable/epics/`：永久文档保存目标、范围、已批准子项、决策、交付索引与终态验收，`work/epic-{slug}.md` 只作批准 revision、执行进度与 `item_progression` / `milestone_commit` / `remote_publish` 策略的临时游标，终态删除游标但保留永久档案。
+
+Epic 保留三道 owner gate：独立 design review 后确认拆解；目标、范围、非目标、验收、子项或重大风险变化时重新确认；全部子项完成并由 fresh reviewer 按最新 owner 已批准标准做终态整体验收后，由 owner 最终接受。连续策略在普通子项边界不新增人工 gate。
+
+v1 的 `roadmap/`、`features/`、`issues/`、`refactors/`、`goals/`、`compound/`、`audits/`、`brainstorms/` 与 `feedback/` 九个历史知识目录只按任务关键词只读检索和引用，不生成、不原地改写、不批量迁移，也不写回。
+
+既有 `.codestable/requirements/` 只有经 `.codestable/attention.md` 显式登记为 canonical requirement 位置才可维护，否则只读；新项目不默认创建该目录。`cs-epic` 承接有价值的 goal 契约、恢复游标与验收，但不恢复 `cs-goal` runtime、goal package、`state.yaml`、逐轮 iteration 报告或 runtime gate。
+
+## v1.0.4 退役入口
+
+以下 24 个名称已退役，不随 v2 交付，也不会保留兼容 shim。升级不会删除项目里的历史
+产物；只是新的 skill 安装包不再暴露这些触发入口。
+
+| v1 名称 | v2 做法 |
+|---|---|
+| `cs-feat-design`, `cs-feat-design-review`, `cs-feat-impl`, `cs-feat-qa`, `cs-feat-accept`, `cs-feat-ff` | 统一进入 `cs-feat`，由风险与仓库事实决定执行强度 |
+| `cs-issue-report`, `cs-issue-analyze`, `cs-issue-fix` | 统一进入 `cs-issue` |
+| `cs-refactor-ff` | 进入 `cs-refactor` |
+| `cs-audit` | 使用 `cs-review` 的 audit 模式 |
+| `cs-goal`, `cs-roadmap`, `cs-roadmap-review`, `cs-roadmap-impl-goal` | 大需求进入 `cs-epic`；不恢复 goal package、`state.yaml`、逐轮报告或 runtime gate |
+| `cs-brainstorm`, `cs-domain`, `cs-req` | 先由 `cs` 在当前会话对齐；收敛后同轮进入 `cs-feat` / `cs-issue` / `cs-epic`，稳定资产由 owning skill 进入 canonical 项目文档、ADR 或永久 Epic |
+| `cs-docs`, `cs-docs-neat`, `cs-doc-api`, `cs-doc-tutorial` | 在对应开发任务中同步文档，或直接提出独立文档请求 |
+| `cs-note` | 进入 `cs-keep` |
+| `cs-feedback` | 项目经验进入 `cs-keep`；产品反馈按仓库 issue 流程提交 |
+
+不知道如何映射时调用 `cs` 获取推荐。v1 项目资产的保留规则见
+[WORKFLOW.md](./WORKFLOW.md#v1-升级边界)。

@@ -12,12 +12,15 @@
 from __future__ import annotations
 
 import argparse
+import fcntl
+import shutil
 import sys
 
 sys.dont_write_bytecode = True  # 不污染 plugin 包（check-plugin-package 禁 __pycache__）
 
 import json
 import tempfile
+from contextlib import contextmanager
 from pathlib import Path
 from statistics import mean
 from typing import Any
@@ -31,9 +34,16 @@ import metrics                          # noqa: E402
 import scorers as scorers_pkg          # noqa: E402
 from _model import EvalResult, MEASURED, SOFT, UNDERPOWERED, render_tagged, tagged, write_json  # noqa: E402
 from buildprompt import build_prompt   # noqa: E402
-from config import ExperimentConfig, judge_issues, load_config, repo_root, resolve_variant_text  # noqa: E402
+from config import (  # noqa: E402
+    ExperimentConfig,
+    judge_issues,
+    load_config,
+    repo_root,
+    resolve_variant_text,
+    select_execution_targets,
+)
 from e2e_env import prepare_e2e_workdir  # noqa: E402
-from fixtures import load_fixtures      # noqa: E402
+from fixtures import load_fixtures, validate_learning_transfer_coverage  # noqa: E402
 
 
 def _agg_tag(tags: set[str]) -> str:
@@ -84,6 +94,13 @@ def _models_for(config: ExperimentConfig, override: str | None, harness: str) ->
 
 def build_matrix(config: ExperimentConfig, args) -> list[tuple[str, str, str]]:
     variants = [args.variant] if args.variant else config.variants
+    if config.model_targets:
+        targets = select_execution_targets(config, args.harness, args.model)
+        return [
+            (variant, target.harness, target.model)
+            for variant in variants
+            for target in targets
+        ]
     harnesses = [args.harness] if args.harness else config.harnesses
     cells = []
     for variant in variants:
@@ -204,6 +221,56 @@ def write_results_md(exp_dir: Path, config: ExperimentConfig, agg: dict, cells: 
     (exp_dir / "results.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+class SequenceOutputBusyError(RuntimeError):
+    """同一输出已有 learning-transfer 进程持锁。"""
+
+
+def _sequence_run_root(out_path: Path) -> Path:
+    """不同 --out 使用独立 preflight/cell 空间；同一 out 才共享恢复状态。"""
+    base = (out_path.parent / "runs").resolve()
+    if out_path.name in {"", ".", ".."}:
+        raise ValueError("--out 必须包含安全的文件名")
+    run_root = (base / out_path.name).resolve()
+    try:
+        run_root.relative_to(base)
+    except ValueError as exc:
+        raise ValueError("--out 生成的 run root 越过隔离目录") from exc
+    if run_root == base:
+        raise ValueError("--out 不能指向 run root 本身")
+    return run_root
+
+
+def _sequence_checkpoint_path(out_path: Path) -> Path:
+    return out_path.parent / f"{out_path.name}.partial.jsonl"
+
+
+@contextmanager
+def _sequence_output_lock(out_path: Path):
+    """对单个 --out 加非阻塞进程锁，避免 checkpoint/run root 交叉写。"""
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    lock_path = out_path.parent / f".{out_path.name}.lock"
+    with lock_path.open("a", encoding="utf-8") as handle:
+        try:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            raise SequenceOutputBusyError(f"同一 --out 已有运行: {out_path}") from exc
+        try:
+            yield
+        finally:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+
+
+def _clear_sequence_state(run_root: Path, checkpoint_path: Path) -> None:
+    """`--fresh` 清理该输出专属的 checkpoint、preflight 与 cell 状态。"""
+    if run_root.is_symlink():
+        raise ValueError("拒绝清理 symlink run root")
+    if run_root.exists() and not run_root.is_dir():
+        raise ValueError("拒绝清理非目录 run root")
+    checkpoint_path.unlink(missing_ok=True)
+    if run_root.exists():
+        shutil.rmtree(run_root)
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="eval-cs-skill eval runner")
     p.add_argument("--experiment", required=True)
@@ -215,7 +282,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--confirm", action="store_true", help="确认超预算仍执行")
     p.add_argument("--out")
-    p.add_argument("--fresh", action="store_true", help="忽略并删除已有 checkpoint，从头跑")
+    p.add_argument("--fresh", action="store_true", help="删除该输出的 checkpoint 与 run state，从头跑")
     p.add_argument("--offset", type=int, default=0, help="跳过前 M 个 fixture（分段用）")
     p.add_argument("--limit", type=int, help="只跑 offset 起 N 个 fixture（分段用，每段配独立 --out）")
     args = p.parse_args(argv)
@@ -223,13 +290,129 @@ def main(argv: list[str] | None = None) -> int:
     exp_dir = Path(args.experiment).resolve()
     config = load_config(exp_dir)
     k = args.k if args.k is not None else config.k
+    if k < 1:
+        print("[eval-cs-skill] k 必须至少为 1", file=sys.stderr)
+        return 2
     scorer_names = args.scorer or config.scorers
     fixtures = load_fixtures(exp_dir, config.fixture_classes)
+    if config.execution_mode == "learning-transfer":
+        contract_issues: list[str] = []
+        if config.variants != ["baseline"] or args.variant not in {None, "baseline"}:
+            contract_issues.append("只允许冻结的 baseline 变体")
+        if config.scorers != ["learning_transfer"] or scorer_names != ["learning_transfer"]:
+            contract_issues.append("scorer 必须且只能是 learning_transfer")
+        if contract_issues:
+            print(
+                f"[eval-cs-skill] learning-transfer 执行契约不合规: {'; '.join(contract_issues)}",
+                file=sys.stderr,
+            )
+            return 2
+    if config.execution_mode == "learning-transfer" and set(config.fixture_classes) == {
+        "positive", "unrelated", "stale",
+    }:
+        coverage_problems = validate_learning_transfer_coverage(fixtures)
+        if coverage_problems:
+            print(
+                f"[eval-cs-skill] learning-transfer coverage 不合规: {'; '.join(coverage_problems)}",
+                file=sys.stderr,
+            )
+            return 2
     if args.offset or args.limit:
         fixtures = fixtures[args.offset: (args.offset + args.limit) if args.limit else None]
     if not fixtures:
         print(f"[eval-cs-skill] 无 fixtures：{exp_dir}/fixtures/{config.fixture_classes}", file=sys.stderr)
         return 2
+    if config.execution_mode == "learning-transfer":
+        import sequence
+
+        targets = select_execution_targets(config, args.harness, args.model)
+        if not targets:
+            print("[eval-cs-skill] 没有匹配的 model target", file=sys.stderr)
+            return 2
+        est = sequence.dry_run_sequence(config, fixtures, k, repo_root(), targets)
+        print(
+            f"[eval-cs-skill] learning-transfer 预估成本 ${est['est_total_usd']} / "
+            f"预算 ${est['budget_usd']} (invocations={est['invocation_count']}, "
+            f"hooks={est['hook_runs']})"
+        )
+        if args.dry_run:
+            if args.out:
+                dry_run_out = Path(args.out)
+                dry_run_checkpoint = _sequence_checkpoint_path(dry_run_out)
+                try:
+                    with _sequence_output_lock(dry_run_out):
+                        if dry_run_out.exists() or dry_run_checkpoint.exists():
+                            raise ValueError(
+                                "--dry-run 不得覆盖已有结果或 checkpoint；请改用新的 --out"
+                            )
+                        write_json(dry_run_out, est)
+                except (SequenceOutputBusyError, ValueError) as exc:
+                    print(f"[eval-cs-skill] learning-transfer 输出不安全: {exc}", file=sys.stderr)
+                    return 2
+            return 0
+        if est["est_total_usd"] > config.budget_usd and not args.confirm:
+            print(
+                f"[eval-cs-skill] 阻断：预估 ${est['est_total_usd']} 超预算 "
+                f"${config.budget_usd}；加 --confirm 放行。",
+                file=sys.stderr,
+            )
+            return 3
+        real_targets = [
+            target for target in targets
+            if target.harness not in {"mock", "mock-weak"}
+        ]
+        freeze_validation = None
+        if real_targets:
+            try:
+                freeze_validation = sequence.validate_freeze_manifest(
+                    experiment_dir=exp_dir,
+                    root=repo_root(),
+                    config=config,
+                    fixtures=fixtures,
+                    k=k,
+                    targets=targets,
+                )
+            except ValueError as exc:
+                print(f"[eval-cs-skill] 冻结校验失败: {exc}", file=sys.stderr)
+                return 2
+        out_path = Path(args.out) if args.out else (
+            exp_dir / "artifacts" / "analysis" / f"exp-{config.name}-results.json"
+        )
+        checkpoint_path = _sequence_checkpoint_path(out_path)
+        try:
+            run_root = _sequence_run_root(out_path)
+            with _sequence_output_lock(out_path):
+                if out_path.exists() and (args.fresh or not checkpoint_path.exists()):
+                    raise ValueError(
+                        "--out 已包含不可覆盖的运行结果；恢复需保留 checkpoint，重跑请使用新 --out"
+                    )
+                if args.fresh:
+                    if sequence.checkpoint_has_irreversible_evidence(checkpoint_path):
+                        raise ValueError(
+                            "--fresh 不得删除 invocation、score、error 或 fixture-invalid 证据；"
+                            "请改用新的 --out"
+                        )
+                    _clear_sequence_state(run_root, checkpoint_path)
+                payload = sequence.run_sequence(
+                    config=config,
+                    fixtures=fixtures,
+                    k=k,
+                    experiment_dir=exp_dir,
+                    root=repo_root(),
+                    run_root=run_root,
+                    checkpoint_path=checkpoint_path,
+                    targets=targets,
+                )
+                if freeze_validation is not None:
+                    payload["freeze"] = freeze_validation
+                write_json(out_path, payload)
+                if not payload["errors"] and not payload["invalid"]:
+                    checkpoint_path.unlink(missing_ok=True)
+        except (SequenceOutputBusyError, ValueError) as exc:
+            print(f"[eval-cs-skill] learning-transfer 运行状态不安全: {exc}", file=sys.stderr)
+            return 2
+        print(f"[eval-cs-skill] 完成 {len(payload['pairs'])} paired runs → {out_path}")
+        return 0 if not payload["errors"] and not payload["invalid"] else 4
     cells = build_matrix(config, args)
 
     for issue in judge_issues(config):

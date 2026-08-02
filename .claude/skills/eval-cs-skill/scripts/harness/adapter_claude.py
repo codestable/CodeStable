@@ -10,10 +10,52 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
+import tempfile
 import time
 from pathlib import Path
 
-from .base import HarnessError, HarnessResult, register, whitelisted_env
+from .base import (
+    CLAUDE_ENV_KEYS,
+    HarnessError,
+    HarnessResult,
+    macos_sandbox_profile,
+    register,
+    whitelisted_env,
+)
+
+
+_SETTINGS_ENV_KEYS = {
+    "ANTHROPIC_API_KEY",
+    "ANTHROPIC_AUTH_TOKEN",
+    "ANTHROPIC_BASE_URL",
+    "ANTHROPIC_MODEL",
+    "CLAUDE_CODE_OAUTH_TOKEN",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC",
+    "CLAUDE_CODE_ATTRIBUTION_HEADER",
+}
+
+
+def _provider_env() -> dict[str, str]:
+    """复制显式 provider 变量；缺失项可从宿主 Claude settings 白名单补齐。"""
+    env = whitelisted_env(include=CLAUDE_ENV_KEYS)
+    settings_path = Path.home() / ".claude/settings.json"
+    if not settings_path.is_file() or settings_path.is_symlink():
+        return env
+    try:
+        data = json.loads(settings_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return env
+    settings_env = data.get("env") if isinstance(data, dict) else None
+    if not isinstance(settings_env, dict):
+        return env
+    for key in _SETTINGS_ENV_KEYS:
+        value = settings_env.get(key)
+        if key not in env and isinstance(value, str) and value:
+            env[key] = value
+    return env
+
+
+_sandbox_profile = macos_sandbox_profile
 
 
 class ClaudeHarness:
@@ -23,24 +65,39 @@ class ClaudeHarness:
         binary = shutil.which("claude")
         if not binary:
             raise HarnessError("找不到 `claude` CLI，无法用 claude-headless harness")
+        binary_path = Path(binary).resolve()
+        sandbox = shutil.which("sandbox-exec")
+        if not sandbox:
+            raise HarnessError("claude-headless 需要 macOS sandbox-exec 外部文件系统隔离")
         workdir.mkdir(parents=True, exist_ok=True)
-        cmd = [binary, "-p", prompt, "--output-format", "json"]
-        if model:
-            cmd += ["--model", model]
-        start = time.monotonic()
-        try:
-            completed = subprocess.run(
-                cmd,
-                cwd=workdir,
-                env=whitelisted_env(),
-                text=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                timeout=timeout_s,
-                check=False,
-            )
-        except subprocess.TimeoutExpired as exc:
-            raise HarnessError(f"claude-headless 超时 {timeout_s}s") from exc
+        with tempfile.TemporaryDirectory(prefix="cs-eval-claude-", dir=workdir.parent) as tmp:
+            runtime = Path(tmp)
+            (runtime / "home").mkdir()
+            (runtime / "tmp").mkdir()
+            inner = [
+                str(binary_path), "-p", prompt, "--output-format", "json",
+                "--no-session-persistence", "--safe-mode",
+                "--permission-mode", "bypassPermissions",
+            ]
+            if model:
+                inner += ["--model", model]
+            cmd = [sandbox, "-p", _sandbox_profile(workdir, runtime, binary_path), *inner]
+            env = _provider_env()
+            env.update({"HOME": str(runtime / "home"), "TMPDIR": str(runtime / "tmp")})
+            start = time.monotonic()
+            try:
+                completed = subprocess.run(
+                    cmd,
+                    cwd=workdir,
+                    env=env,
+                    text=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    timeout=timeout_s,
+                    check=False,
+                )
+            except subprocess.TimeoutExpired as exc:
+                raise HarnessError(f"claude-headless 超时 {timeout_s}s") from exc
         wall_ms = int((time.monotonic() - start) * 1000)
         if completed.returncode != 0:
             raise HarnessError(f"claude 退出码 {completed.returncode}: {completed.stderr[-500:]}")

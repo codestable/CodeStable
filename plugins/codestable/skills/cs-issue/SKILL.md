@@ -1,237 +1,76 @@
 ---
 name: cs-issue
-description: "Issue 主入口。用于修复 bug / 诊断报错 / 定位既有行为异常，从问题恢复并推进 report、analyze、fix、review。不要用于新增功能(cs-feat)、行为等价重构(cs-refactor)、对外文档(cs-docs)、大需求拆解(cs-epic)。"
-argument-hint: "[--stage report|analyze|fix] <issue>"
-contracts:
-  - grep: "restoreIssueStage"
-  - grep: "progressive reference loading"
-  - grep: "fix-note"
-  - not-grep: "git push"
-  - not-grep: "read all references"
+description: 修复 bug、报错或既有行为异常。不用于新功能（cs-feat）或行为等价重构（cs-refactor）。
+argument-hint: "[问题描述]"
 ---
 
 # cs-issue
 
-## 启动必读
+修一个 bug，并证明它修好了。
 
-动作前先跑 CodeStable preflight：读 `.codestable/attention.md`（缺失先 `cs-onboard`）；不要用 `AGENTS.md`/`CLAUDE.md` 等外部入口代替它；细则见 `.codestable/reference/execution-conventions.md`。
+## 开工
 
-`cs-issue` 是问题修复的唯一推荐入口，是一个 workflow skill：从仓库事实恢复当前阶段、加载对应阶段协议、在人工 checkpoint 停下。它把问题从记录、根因分析、定点修复、验证、fix-note 和 code review 衔接到闭环。真正的 report/analyze/fix 怎么做由各阶段 protocol 负责（见下方 Progressive Reference Loading）。
+- 有 `.codestable/attention.md` 就先读。
+- 按错误信息与相关模块关键词检索 `.codestable/lessons/`、项目文档，以及存在的 v1 只读知识目录：`.codestable/roadmap/`、`.codestable/features/`、`.codestable/issues/`、`.codestable/refactors/`、`.codestable/goals/`、`.codestable/compound/`、`.codestable/audits/`、`.codestable/brainstorms/`、`.codestable/feedback/`；这个坑可能踩过，命中要报告来源路径。上述 v1 目录不得继续生成、原地改写或批量迁移，新结论按归属进入 v2 Epic、项目文档、ADR 或 lesson。
+- 同一会话由 `cs` 交入且带已确认 handoff 时，直接消费目标入口、原始诉求、目标或期望行为、范围/非目标、验收、已核实仓库事实及来源、owner 已确认的术语与决策、未决风险、canonical 资产指针或资产候选；packet 精确范围内已确认的事项不重复询问。handoff 只证明当前会话共识，不扩大实现、commit、发布或写入授权，也不替代本 skill 的 review、验证与确认门槛；字段缺失、仓库事实冲突、出现会改变结果的新风险、缺少会改变方向的事实或超出已确认边界时再按本 skill 规则确认。
+- 对照检查：目标（期望行为）、现场（复现条件与环境）、边界（哪些不能动）、验收（怎么算修好）。缺少会改变修复方向的事实时先问用户，一次最多 3 个问题，形成共识即停。
+- 诉求其实是新增能力而不是坏掉的行为时，转 `cs-feat`，不在 issue 里偷做。
 
-旧阶段技能 `cs-issue-report`、`cs-issue-analyze`、`cs-issue-fix` 长期保留为兼容入口，只传入 `requested_stage`。
+## 持续学习
 
-## 入口意图
+检索到 lesson 后先做 read-repair。只做一次有界、最低成本的定向核实，优先读取已有代码、测试或
+canonical 文档；不得仅为核实 lesson 运行大范围测试或反复复现。仍不足时跳过该 lesson，不阻塞正常任务。
+只有 scope 符合、未退役、当前事实成立，并真实改变计划或验证，或明确排除一个具体且合理的错误路径
+的条目才算有效命中；按
+`经验命中：{path}（{status}）；核验：{fact}；影响：{plan_or_check}` 报告。`retired` 不应用；
+`observed` / `validated` 先核实再用；旧 lesson 缺 `status` 按 `observed` 读取，不批量迁移。只是相关
+但没有改变行为时不制造复用证据；当前事实明确反证时立即停止应用，证据不足时不猜。
 
-本次调用参数：$ARGUMENTS
+任务内只在内存保留最多 3 条候选，按新证据替换低价值项，不暂停或询问。强信号只包括：owner
+纠正实际改变方案/代码/术语/验证；可复现证据推翻根因；同一路径失败两次后更换假设；
+blocking/important finding 暴露未编码不变量；新 red -> green 捕获可复发失败；lesson 真实改变本次行为
+或被反证；重复 workaround；方法显著降低重试、成本或风险。
 
-意图来源按优先级：调用参数 flag > 兼容入口预设 > 用户话术。参数为空或未被替换（仍是字面 `$ARGUMENTS`）时跳过该来源；调用参数用 `--stage report|analyze|fix` 表示阶段意图，其余文本作为问题描述。旧裸 token（如 `fix`）只作为历史提示词兼容识别；新文档和新调用一律用 `--stage`。
+候选还必须同时有可追溯证据、能写成未来动作、适用于本次精确 diff 之外、且没有现成 canonical
+owner。网络波动、拼写、泛化口号、活动记录，以及已被机械 owner 完整覆盖的事实直接丢弃。
 
-无参数默认行为：没有 flag / 问题描述时，不猜阶段；扫描 `.codestable/issues/`、目标产物和当前 git diff，用状态机恢复下一步。若没有可恢复 issue 且用户原话也没有问题目标，返回 `NeedsHuman` 问处理哪个 issue。
+创建、改写规则/scope、晋升、删除与跨项目反馈仍须用户显式授权。为不中断 read-repair，仅对已有且
+有效命中的 lesson 开放两种窄维护：`observed -> validated` 仅在独立后续任务确实采用并验证成功时
+发生，只补一次代表性证据；必须记录 lesson 实际改变的计划或验证，或明确排除的具体且合理错误路径，
+以及本次通过的验收证据。`observed|validated -> retired` 仅在当前仓库事实直接反证或发现已有
+canonical owner 时发生，只写原因与替代/反证指针。窄维护不新建事实、不改规则、不扩 scope、不新增
+gate，随当次代码、证据和
+游标进入同一语义原子 milestone；稳定 validated 命中不写文件。需要改写结论或证据不足时只给
+候选，新结论不得通过复活 retired 条目获得 validated 身份；窄维护必须在最终报告列出文件变化。
 
-入口意图不覆盖仓库事实。若 report 已存在但用户从 report 兼容入口进来，按 confirmed `issue_path` 恢复：standard 继续 analyze，fast-track 在同 unit `approval-report.md#issue-fast-path` 已批准时直接 fix；若代码已改但无 fix-note，进入 fix 验证/记录。
+当前任务范围内能直接落成 red -> green 测试/checker 的约束优先机械化，不另写重复 lesson；会扩大
+范围时只给候选。用户已明确说“记住 / 更新 / 退役”时，同轮按 `cs-keep` 处理，不重复确认。普通任务
+只在强信号成立时展示最高价值一条，首行固定 `晶化候选：{rule}`，并给出证据、范围和建议归宿；无
+强信号完全不显示模板，没有记忆写入授权时不落盘。
 
-## Spec
+## 硬门槛
 
-```haskell
-csIssue :: IssueRequest -> IssueOutcome
+- **没有稳定、快速、能明确变红的验证，不许猜根因、不许改代码。** 优先失败测试；无法自动化时与用户确认一个手工复现步骤。
+- 声称修复完成前，**那条变红的验证必须变绿**，并附运行输出；相关既有测试不得变红。
+- **根因是有效状态第一次变成无效的地方，不是报错处**；只消除因果断点，不在症状处堆特殊分支。
+- 同一修复路径失败两次，停下来重新审视根因假设，不要变着花样重试；升级手段（可证伪假设、一次一个变量）与"怀疑结构"信号见 `references/debug.md`。
 
-data IssueRequest = IssueRequest
-  { requestedStage : Maybe Stage         -- report | analyze | fix
-  , userGoal       : Maybe Text
-  , checkpointResume : Maybe IssueResume
-  , repoFacts      : RepoFacts           -- 优先于 args / 聊天历史
-  }
+## 风险升级
 
-data Stage = Report | Analyze | Fix | CodeReview | FastPath
-data RouteTarget = IssueStage Stage | ExternalSkill SkillName
-data ArtifactStatus = ArtifactMissing | ArtifactDraft | ArtifactConfirmed
-data IssuePath = PathUndecided | StandardPath | FastPathPending | FastPathApproved | FastPathRejected
-data ApprovalStatus = ApprovalMissing | ApprovalPending | ApprovalApproved | ApprovalRejected | ApprovalRevisionRequested Feedback
-data RootCauseStatus = RootCauseUnknown | RootCauseClear
-data CodeStatus = NotStarted | Changed
-data ReviewStatus = Missing | Passed | Blocking
+修复涉及公开契约、持久化数据、权限或并发语义时，先停下说明影响面、获得用户确认再动。根源超出本次 scope（比如需要重构）时报告并让用户选择，不擅自扩大改动。
 
-data IssueState = IssueState             -- 全部从 .codestable/issues/{slug}/ 恢复
-  { issueDir     : Maybe Path
-  , reportStatus : ArtifactStatus
-  , rootCause    : RootCauseStatus       -- 读代码后根因是否明确
-  , analysisStatus : ArtifactStatus
-  , issuePath    : IssuePath             -- 从 report + approval-report 恢复；一旦 standard 不二次改判
-  , codeStatus   : CodeStatus            -- 当前 git diff
-  , hasFixNote   : Bool
-  , reviewStatus : ReviewStatus
-  , pendingCheckpoint : Maybe CheckpointReason -- approval-report.md 当前 pending decision
-  , rejectedCheckpoint : Maybe CheckpointReason
-  , fixCompletionApproval : ApprovalStatus     -- approval-report.md#issue-fix-completion
-  }
+## 收尾
 
-data IssueOutcome
-  = RoutedTo RouteTarget
-  | HumanCheckpoint CheckpointReason
-  | Completed IssueSummary
-  | NeedsHuman Reason
-  | Blocked Reason
-
-data CheckpointReason = ConfirmReport | ConfirmFixPlan | ConfirmFixCompletion
-data CheckpointAnswer = ApproveCheckpoint | RejectCheckpoint | ReviseCheckpoint Feedback
-data IssueResume = ResumeIssueCheckpoint CheckpointReason CheckpointAnswer
-
-resumeCheckpoint :: IssueState -> CheckpointReason -> CheckpointAnswer -> IssueState
-resumeCheckpoint s reason answer = persistApprovalAnswer reason answer s
-
-applyIssueResume :: Maybe IssueResume -> IssueState -> Either Reason IssueState
-applyIssueResume Nothing s = Right s
-applyIssueResume (Just (ResumeIssueCheckpoint reason answer)) s
-  | s.pendingCheckpoint == Just reason = Right (resumeCheckpoint s reason answer)
-  | otherwise                          = Left InvalidCheckpointResume
-
--- persistApprovalAnswer 按 reason 更新机器状态：ConfirmReport reject -> rejectedCheckpoint；
--- ConfirmFixPlan reject 在 fast-path pending 时 -> FastPathRejected，否则 -> rejectedCheckpoint；
--- revise 保持对应 report/analysis 为 draft；ConfirmFixCompletion revise -> ApprovalRevisionRequested feedback。
-
-normalizeIssuePath :: IssueReport -> Maybe ApprovalReport -> IssuePath
-normalizeIssuePath report (Just approval)
-  | fastPathApproval approval == Pending  = FastPathPending
-  | fastPathApproval approval == Approved = FastPathApproved
-  | fastPathApproval approval == Rejected = FastPathRejected
-normalizeIssuePath report _
-  | issuePathField report == Just StandardPath = StandardPath
-  | isNothing (issuePathField report) && reportStatus report == ArtifactConfirmed = StandardPath
-  | otherwise                             = PathUndecided
-
-fastPathApproval :: ApprovalReport -> ApprovalStatus
-fastPathApproval approval = namedApproval approval "issue-fast-path"
-```
-
-`restoreIssueStage` 从仓库事实选下一步（新增能力而非坏掉的既有行为 → 路由 `cs-feat`）：
-
-```haskell
-restoreIssueStage :: IssueState -> EntryIntent -> IssueOutcome
-restoreIssueStage(s, intent)
-  | ambiguousTarget(s, intent)                          -> NeedsHuman "which issue?"
-  | isNewCapability(intent)                             -> RoutedTo (ExternalSkill "cs-feat")
-  | Just reason <- s.pendingCheckpoint                 -> HumanCheckpoint reason
-  | Just reason <- s.rejectedCheckpoint                -> Blocked (OwnerRejectedIssueCheckpoint reason)
-  | s.hasFixNote && s.reviewStatus == Missing           -> RoutedTo (IssueStage CodeReview)
-  | s.hasFixNote && s.reviewStatus == Blocking          -> RoutedTo (IssueStage Fix)
-  | s.hasFixNote && s.reviewStatus == Passed
-  , s.fixCompletionApproval == ApprovalMissing          -> RoutedTo (IssueStage Fix)
-  | s.hasFixNote && s.reviewStatus == Passed
-  , s.fixCompletionApproval == ApprovalPending          -> Blocked "pending fix approval lacks checkpoint state"
-  | s.hasFixNote && s.reviewStatus == Passed
-  , s.fixCompletionApproval == ApprovalRejected         -> Blocked "fix completion rejected"
-  | s.hasFixNote && s.reviewStatus == Passed
-  , s.fixCompletionApproval is ApprovalRevisionRequested _ -> RoutedTo (IssueStage Fix)
-  | s.hasFixNote && s.reviewStatus == Passed
-  , s.fixCompletionApproval == ApprovalApproved         -> Completed summary
-  | not s.hasFixNote && s.reviewStatus /= Missing       -> Blocked "review exists without fix-note"
-  | s.reportStatus /= ArtifactConfirmed                -> RoutedTo (IssueStage Report)
-  | s.issuePath == PathUndecided                        -> NeedsHuman "confirmed report lacks path decision"
-  | s.issuePath == FastPathPending                      -> Blocked "pending fast-path approval lacks checkpoint state"
-  | s.issuePath == FastPathApproved && not (fastPathEligible s)
-                                                            -> NeedsHuman "approved fast path is no longer eligible"
-  | s.issuePath == FastPathApproved                     -> RoutedTo (IssueStage FastPath)
-  | s.issuePath in [StandardPath, FastPathRejected] && s.analysisStatus /= ArtifactConfirmed
-                                                            -> RoutedTo (IssueStage Analyze)
-  | s.issuePath in [StandardPath, FastPathRejected] && s.analysisStatus == ArtifactConfirmed
-                                                            -> RoutedTo (IssueStage Fix)
-  where fastPathEligible x = x.rootCause == RootCauseClear && smallFix(x) && not crossModule(x)
-```
-
-`restoreIssueStage` 是唯一路由真相：启动后扫描 `.codestable/issues/`、读取目标 issue 产物、检查当前 git diff 恢复 `IssueState`，按上方分支选下一步；各 stage 加载哪个 protocol 见下方 Progressive Reference Loading。
-
-## Workflow
-
-主执行主线（每次调用按序走；各 stage "怎么做" 的厚规则见对应 protocol，本节只定顺序与边界）：
-
-```haskell
-workflow :: IssueRequest -> IssueOutcome
-workflow req = do
-  intent <- preflight req >>= parseEntryIntent
-  state <- restoreIssueState req.repoFacts
-  resumed <- fromEither Blocked (applyIssueResume req.checkpointResume state)
-  executeOrRoute (restoreIssueStage resumed intent) >>= exitRecoverable
-
-preflight         -- 读 .codestable/attention.md；缺失 -> route to cs-onboard；不得用 AGENTS.md/CLAUDE.md 代替
-parseEntryIntent  -- flag > compat-preset > utterance；repoFacts override requestedStage；空参不推断 stage
-restoreIssueState -- preflight 后扫 .codestable/issues/ + artifact + git diff 恢复 IssueState；typed resume 精确匹配 pending checkpoint 后先持久化
-restoreIssueStage -- 从已应用 resume 的 state 选 next stage（见 Spec）；
-                  -- 新增能力（非 bug）-> route to cs-feat
-loadStageProtocol -- stageProtocol 映射（见下节）；进 stage 才加载该 stage 一个 protocol
-executeOrRoute    -- report/analyze 落盘 artifact；fix 循环修复+验证+写 fix-note；遇 HumanCheckpoint 必停
-exitRecoverable   -- fix-note 必出（根因/改动/验证/遗留风险），next stage 或 checkpoint reason 明确
-```
-
-## 文件放哪儿
-
-```text
-.codestable/issues/{YYYY-MM-DD}-{slug}/
-├── {slug}-report.md
-├── {slug}-analysis.md      # standard 路径必有；fast-track 不生成
-├── {slug}-fix-note.md
-├── {slug}-review.md
-└── approval-report.md       # 仅需 owner 决策时；fast-path 选择从这里恢复
-```
-
-日期取发现/提报问题当天。`fix-note.md` 是必出产物，即使走快速通道也要写。
-
-## Progressive Reference Loading
-
-```haskell
-stageProtocol :: Stage -> Protocol
-stageProtocol Report     = "references/report/protocol.md"
-stageProtocol Analyze    = "references/analyze/protocol.md"
-stageProtocol Fix        = "references/fix/protocol.md"   -- 必要时 references/fix/reference.md
-stageProtocol CodeReview = skill "cs-code-review"         -- 公开横切 skill
-stageProtocol FastPath   = stageProtocol Fix              -- 确认后直接 fix（见「快速通道」），仍写 fix-note
-
--- 惰性加载（progressive reference loading）：进入某阶段才加载该阶段一个 protocol，不在启动时读全部
--- 禁止：启动即读全部 references；用 fix 协议做 report；code review 未过就当修复完成
-```
-
-## 快速通道
-
-快速通道（`FastPath`）是 `cs-issue` 内部模式，不是单独技能。必须同时满足：
-
-1. 读代码后能指出明确根因。
-2. 修复很小，通常 1-2 处。
-3. 无跨模块影响风险。
-
-不满足就走标准 report → analyze → fix。进入标准路径后默认不再二次改判，避免阶段之间口径漂移。
-
-## 人工 checkpoint
-
-三个 checkpoint 都必须先把候选 artifact 和 pending decision 写入 `approval-report.md`；顶层只消费
-`pendingCheckpoint`，owner 回答必须以 `ResumeIssueCheckpoint reason answer` 进入 request；reason 匹配后先更新 approval 状态和目标 artifact，再恢复路由：
-
-```haskell
-onCheckpoint :: CheckpointReason -> Action
-onCheckpoint ConfirmReport        = 停等用户确认已持久化的 report draft
-onCheckpoint ConfirmFixPlan       = 停等用户确认已持久化的修复方案和风险
-onCheckpoint ConfirmFixCompletion = 停等用户确认 review 已通过的修复结果
-```
-
-fix 阶段的验证结果和 review blocking 处理按协议循环，不在每步默认打断用户。
-
-## Failure Behavior
-
-```haskell
-needsHuman :: Situation -> Bool
-needsHuman s = attentionMissing s          -- .codestable/attention.md 缺失 -> 先 cs-onboard
-            || noRecoverableIssue s        -- 无可恢复 issue 目标
-            || ambiguousScope s            -- issue 范围模糊
-            || needsProductJudgement s     -- 修复需产品判断而非定点修复
-```
-
-报告：当前 issue 目录、阻塞原因、下一步用户动作、已写文件、是否可安全重试。
-
-## 退出条件
-
-```haskell
-mayExit :: State -> Bool
-mayExit s = fixNoteComplete s   -- {slug}-fix-note.md 已写明根因、改动、验证和遗留风险
-         && reviewSettled s     -- 必要 code review 已通过或阻塞项已清楚交回
-         && (reviewBlocked s || s.fixCompletionApproval == ApprovalApproved)
-```
-
-修复暴露新 feature 需求时，不在 issue 内偷做，另开 `cs-feat`。
+- 当前主流程创建 reviewer 前，先发现当前会话可调用的 subagent 创建与管理能力。项目上下文有显式创建方式/model 约束时先遵守。达到审查质量基线后，优先选择与实现者异构的 agent，并显式指定最强稳定 `model`；创建方式依次使用受管理的结构化委派能力、宿主 subagent、本机有界 agent CLI 回退，不得只扫 PATH。
+- 没有合格异构候选时回退同构最强模型。把最终创建方式、agent/model 与回退原因写入 task packet，禁止依赖默认模型。
+- 审查前冻结一个明确目标（diff review 优先 staged diff，也可用明确 range/patch；design review 冻结对应文档版本；audit 冻结 commit + 范围标识），把目标标识写入 task packet；reviewer 返回前不改目标或对应工作树。有 blocking 或未被用户明确接受的 important 时不提交当前候选，也不得创建正式里程碑 commit；处理后重跑验证并重新冻结完整审查目标。
+- 仅在跨会话恢复、agent 交接或隔离 reviewer 需要不可变基线时，且已有 commit 授权，才可在私有工作分支创建明确标记的 WIP/checkpoint commit；它不代表 review 通过或任务完成，交付前按仓库策略 fixup/squash。
+- 本 skill 的确认与验证门槛均满足、blocking 清零且其余 important 已处理或被用户明确接受后，已有 commit 授权时才创建语义原子的正式里程碑 commit；未获授权则只报告可提交状态，不自行提交。
+- 一个独立审查阶段由单一审查目的界定；design review、change review、contract review 与 Epic final acceptance 是不同阶段。只有为本阶段 findings 所作修复的复审，才属于同一阶段并沿用原 reviewer lineage；审查目的变化时开启新阶段。
+- 修复完成后默认进入 change review 审查阶段；仅单行级微小修复可说明后跳过。
+- 每个独立审查阶段的首轮必须由当前主流程创建一个 fresh reviewer，与实现者保持独立；reviewer 单轮执行 `cs-review`，其内部不得创建子 agent。
+- 主流程处理 findings 后先修复并重跑验证，再冻结新的完整审查目标；仅因处理 findings 产生的修复，复审必须沿用同一 reviewer 的同一 session，以 follow-up 继续。复审同时检查完整当前候选与本轮修复增量，逐项报告 `resolved` / `unresolved` / `new findings`；不得只核对旧 finding 或机械打勾。reviewer 独立性要求它独立于实现者，不要求对自身上一轮审查失忆。
+- 同一审查阶段累计最多 3 个有终态报告的轮次；更换 reviewer 不重置计数。只有原 run/session 失败或不可恢复、能力不满足、目标、范围、设计或核心路径发生重大变化、reviewer 声明无法继续独立判断，或 owner 要求第二意见时，才可更换 reviewer；更换时创建 fresh reviewer。超限仍有 blocking 或分歧时交用户裁决，不得继续对轮或宣称完成。
+- reviewer 创建后绑定该运行并记录 run identity：目标有效、能力仍满足，且 reviewer 状态为 running，或 `Awaiting` 携带可查询的同一 run identity 且查询仍为活动态时为健康；状态健康时等待终态报告，不因后来发现更优创建方式而取消、重复创建或并行补发。仅在运行明确失败或终止无报告、idle / `Awaiting` 且无可恢复 run identity、能力不满足或目标失效时，本轮失败且不计轮次；不得盲目重发，先检查 task packet 与 agent 状态，再决定一次有界重试、更换创建方式或交用户。
+- 报告：根因一句话、改动文件、验证结果。
+- 需要跨会话继续时写 `.codestable/work/issue-{slug}.md`（目标 / 现场 / 边界 / 证据 / 验收 / 状态与未决六节；work 文档一律带类型前缀）。完成后先在报告列毕业去向（结论进哪、lesson 沉哪，或明说无可毕业）再删除；目标位置不存在时在清单中建议落点请用户拍板，拍板前不删。用户要求留档则保留。
