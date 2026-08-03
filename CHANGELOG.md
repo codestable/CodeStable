@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.1
+
+- Replaced task-shape workflow tiers with minimum sufficient assurance selected from unexcluded risks.
+- Added pre-approval Epic route discovery with a document-owned route map, derived frontier, and explicit HITL decisions.
+- Added conditional shared-language alignment for Feature and Epic design without introducing a mandatory glossary or new gate.
+- Removed stale experiments for retired v1 skill entries and tightened experiment-to-skill consistency checks.
+
 ## 2.0.0
 
 - Reduced the shipped package from the 32 skills in v1.0.4 to 8 thin-harness skills: `cs`,
