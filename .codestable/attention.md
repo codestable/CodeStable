@@ -30,4 +30,4 @@ CodeStable 所有落盘产出的正文用**中文**：plan / design、plan revie
 
 ### 其他
 
-- 调用 `cs-review`（含本仓库所有 CodeStable design review、code review 和修复后复审）时，发起者优先通过 Paseo 创建 fresh reviewer subagent，并与当前主 agent 异构：主 agent 为 Codex 时，首选 `provider=claude`、`model=claude-fable-5`、`thinkingOptionId=high`，不可用则回退 `provider=claude`、`model=claude-opus-5`；主 agent 为 Claude 时，使用 `provider=codex`、`model=gpt-5.6-sol`。指定路径均不可用时停下报告，不静默改用其他 reviewer
+- 调用 `cs-review`（含本仓库所有 CodeStable design review、code review 和修复后复审）时，发起者优先通过 Paseo 创建 fresh reviewer subagent，并与当前主 agent 异构：主 agent 为 Codex 时，首选 `provider=claude`、`model=claude-fable-5`、`thinkingOptionId=high`；没有可用 Fable 账户时，先回退 `provider=claude`、`model=claude-opus-5`，Opus 5 也不可用时才回退同构最强 reviewer。主 agent 为 Claude 时，使用 `provider=codex`、`model=gpt-5.6-sol`；该异构路径不可用时才回退同构最强 reviewer。记录最终 agent/model 与回退原因，不依赖默认模型
