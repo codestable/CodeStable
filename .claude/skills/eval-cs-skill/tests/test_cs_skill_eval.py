@@ -14,6 +14,7 @@ ROOT = EVAL_SKILL.parents[2]
 SCRIPTS = EVAL_SKILL / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
+import config as config_mod          # noqa: E402
 import fixtures as fx_mod            # noqa: E402
 import metrics as metrics_mod       # noqa: E402
 import runner as runner_mod         # noqa: E402
@@ -45,6 +46,19 @@ def test_real_fixtures_all_valid():
 def test_at_least_8_planted_defects():
     n = len(list((EXPERIMENT / "fixtures/planted-defect").glob("*.json")))
     assert n >= 8, "统计功效要求每类 n>=8"
+
+
+def test_repository_experiment_skills_exist():
+    missing = []
+    for config_path in sorted((ROOT / "experiments").glob("*/config.json")):
+        config = config_mod.load_config(config_path.parent)
+        skill_path = config_mod.resolve_skill_path(ROOT, config.skill_under_test)
+        if not skill_path.is_file():
+            missing.append(
+                f"{config_path.relative_to(ROOT)} -> {skill_path.relative_to(ROOT)}"
+            )
+
+    assert missing == [], "实验指向已退役或不存在的 skill:\n" + "\n".join(missing)
 
 
 # ---- planted_defect scorer ----

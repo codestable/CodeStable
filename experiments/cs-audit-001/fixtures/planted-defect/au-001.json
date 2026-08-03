@@ -1,9 +1,0 @@
-{
-  "id": "au-001",
-  "answerType": "findings-recall",
-  "answer": ["RCE: eval 执行外部输入"],
-  "task": {
-    "kind": "audit",
-    "diff": "def handler(req):\n    return eval(req.body)"
-  }
-}

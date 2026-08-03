@@ -1,9 +1,0 @@
-{
-  "id": "au-002",
-  "answerType": "findings-recall",
-  "answer": ["弱哈希: md5 用于签名校验"],
-  "task": {
-    "kind": "audit",
-    "diff": "import hashlib\ndef sign(x):\n    return hashlib.md5(x).hexdigest()"
-  }
-}

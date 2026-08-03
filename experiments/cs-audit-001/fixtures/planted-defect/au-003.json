@@ -1,9 +1,0 @@
-{
-  "id": "au-003",
-  "answerType": "findings-recall",
-  "answer": ["TLS 校验关闭: verify=False"],
-  "task": {
-    "kind": "audit",
-    "diff": "import requests\ndef pull(u):\n    return requests.get(u, verify=False)"
-  }
-}
