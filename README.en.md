@@ -26,11 +26,21 @@ proportionate verification + necessary review / owner gates
 
 Explicit actions dispatch in the same turn by default; they do not acquire a discussion gate first.
 
+Task type determines the engineering method; actual risk determines assurance strength:
+
+```text
+Execution flow = minimum complete loop + the least assurance required by each unexcluded risk
+```
+
+Independent review is not a default step. Each risk adds only the assurance directly required by that risk.
+
 Requests to discuss first converge in the current session and hand off in the same turn.
 
 `cs` aligns facts, language, and boundaries; with existing execution authorization it enters `cs-feat`, `cs-issue`, or `cs-epic`. Discussion itself grants no authorization.
 
 Discussion creates no work cursor or transcript. Unresolved discussion is not recoverable across sessions. Advice requests only advise, and an overview writes no files.
+
+A shared language activates only for material ambiguity: ordinary changes reuse existing terms with zero new artifacts, Features align local semantics, and Epics align cross-concept relationships as part of Route Clear.
 
 ## Start in 5 Minutes
 
@@ -123,6 +133,11 @@ Ordinary work creates no CodeStable stage docs; the diff, tests, and delivery su
 ### The Two-Layer Epic Model
 
 Large initiatives separate durable contracts from temporary execution state. A permanent Epic document owns goals, scope, acceptance, approved items, key decisions, and final delivery.
+
+When the route is still unclear, the permanent Epic document itself is the route map; decision dependencies derive the frontier.
+
+The agent resolves facts, and genuine product judgment and trade-offs enter HITL. Once the route is clear, reviewable,
+and executable, existing design review, owner confirmation, and execution begin.
 
 A temporary work cursor keeps only its pointer, approved revision, progress, policies, and evidence.
 

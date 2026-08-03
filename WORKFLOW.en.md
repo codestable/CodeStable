@@ -13,10 +13,11 @@ unsure which entry    -> cs
 discuss / align first -> cs -> cs-feat / cs-issue / cs-epic
 onboard / v1 upgrade  -> cs-onboard
 diagnose / investigate -> cs-issue (no product diff; no change review)
-new capability -> cs-feat -> cs-review (default; documentation-only tiny changes may be skipped with an explanation)
-authorized repair of bug / performance regression / broken behavior -> cs-issue -> cs-review (default; single-line tiny fixes may be skipped with an explanation)
-equivalent refactor -> cs-refactor -> cs-review (cross-module, public-interface, or performance-sensitive work; tiny cleanups may be skipped with an explanation)
+new capability -> cs-feat
+authorized repair of bug / performance regression / broken behavior -> cs-issue
+equivalent refactor -> cs-refactor
 large initiative      -> cs-epic -> cs-feat / cs-issue / cs-refactor
+independent review / audit -> cs-review
 lessons and memory    -> cs-keep
 ```
 
@@ -43,14 +44,62 @@ lessons and memory    -> cs-keep
   duplicate-confirmation privilege. When only discussion is authorized, `cs` returns the confirmed conclusions
   and recommends `cs-keep` or the owning skill for asset graduation.
 
-Execution strength follows risk:
+### Shared Language
 
-- `cs-feat` normally understands, implements, and verifies directly. Public contracts, data,
-  authorization, concurrency, or real design tradeoffs require owner confirmation first.
+Shared language is a conditional design discipline, not a fixed phase for every task:
+
+- Ordinary changes that reuse existing unambiguous terms add no artifact, question, or gate. It activates only when a new or overloaded term or a neighboring concept boundary can change goals, behavior, ownership, factual
+  authority, lifecycle, contracts, or acceptance.
+- A Feature requires local semantic clarity: a canonical name, tight definition, excluded meaning, and one boundary scenario keep implementation, API, schema, docs, and tests aligned.
+- An Epic requires conceptual-system clarity: cross-concept relationships, authority, and invariants live in the permanent Epic and form part of Route Clear.
+- The agent verifies repository facts; product meaning and concept boundaries enter HITL after facts, options, and trade-offs are explicit. This is not a new owner gate and does not offload researchable facts.
+- Stable domain terms use existing canonical domain docs; architecture roles stay in the current design. Without a home, definitions stay in the task packet or permanent Epic with a suggested destination that does not block
+  delivery and does not automatically create `CONTEXT.md` or a parallel glossary.
+- Design / contract review checks define-before-use, one meaning per term, and scenario consistency, but cannot prove owner understanding. A post-review terminology question that exposes a contract-level mismatch means the
+  candidate is not clear; explaining an implementation detail alone does not reopen design.
+
+Task type determines the engineering method; actual risk determines assurance strength:
+
+```text
+Execution flow = minimum complete loop + the least assurance required by each unexcluded risk
+```
+
+Independent review is not a default step. Each risk adds only the assurance directly required by that risk.
+
+Before selecting the minimum complete loop, perform one silent, bounded check against the goal and the
+paths, symbols, trust boundaries, and effects outside the codebase that the change is expected to or actually
+does touch. This check creates no itemized report or artifact. If a risk still cannot be ruled out after the
+least-cost targeted check, treat it as present or continue targeted diagnosis until it can be decided; not noticing a risk is not a valid reason to lower assurance. Size is
+only evidence about impact: line count, file count, prose versus code, and task kind do not replace semantic risk.
+
+Add only the assurance directly required by each risk fact:
+
+- An uncertain goal, root cause, or implementation direction, or a real trade-off that changes the result -> targeted diagnosis, a question, or design; obtain owner confirmation when the owner must choose.
+- A change that breaks compatibility or changes a public contract used by multiple consumers -> contract confirmation, matching contract tests, and canonical documentation; add independent review when compatibility
+  or consumer impact remains uncertain.
+- A change that changes authorization, security, privacy, or another trust boundary -> targeted threat/security evidence and independent review; obtain confirmation when the owner's authorization boundary changes.
+- A change that changes persisted data, schema, or a migration path -> compatibility/migration verification, applicable backup and rollback/recovery evidence, and independent review; confirm destructive or irreversible work.
+- A change that changes concurrency, ordering, or consistency semantics -> matching race/order verification and independent review; confirm when the semantics involve a trade-off.
+- A change that creates an irreversible effect outside the codebase -> confirm before execution, provide applicable dry-run, idempotency, compensation, or recovery evidence, and add independent review.
+- Work that addresses a performance regression or changes a performance-sensitive path -> targeted profiling, a baseline, or a before/after comparison; add independent review only when SLO, cost, or propagation is material
+  or uncertain.
+- A change that has broad impact or can propagate failure across modules -> expand to affected regression checks; add a full suite or independent review only when consumer/failure scope remains uncertain or failure cost is high.
+
+When the user says “flow is too heavy / this is only a small change / documentation exceeds the code,” this triggers
+a reassessment of risk and assurance, not an unconditional bypass of safety gates. Stop adding artifacts and
+recalculate; keep a gate only by naming the concrete risk that prevents lowering it. Continuity needs are not risk
+gates: cross-session work, multi-agent handoff, or an explicit request for a durable record adds only one temporary
+work cursor. Ordinary work uses the lowest-cost authoritative targeted verification and does not automatically stack
+a full suite, browser smoke, or independent review.
+
+- `cs-feat` starts with the minimum complete loop and adds assurance only for the risk facts above;
+  it asks for confirmation only when an owner choice is required.
 - `cs-issue` first establishes a repeatable failure signal for the user's actual symptom. A diagnosis-only request leaves
   zero product changes and reports a confirmed root cause, falsifiable hypothesis, or insufficient evidence; once repair
   is authorized, the same signal must go from red to green.
-- `cs-refactor` establishes equivalence evidence first and keeps verification green after each step.
+- `cs-refactor` establishes equivalence evidence first and keeps verification green after each step; once all steps are
+  done it runs a regression covering affected call sites and modules, and only a full suite is added when an independent
+  risk requires it.
 - A performance regression or anomalous slowdown enters `cs-issue`; without an existing failure, proactive optimization
   under behavioral equivalence remains in `cs-refactor`.
 - `cs-epic` keeps approved delivery contracts in a permanent Epic document and active execution in
@@ -72,9 +121,11 @@ Execution strength follows risk:
   constraints belong to project context, not to a shipped skill. Record the final creation method, agent/model,
   and fallback reason in the task packet.
 - Before dispatch, the outer workflow must freeze an explicit review target: prefer a staged diff or
-  explicit range/patch for diff review, freeze the document version for design review, and freeze a
-  commit plus scope for audit. It does not move that target or its worktree until the reviewer returns;
-  a changed target invalidates the round.
+  explicit range/patch for diff review; design review may freeze an existing repository design document
+  or verbatim design text + SHA-256 in the task packet; audit freezes a commit plus scope. With the packet
+  form, the first round sends the text and hash verbatim, and the reviewer reviews that text as the target;
+  a finding-driven follow-up carries the latest full text, previous and current hashes, and repair summary.
+  It does not move that target or its worktree until the reviewer returns; a changed target invalidates the round.
 - `cs-review` is a read-only leaf executor for change, module, or repository review. The outer
   workflow owns fixes and any later review round.
 - With blocking findings or important findings not explicitly accepted by the user, do not commit the
@@ -85,9 +136,10 @@ Execution strength follows risk:
 - A review stage allows at most three completed rounds with terminal reports. Replacing a reviewer does not reset that count.
   Replace one only when the original run/session fails or cannot be recovered, capability is insufficient,
   the target, scope, design, or core path changes materially, the reviewer says it can no longer judge
-  independently, or the owner requests a second opinion. A replacement starts fresh. A formal semantic
-  milestone requires the review gate plus existing commit authorization; a WIP/checkpoint exists only for
-  recovery or an isolated baseline and does not mean approval.
+  independently, or the owner requests a second opinion. A replacement starts fresh. Complete the selected
+  assurance first. A review gate is required only when review was actually triggered, and a formal semantic
+  milestone also requires existing commit authorization; a WIP/checkpoint exists only for recovery or an isolated
+  baseline and does not mean approval.
 - An Epic allows only one `current_item` at a time. This is a serialization constraint, not a per-item owner gate.
   Under the continuous policy, an ordinary item milestone advances automatically; it must not ask whether
   to continue to the next item or return as a terminal result. Per-item pauses require an explicit owner policy
@@ -130,6 +182,32 @@ a durable record; remove it when complete unless the owner asks to retain it.
 ## Epic Lifecycle
 
 An Epic separates durable product intent from temporary execution state and keeps one fact owner:
+
+When the route is still unclear during `proposed + planning`, `cs-epic` performs pre-approval route discovery:
+
+- The permanent Epic document is the only route document; during proposed, the permanent Epic document itself is the route map.
+  Precisely stated route questions go under Decisions pending with a readable name, `AFK|HITL`, dependencies, and
+  a resolution method. The frontier is derived only from pending decisions whose dependencies are resolved; it is
+  not stored as another state or list. Route-level fog that cannot yet be stated precisely goes under Still unclear.
+  This does not add issues, a separate map artifact, or a third state system.
+- The agent resolves AFK facts. Only product judgment, user preference, external authority, or a real trade-off
+  enters HITL. The agent first supplies facts, options and trade-offs, a recommendation, and the route impact, but
+  must not answer a HITL question for the owner or treat silence as a choice. Only one HITL frontier decision is
+  presented at a time. HITL is not a new owner gate and does not approve the Epic. No unresolved HITL node may
+  remain at route clear. A still-valid HITL node must be explicitly resolved by the owner or moved out of scope with
+  the owner's explicit confirmation; the agent must not unilaterally declare it out of scope or invalid; a prerequisite
+  involving external authority or side effects still requires separate permission or confirmation.
+- A resolved node moves from Decisions pending to key decisions; newly visible fog becomes a decision, and work
+  outside the destination becomes a non-goal before the frontier is derived again. Decision questions are not
+  copied one-for-one into execution items. The work cursor keeps only the current frontier decision name, next
+  action, blockers, and evidence pointers; before the route is clear, `current_item` stays `null`.
+- The route is clear, reviewable, and executable only when remaining unknowns cannot change goals, scope,
+  non-goals, acceptance, item boundaries, dependencies, or major risks, and stable-ID item contracts name the
+  owning skill, dependencies, and acceptance. Route clear is not a new owner gate; the complete proposed Epic
+  then enters the existing design review and first owner confirmation.
+- Skip route discovery when the route is already clear, only one local technical unknown remains, or the only
+  reason is high risk, file count, or cross-session continuity. The relevant owning skill handles local design
+  and assurance.
 
 - The **permanent Epic document** reuses an existing Epic, RFC, or initiative home when the project
   has one. Otherwise, create `.codestable/epics/{slug}.md` on demand for the first Epic;

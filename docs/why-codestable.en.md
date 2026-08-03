@@ -35,6 +35,14 @@ CodeStable skills are thin: they state what must be achieved, what must not be c
 
 They do not force every task through one set of stages or use a permanent state machine to replace local engineering judgment.
 
+Task type determines the engineering method; actual risk determines assurance strength:
+
+```text
+Execution flow = minimum complete loop + the least assurance required by each unexcluded risk
+```
+
+Independent review is not a default step. Each risk adds only the assurance directly required by that risk.
+
 Context should be thick but loaded only when needed. The current task retrieves project facts, adjacent implementation, historical lessons, and engineering guidance by keyword and situation instead of preloading a manual into every session.
 
 ## Human in the Loop Is Not Approval at Every Step
@@ -52,7 +60,16 @@ Domain terms, requirements, architecture decisions, failed approaches, and accep
 CodeStable keeps one canonical owner for each fact: stable product facts return to project docs, structural
 trade-offs enter ADRs, and experience without a stronger owner is staged in lessons.
 
+A shared language follows the same rule. It activates only when terminology ambiguity can change behavior or a route:
+a Feature converges local semantics, an Epic converges concept relationships, and existing project domain docs keep
+owning stable definitions instead of having every task copy a glossary.
+
 Session-critical facts enter attention, and durable Epic contracts enter permanent Epic documents.
+
+A large initiative whose route is still unclear must not masquerade as a complete plan. The permanent Epic document
+itself is the route map: decision dependencies derive the frontier, the agent resolves facts, and only product
+judgment or real trade-offs enter HITL. Only when the route is clear, reviewable, and executable does an execution
+agent take over. Exploration and the final route share one factual owner rather than a separate issue map.
 
 Only active cross-session state uses a temporary work cursor. Ordinary work relies on the diff, test output, and delivery summary as evidence and creates no extra stage documents.
 

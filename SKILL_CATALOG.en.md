@@ -20,13 +20,27 @@ skill files or a centralized onboard runtime.
 
 Discussion exists only in the current session and creates no work cursor or transcript; stable assets graduate through the owning skill into their canonical homes, while unresolved discussion has no cross-session recovery promise.
 
+A shared language activates only when terminology ambiguity can change behavior or a contract: a Feature converges local semantics, an Epic converges the conceptual system, and ordinary changes add no glossary or gate.
+
 Task skills identify strong signals silently. Ordinary work shows at most one crystallization candidate, while Epic
 items defer candidates to the final graduation list. `cs-keep` evolves lessons through observed / validated / retired;
 mechanical guards come first, and creation or cross-project sharing still requires explicit authorization.
 
+Task type determines the engineering method; actual risk determines assurance strength:
+
+```text
+Execution flow = minimum complete loop + the least assurance required by each unexcluded risk
+```
+
+Independent review is not a default step. Each risk adds only the assurance directly required by that risk.
+
 ## Project Knowledge and Epic Boundary
 
 New projects still precreate only `.codestable/attention.md`, `lessons/`, and `work/`. An Epic reuses an existing project home or creates `.codestable/epics/` only on first need: the permanent doc keeps goals, scope, approved items, decisions, delivery index, and terminal acceptance, while `work/epic-{slug}.md` is only a temporary cursor for the approved revision, execution progress, and `item_progression` / `milestone_commit` / `remote_publish` policies; terminal handling deletes the cursor but retains the permanent archive.
+
+When the route is still unclear, the permanent Epic document itself is the route map: decision dependencies derive
+the frontier, the agent resolves facts, and product judgment or real trade-offs enter HITL. Review and execution
+begin only when the route is clear, reviewable, and executable; no separate map, issue set, or parallel lifecycle is added.
 
 Epics retain three owner gates: the owner confirms decomposition after independent design review; reconfirms changes to goals, scope, non-goals, acceptance, items, or major risks; and finally accepts only after all items complete and a fresh reviewer performs holistic terminal acceptance against the latest owner-approved criteria. The continuous policy adds no artificial gate at an ordinary item boundary.
 

@@ -20,12 +20,25 @@ runtime。
 
 讨论本身只存在于当前会话，不创建 work 游标或 transcript；稳定资产由 owning skill 按 canonical 归宿毕业，未收敛讨论不承诺跨会话恢复。
 
+共享语言只在术语歧义会改变行为或契约时触发：Feature 收敛局部语义，Epic 收敛概念体系；普通改动不新增 glossary 或 gate。
+
 task skill 静默识别强信号，普通任务最多展示一条晶化候选，Epic 子项统一在最终毕业清单处理。
 `cs-keep` 让 lesson 按 observed / validated / retired 演化；机械 guard 优先，新建与跨项目分享仍需显式授权。
+
+任务类型只决定工程方法，实际风险决定保障强度：
+
+```text
+执行流程 = 最小闭环 + 每个未排除风险所要求的最少保障
+```
+
+独立 review 不是默认步骤。一个风险只增加与它直接对应的保障，不自动打开整套流程。
 
 ## 项目知识与 Epic 边界
 
 新项目仍只预建 `.codestable/attention.md`、`lessons/` 与 `work/`。Epic 优先沿用项目已有归宿，否则首次需要时才创建 `.codestable/epics/`：永久文档保存目标、范围、已批准子项、决策、交付索引与终态验收，`work/epic-{slug}.md` 只作批准 revision、执行进度与 `item_progression` / `milestone_commit` / `remote_publish` 策略的临时游标，终态删除游标但保留永久档案。
+
+路线尚不清晰时，永久 Epic 文档本身就是路线地图：决策依赖派生 frontier，agent 解决事实，产品判断
+与真实取舍进入 HITL。路线清晰、可审查、可执行后才送审和执行，不增加独立 map、issue 或平行生命周期。
 
 Epic 保留三道 owner gate：独立 design review 后确认拆解；目标、范围、非目标、验收、子项或重大风险变化时重新确认；全部子项完成并由 fresh reviewer 按最新 owner 已批准标准做终态整体验收后，由 owner 最终接受。连续策略在普通子项边界不新增人工 gate。
 

@@ -12,14 +12,14 @@ argument-hint: "[--range <git-range>] [scope 或 audit 目标]"
 ## 调用边界
 
 - 用户直接调用时，当前 agent 就是 reviewer，不再派生 reviewer。
-- 来源流程派发前冻结一个明确的审查目标（diff review 优先 staged diff，也可用明确的 `--range` 或 patch；design review 冻结对应文档版本；audit 冻结 commit + 范围标识），把审查目标标识写入 task packet；reviewer 返回前不得移动该目标或对应工作树。目标变化则本轮失效；调用方重新冻结完整目标后，按 reviewer lineage 规则决定 follow-up 或更换 reviewer。
+- 来源流程派发前冻结一个明确的审查目标（diff review 优先 staged diff，也可用明确的 `--range` 或 patch；design review 冻结对应文档版本，合法形式是仓库内已有 design 文档版本，或 task packet 内原样全文 + SHA-256；audit 冻结 commit + 范围标识），把审查目标标识写入 task packet。packet 形式首轮把全文与 hash 原样交给 reviewer，reviewer 审查的目标就是该文本；finding-driven follow-up 携带最新全文、前后 hash 与修复摘要。reviewer 返回前不得移动该目标或对应工作树。目标变化则本轮失效；调用方重新冻结完整目标后，按 reviewer lineage 规则决定 follow-up 或更换 reviewer。
 - 来源流程负责在每个独立审查阶段首轮进入本 skill 前完成 reviewer 创建方式与 agent/model 选择并创建 fresh reviewer；首轮 task packet 传入单一审查目的、改动意图、审查目标、不审内容、期望返回格式，以及最终创建方式、agent/model 与回退原因。design review、change review、contract review 与 Epic final acceptance 使用不同阶段；仅因本阶段 findings 修复而复审时，调用方把新的冻结目标和修复摘要作为 follow-up 交给同一 reviewer 的同一 session。
 - follow-up 复审必须检查完整当前候选与本轮修复增量，逐项报告 `resolved` / `unresolved` / `new findings`，不得只核对旧 finding。独立性由调用方建立；reviewer 只需独立于实现者，不要求对自身上一轮审查失忆，本 skill 也不通过再次委派来补建独立视角。
 
 ## 模式
 
 - **diff review**（默认）：审当前工作区 diff 或 `--range` 指定范围，对照本次改动的意图（对话共识、work 文档或 design）。
-- **design review**：审 cs-feat / cs-epic 提交的方案要点或拆解方案，检查需求覆盖、契约影响、风险与取舍是否成立。
+- **design / contract review**：审 cs-feat / cs-epic 提交的方案要点、拆解方案或变化后的 owner 契约，检查需求覆盖、契约影响、共享语言、风险与取舍是否成立。
 - **audit**：用户要求主动扫描时，按用户给的范围（全仓 / 目录 / 维度如安全、性能）做只读审计。范围大时先和用户对齐扫哪里、找什么。
 
 ## 硬门槛
@@ -32,7 +32,7 @@ argument-hint: "[--range <git-range>] [scope 或 audit 目标]"
 
 ## 审查标准
 
-目标不是完美代码，而是确认改动没有降低代码健康、且朝声明的意图前进。**先对照意图与既有约束，再挑结构**：这批改动想解决什么、是否越界、是否漏验证；然后看归属与命名、深度（是否纯穿透层）、接缝是否为想象中的扩展、边界处理。只提会改变正确性或失败代价的点，不机械过检查表；能被 lint / formatter 自动处理的问题不手工阻塞。整体结论三档：**可合 / 有条件可合 / 建议先改再合**。发现分级：
+目标不是完美代码，而是确认改动没有降低代码健康、且朝声明的意图前进。**先对照意图与既有约束，再挑结构**：这批改动想解决什么、是否越界、是否漏验证；然后看归属与命名、深度（是否纯穿透层）、接缝是否为想象中的扩展、边界处理。design / contract review 中，会改变目标、行为、归属、契约或验收的项目术语必须先定义后使用或链接 canonical 定义，同一术语全文同义，概念关系与边界场景一致；已有单义术语或纯实现细节不要求新增 glossary。reviewer 可以发现歧义和契约不可读，不能替 owner 证明理解或决定产品语义。只提会改变正确性或失败代价的点，不机械过检查表；能被 lint / formatter 自动处理的问题不手工阻塞。整体结论三档：**可合 / 有条件可合 / 建议先改再合**。发现分级：
 
 - **blocking**：正确性、安全、数据、并发问题，或与声明意图相悖——**blocking 未解决不得宣称 review 通过**；
 - **important**：维护性、性能、可测试性隐患，需要处理或被用户明确接受；

@@ -40,6 +40,23 @@ Epic 同时需要长期可读的产品意图和短期可变的执行状态。把
   风险和长期 `status`；`work/epic-{slug}.md` 只保存永久文档指针、`approved_revision`、执行
   `phase`、当前子项 ID、各 ID 的进度、下一步、阻塞、`item_progression`、`milestone_commit`、
   `remote_publish`、临时决策记录以及证据或 commit 指针，不复制子项定义、目标、验收或最终结论。
+- 本 ADR 补充批准前路线发现语义：proposed/planning 期间路线尚不清晰时，永久 Epic 文档就是唯一
+  路线文档，同时也是文档内路线地图；不新增独立 map、issue 或第三套状态。可精确陈述的
+  `待决策` 节点记录可读名称、`AFK` / `HITL`、依赖、解决方式与证据，frontier 只由依赖已进入
+  `关键决策` 的节点派生，不另存状态或清单；仍不可精确陈述的内容留在 `尚未明确`。
+- AFK 事实由 agent 调查；需要产品判断、用户偏好、外部权限或真实取舍的 frontier 节点进入 HITL。
+  agent 必须先给事实、选项、取舍、建议与路线影响，不得替 owner 回答，也不得把沉默当作选择；
+  HITL 不是新的 owner gate 或批准。每次解决后，节点在 `待决策`、`尚未明确`、`关键决策` 与
+  `非目标` 之间原子迁移，并重新派生 frontier。
+- route clear 前不得保留未解决的 `HITL` 节点；仍有效的节点必须由 owner 明确解决或确认移入
+  `非目标`，只有因已确认上游决策而机械失效的节点可带依据删除，agent 不得单方判定其超出范围或
+  失效。只有 AFK 局部未知可以下放到子项。prerequisite 涉及外部权限、代码外副作用或不可逆动作时
+  必须是 HITL，执行前仍须另获对应权限或确认，HITL 回答本身不构成授权。
+- 只有会改变目标、范围、非目标、验收、子项边界、依赖或重大风险的路线级迷雾清除，且子项已成为
+  带稳定 ID、owning skill、依赖与验收的可交付契约时，才算路线清晰、可审查、可执行。route clear
+  不是新的 owner gate；之后仍进入既有 design review 和首次 owner 确认。起草 proposed 永久 Epic
+  时同步创建 planning work 游标；批准前 `current_item` 保持 `null`。游标缺失时先查找已有
+  `status: proposed` 的在途 Epic，再补游标，不创建重复 Epic。
 - 永久文档 `status` 只允许 `proposed -> active -> accepted`；owner 放弃时可从任一非终态转为
   `cancelled`，被后继 Epic 取代时可转为 `superseded`。work 的 `phase` 只允许
   `planning -> executing -> acceptance`；阻塞只写 `blocked_by`，解除后仍处于原 phase，不另造状态。

@@ -7,6 +7,8 @@ argument-hint: "[诉求]"
 # cs
 
 判断用户此刻要执行、先讨论、咨询还是了解体系。**明确行动默认直接执行，不先加讨论 gate。**
+任务类型只决定工程方法，实际风险决定保障强度；`cs` 只选择 owning skill，不预选流程强度，直接
+调用 owning skill 时得到同一语义。
 
 ## 判别与行为
 
@@ -21,7 +23,7 @@ argument-hint: "[诉求]"
 ## 会话内讨论与 handoff
 
 - Execute 默认优先级最高；明确行动仍同轮直转。用户显式要求先讨论时才覆盖该默认；owning skill 已可判定时，目标与验收细化留给该 skill。
-- 讨论只存在于当前会话。仓库可核实的事实由 agent 自行调查；一次只问一个真正需要 owner 决定的问题，给出建议与理由，并用精确术语、具体场景和边界案例检验理解。
+- 讨论只存在于当前会话。仓库可核实的事实由 agent 自行调查；一次只问一个真正需要 owner 决定的问题，给出建议与理由，并用精确术语、具体场景和边界案例检验理解。共享语言只在歧义会改变目标、行为、归属、契约或验收时收敛；已有单义术语不增加提问或产物。
 - handoff-ready 时形成内存 packet：目标入口、原始诉求、目标或期望行为、范围、非目标、验收口径、已核实仓库事实及来源、owner 已确认的术语与决策、未决风险、canonical 资产指针或资产候选。
 - 已有执行授权时同轮移交给三个已确认出口 `cs-feat` / `cs-issue` / `cs-epic`，不再询问“是否继续”；只授权讨论时返回已确认结论，并推荐由 `cs-keep` 或对应 owning skill 完成资产毕业。
 - 讨论过程本身不产生授权；handoff 不扩大实现、commit、发布或写入授权，也不替代目标 skill 的硬门槛。收敛到其他入口时按既有 Execute / Advise 规则处理，不附带 handoff 的不重复确认契约。
@@ -40,6 +42,9 @@ argument-hint: "[诉求]"
 | 沉淀经验、教训、"记住这个" | `cs-keep` |
 | 仓库接入 / v1 升级 | `cs-onboard` |
 
+大而路线仍不清晰时也只交给 `cs-epic`；是否需要批准前路线发现由 `cs-epic` 根据路线级迷雾判断，
+`cs` 不创建地图、issue 或平行设计状态。
+
 一次只转一个入口；用户同时给出两个独立诉求时，问先做哪个。转入不扩大授权：目标 skill 的硬门槛、checkpoint 与写入规则照常生效。
 
 ## 体系速读
@@ -48,6 +53,8 @@ CodeStable 是一层薄研发纪律加一个项目记忆闭环。项目记忆在
 
 Epic 采用职责互斥的双层文档：永久 Epic 上下文优先沿用项目已有 Epic / RFC / initiative 归宿，否则首次使用时按需创建 `.codestable/epics/`；临时 `.codestable/work/epic-{slug}.md` 只保存执行游标，完成后清理。`cs-goal` 中有价值的目标契约、恢复、人工门槛和终态验收已并入 `cs-epic`，但不恢复 `cs-goal` 入口、goal package、`state.yaml`、逐轮 iteration 报告或 runtime gate。
 
-v1 的 24 个旧入口（cs-feat-design、cs-goal、cs-audit、cs-note、cs-feedback、cs-roadmap 系等）已并入上表：设计与需求澄清是 cs-feat / cs-epic 的内置步骤，审计是 cs-review 的模式，沉淀统一走 cs-keep。
+v1 的 24 个旧入口（cs-feat-design、cs-goal、cs-audit、cs-note、cs-feedback、cs-roadmap 系等）已并入
+上表：设计与需求澄清是按风险或 Epic 契约触发的可用保障，审计是 cs-review 的模式，沉淀统一走
+cs-keep。
 
 导览与推荐本身不写任何文件。

@@ -430,13 +430,18 @@ def test_cs_session_discussion_and_handoff_contract_is_bilingual() -> None:
     for anchor in (
         "Explicit action dispatches in the same turn by default",
         "the user explicitly asks to discuss first",
+        "repository facts still cannot identify",
+        "would materially change",
         "Discussion exists only in the current session",
         "does not create a discussion work cursor",
         "Unresolved discussion is not recoverable across sessions",
         "existing execution authorization",
         "must not ask whether to continue",
         "The handoff does not expand authorization",
+        "the owning skill's review, verification, or owner gates",
         "Raw questions, answers, unresolved discussion, and candidate branches are not persisted",
+        "only when it is hard to reverse",
+        "the result of a real trade-off",
         "When no canonical home exists, ask the owner to choose one",
         "Outside the three confirmed handoff targets",
     ):
@@ -470,9 +475,6 @@ def test_issue_diagnosis_and_authorized_fix_contract_is_bilingual() -> None:
     for anchor in (
         "只诊断 / 排查",
         "获授权修复 bug / 性能回退 / 行为异常",
-        "默认；仅文案级微小改动可说明后跳过",
-        "默认；仅单行级微小修复可说明后跳过",
-        "跨模块大范围、公开 interface 或性能敏感路径",
         "只要求诊断时保持零产品改动",
         "已证实根因、可证伪假设或证据不足",
         "性能回退或异常变慢",
@@ -483,15 +485,111 @@ def test_issue_diagnosis_and_authorized_fix_contract_is_bilingual() -> None:
     for anchor in (
         "diagnose / investigate",
         "authorized repair of bug / performance regression / broken behavior",
-        "default; documentation-only tiny changes may be skipped with an explanation",
-        "default; single-line tiny fixes may be skipped with an explanation",
-        "cross-module, public-interface, or performance-sensitive work",
         "A diagnosis-only request leaves zero product changes",
         "confirmed root cause, falsifiable hypothesis, or insufficient evidence",
         "performance regression or anomalous slowdown",
         "proactive optimization under behavioral equivalence",
     ):
         assert anchor in en_workflow
+
+
+def test_minimum_sufficient_assurance_contract_is_bilingual() -> None:
+    zh_docs = (
+        _read("README.md"),
+        _read("WORKFLOW.md"),
+        _read("SKILL_CATALOG.md"),
+        _read("docs/why-codestable.md"),
+    )
+    en_docs = (
+        _read("README.en.md"),
+        _read("WORKFLOW.en.md"),
+        _read("SKILL_CATALOG.en.md"),
+        _read("docs/why-codestable.en.md"),
+    )
+
+    for document in zh_docs:
+        for anchor in (
+            "执行流程 = 最小闭环 + 每个未排除风险所要求的最少保障",
+            "任务类型只决定工程方法，实际风险决定保障强度",
+            "独立 review 不是默认步骤",
+            "一个风险只增加与它直接对应的保障",
+        ):
+            assert _contains_contract(document, anchor)
+
+    for document in en_docs:
+        for anchor in (
+            "Execution flow = minimum complete loop + the least assurance required by each unexcluded risk",
+            "Task type determines the engineering method; actual risk determines assurance strength",
+            "Independent review is not a default step",
+            "Each risk adds only the assurance directly required by that risk",
+        ):
+            assert anchor in document
+
+    public_workflow = _read("WORKFLOW.md") + _read("WORKFLOW.en.md")
+    for stale in (
+        "默认；仅文案级微小改动可说明后跳过",
+        "默认；仅单行级微小修复可说明后跳过",
+        "default; documentation-only tiny changes may be skipped with an explanation",
+        "default; single-line tiny fixes may be skipped with an explanation",
+    ):
+        assert stale not in public_workflow
+
+
+def test_workflow_publishes_risk_mapping_and_packet_design_targets_bilingually() -> None:
+    zh = " ".join(_read("WORKFLOW.md").split())
+    en = " ".join(_read("WORKFLOW.en.md").split())
+
+    for anchor in (
+        "一次静默、有界核对",
+        "不能排除时先按风险存在处理",
+        "不得以“没有注意到风险”作为降级依据",
+        "独立审查 / 审计 -> cs-review",
+        "破坏兼容性或改变多消费者依赖的公开契约",
+        "改变权限、安全、隐私或其他信任边界",
+        "改变持久化数据、schema 或迁移路径",
+        "改变并发、顺序或一致性语义",
+        "产生不可恢复的代码外副作用",
+        "性能回退或性能敏感路径变化",
+        "改动影响面广或失败可跨模块传播",
+        "流程太重 / 只是小改动 / 文档比代码多",
+        "不是无条件跳过安全门槛",
+        "连续性需要不是风险门槛",
+        "仓库内已有 design 文档版本",
+        "task packet 内原样全文 + SHA-256",
+        "reviewer 审查的目标就是该文本",
+        "最新全文、前后 hash 与修复摘要",
+        "实际触发 review 时才要求通过审查门槛",
+    ):
+        assert anchor in zh
+
+    for anchor in (
+        "one silent, bounded check",
+        "If a risk still cannot be ruled out after the least-cost targeted check, treat it as present",
+        "not noticing a risk is not a valid reason to lower assurance",
+        "independent review / audit -> cs-review",
+        "breaks compatibility or changes a public contract used by multiple consumers",
+        "changes authorization, security, privacy, or another trust boundary",
+        "changes persisted data, schema, or a migration path",
+        "changes concurrency, ordering, or consistency semantics",
+        "creates an irreversible effect outside the codebase",
+        "addresses a performance regression or changes a performance-sensitive path",
+        "has broad impact or can propagate failure across modules",
+        "flow is too heavy / this is only a small change / documentation exceeds the code",
+        "not an unconditional bypass of safety gates",
+        "Continuity needs are not risk gates",
+        "an existing repository design document",
+        "verbatim design text + SHA-256 in the task packet",
+        "the reviewer reviews that text as the target",
+        "latest full text, previous and current hashes, and repair summary",
+        "A review gate is required only when review was actually triggered",
+    ):
+        assert anchor in en
+
+    assert "公开契约、数据、权限、并发或真实方案取舍先经用户确认" not in zh
+    assert (
+        "Public contracts, data, authorization, concurrency, or real design "
+        "tradeoffs require owner confirmation first"
+    ) not in en
 
 
 def test_workflow_owns_epic_and_legacy_knowledge_contracts() -> None:
@@ -576,6 +674,116 @@ def test_workflow_owns_epic_and_legacy_knowledge_contracts() -> None:
     assert "temporary work cursor" in en_readme
     assert "串行连续推进" in zh_catalog
     assert "serially and continuously" in en_catalog
+
+
+def test_epic_wayfinding_contract_is_bilingual_and_keeps_one_document_owner() -> None:
+    zh_docs = (
+        _read("README.md"),
+        _read("WORKFLOW.md"),
+        _read("SKILL_CATALOG.md"),
+        _read("docs/why-codestable.md"),
+    )
+    en_docs = (
+        _read("README.en.md"),
+        _read("WORKFLOW.en.md"),
+        _read("SKILL_CATALOG.en.md"),
+        _read("docs/why-codestable.en.md"),
+    )
+
+    for document in zh_docs:
+        assert _contains_contract(document, "路线尚不清晰")
+        assert _contains_contract(document, "路线清晰、可审查、可执行")
+        assert _contains_contract(document, "永久 Epic 文档本身就是路线地图")
+    for document in en_docs:
+        assert _contains_contract(document, "route is still unclear")
+        assert _contains_contract(document, "clear, reviewable, and executable")
+        assert _contains_contract(document, "permanent Epic document itself is the route map")
+
+    zh_workflow = " ".join(zh_docs[1].split())
+    en_workflow = " ".join(en_docs[1].split())
+    for anchor in (
+        "永久 Epic 文档就是唯一路线文档",
+        "在 proposed 阶段，永久 Epic 文档本身就是路线地图",
+        "frontier 只由依赖已经解决的待决策派生",
+        "待决策",
+        "尚未明确",
+        "不得替 owner 回答 HITL 问题",
+        "HITL 不是新的 owner gate",
+        "route clear 前不得保留未解决的 HITL 节点",
+        "仍有效的 HITL 节点必须由 owner 明确解决或确认移入 `非目标`",
+        "涉及外部权限或副作用的 prerequisite 仍须另获对应权限或确认",
+        "不新增独立 issue、map 或第三套状态",
+        "route clear 不是新的 owner gate",
+        "现有 design review",
+        "`current_item` 保持 `null`",
+    ):
+        assert anchor in zh_workflow
+    for anchor in (
+        "The permanent Epic document is the only route document",
+        "during proposed, the permanent Epic document itself is the route map",
+        "frontier is derived only from pending decisions whose dependencies are resolved",
+        "Decisions pending",
+        "Still unclear",
+        "must not answer a HITL question for the owner",
+        "HITL is not a new owner gate",
+        "No unresolved HITL node may remain at route clear",
+        "A still-valid HITL node must be explicitly resolved by the owner or moved out of scope with the owner's explicit confirmation",
+        "a prerequisite involving external authority or side effects still requires separate permission or confirmation",
+        "does not add issues, a separate map artifact, or a third state system",
+        "Route clear is not a new owner gate",
+        "existing design review",
+        "`current_item` stays `null`",
+    ):
+        assert anchor in en_workflow
+    assert "`Decisions pending`" not in en_workflow
+    assert "`Still unclear`" not in en_workflow
+
+
+def test_shared_language_contract_is_bilingual() -> None:
+    zh_docs = (
+        _read("README.md"),
+        _read("SKILL_CATALOG.md"),
+        _read("docs/why-codestable.md"),
+    )
+    en_docs = (
+        _read("README.en.md"),
+        _read("SKILL_CATALOG.en.md"),
+        _read("docs/why-codestable.en.md"),
+    )
+    for document in zh_docs:
+        assert "共享语言" in document
+    for document in en_docs:
+        assert "shared language" in document
+
+    zh_workflow = " ".join(_read("WORKFLOW.md").split())
+    en_workflow = " ".join(_read("WORKFLOW.en.md").split())
+    for anchor in (
+        "共享语言是条件式设计纪律",
+        "普通改动沿用已有单义术语时不增加产物",
+        "Feature 要求局部语义清晰",
+        "Epic 要求概念体系清晰",
+        "仓库事实由 agent 核实",
+        "产品含义与概念边界进入 HITL",
+        "不自动创建 `CONTEXT.md`",
+        "不是新的 owner gate",
+    ):
+        assert anchor in zh_workflow
+    for anchor in (
+        "Shared language is a conditional design discipline",
+        "Ordinary changes that reuse existing unambiguous terms add no artifact",
+        "A Feature requires local semantic clarity",
+        "An Epic requires conceptual-system clarity",
+        "The agent verifies repository facts",
+        "product meaning and concept boundaries enter HITL",
+        "does not automatically create `CONTEXT.md`",
+        "is not a new owner gate",
+    ):
+        assert anchor in en_workflow
+
+
+def test_public_workflows_stay_within_document_size_limit() -> None:
+    assert len(_read("WORKFLOW.md").splitlines()) <= 300
+    assert len(_read("WORKFLOW.en.md").splitlines()) <= 300
 
 
 def test_project_learning_lifecycle_is_bilingual_and_low_interruption() -> None:

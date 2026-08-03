@@ -14,6 +14,19 @@ LOCAL_SKILLS = ROOT / ".claude/skills"
 
 TASK_SKILLS = ("cs-feat", "cs-issue", "cs-refactor", "cs-epic")
 ORDINARY_TASK_SKILLS = ("cs-feat", "cs-issue", "cs-refactor")
+MINIMUM_SUFFICIENT_ASSURANCE_CONTRACT = (
+    "执行流程 = 最小闭环 + 每个未排除风险所要求的最少保障",
+    "一次静默、有界核对",
+    "不能排除时先按风险存在处理",
+    "不得以“没有注意到风险”作为降级依据",
+    "风险事实 → 增加的保障",
+    "一个风险只增加与它直接对应的保障",
+    "不自动启用整套 design、全量回归、独立 review、work 文档或 Epic final acceptance 路径",
+    "行数、文件数、文案/代码类型和 task kind 都不是风险的替代指标",
+    "流程太重 / 只是小改动 / 文档比代码多",
+    "不是无条件跳过安全门槛",
+    "停止继续增加产物并重算",
+)
 LEGACY_KNOWLEDGE_DIRS = {
     ".codestable/roadmap/",
     ".codestable/features/",
@@ -313,6 +326,68 @@ def test_confirmed_cs_handoff_avoids_duplicate_intake_without_expanding_authorit
     assert "同一会话由 `cs` 交入且带已确认 handoff" not in refactor
 
 
+def test_shared_language_contract_is_published_across_discussion_feature_epic_and_review() -> None:
+    _, cs = _read_skill(SKILLS / "cs/SKILL.md")
+    _, feat = _read_skill(SKILLS / "cs-feat/SKILL.md")
+    feat_language = (SKILLS / "cs-feat/references/shared-language.md").read_text(
+        encoding="utf-8"
+    )
+    _, epic = _read_skill(SKILLS / "cs-epic/SKILL.md")
+    epic_language = (SKILLS / "cs-epic/references/shared-language.md").read_text(
+        encoding="utf-8"
+    )
+    wayfinding = (SKILLS / "cs-epic/references/wayfinding.md").read_text(
+        encoding="utf-8"
+    )
+    _, review = _read_skill(SKILLS / "cs-review/SKILL.md")
+
+    assert "共享语言只在歧义会改变目标、行为、归属、契约或验收时收敛" in cs
+    assert "已有单义术语不增加提问或产物" in cs
+
+    assert "references/shared-language.md" in feat
+    assert _contains_contract(feat, "共享语言分支与完整 design 独立触发")
+    assert "写入现有交付摘要，不为术语另建 artifact" in feat
+    assert "写入既有 work 游标的 `边界` 节，不为术语新建 work" in feat
+    for anchor in (
+        "普通改动沿用已有单义词汇时跳过",
+        "canonical 名称、紧凑定义、排除含义和一个边界场景",
+        "不自动创建 `CONTEXT.md`",
+        "实现、API、schema、文档与测试使用同一含义",
+    ):
+        assert _contains_contract(feat_language, anchor), anchor
+
+    assert "references/shared-language.md" in epic
+    assert _contains_contract(epic, "可判定的 Language Clear 条件")
+    permanent = epic.split("永久文档最小结构", 1)[1].split(
+        "work 游标最小结构", 1
+    )[0]
+    cursor = epic.split("work 游标最小结构", 1)[1].split(
+        "永久 `status`", 1
+    )[0]
+    assert "## 共享语言与概念边界" in permanent
+    assert "## 共享语言与概念边界" not in cursor
+    for anchor in (
+        "术语歧义不新增状态",
+        "仓库事实走 `AFK`",
+        "产品含义或概念边界走 `HITL`",
+        "一条具体的端到端或边界场景",
+        "不自动创建 `CONTEXT.md`",
+        "不是新的 owner gate",
+    ):
+        assert _contains_contract(epic_language, anchor), anchor
+    assert "术语歧义" in wayfinding
+    assert "会改变路线的术语已经单义化" in wayfinding
+
+    for anchor in (
+        "design / contract review",
+        "先定义后使用",
+        "同一术语全文同义",
+        "不能替 owner 证明理解",
+        "已有单义术语或纯实现细节不要求新增 glossary",
+    ):
+        assert _contains_contract(review, anchor), anchor
+
+
 def test_task_skills_retrieve_legacy_knowledge_read_only() -> None:
     for skill_name in TASK_SKILLS:
         _, body = _read_skill(SKILLS / skill_name / "SKILL.md")
@@ -577,9 +652,6 @@ def test_review_reuses_one_reviewer_lineage_for_finding_driven_repairs() -> None
         assert "按需重新发起" not in caller
 
     trigger_contract = {
-        "cs-feat": "改动完成后默认进入 change review 审查阶段",
-        "cs-issue": "修复完成后默认进入 change review 审查阶段",
-        "cs-refactor": "完成后进入 change review 审查阶段",
         "cs-epic": "交确认前进入 design review 审查阶段",
     }
     for skill_name, anchor in trigger_contract.items():
@@ -600,6 +672,150 @@ def test_review_reuses_one_reviewer_lineage_for_finding_driven_repairs() -> None
     assert "可承接来源流程发给同一 session 的 follow-up" in review
     assert "目标变化则本轮失效，由调用方重新冻结后创建 fresh reviewer" not in review
     assert "在进入本 skill 前完成 reviewer 创建方式与 agent/model 选择并创建 fresh reviewer" not in review
+
+
+def test_ordinary_task_skills_publish_minimum_sufficient_assurance() -> None:
+    for skill_name in ORDINARY_TASK_SKILLS:
+        _, skill = _read_skill(SKILLS / skill_name / "SKILL.md")
+        for anchor in MINIMUM_SUFFICIENT_ASSURANCE_CONTRACT:
+            assert _contains_contract(skill, anchor), (
+                f"{skill_name}: missing minimum-assurance contract {anchor!r}"
+            )
+
+
+def test_ordinary_change_review_is_risk_triggered_not_default() -> None:
+    forbidden_shortcuts = (
+        "默认进入 change review",
+        "仅文案级微小改动",
+        "仅单行级微小修复",
+        "仅微小整理",
+    )
+    review_contract = (
+        "独立 change review 不再默认发生",
+        "权限、安全、隐私或其他信任边界",
+        "持久化数据、schema 或迁移路径",
+        "并发、顺序或一致性语义",
+        "不可恢复的代码外副作用",
+        "review 实际触发后才应用 `审查协议` 中的 reviewer 创建、目标冻结、lineage、findings 与轮次条款",
+        "以下 reviewer 创建、目标冻结、lineage、findings 与轮次条款仅在 review 被触发后生效",
+        "commit / 里程碑授权门槛始终生效",
+    )
+
+    for skill_name in ORDINARY_TASK_SKILLS:
+        _, skill = _read_skill(SKILLS / skill_name / "SKILL.md")
+        for shortcut in forbidden_shortcuts:
+            assert shortcut not in skill, f"{skill_name}: keeps shortcut {shortcut!r}"
+        for anchor in review_contract:
+            assert _contains_contract(skill, anchor), (
+                f"{skill_name}: missing risk-triggered review contract {anchor!r}"
+            )
+
+
+def test_ordinary_task_skills_add_only_corresponding_assurance() -> None:
+    risk_mapping = (
+        "目标、根因或实现方向仍不确定",
+        "破坏兼容性或改变多消费者依赖的公开契约",
+        "契约确认、对应契约测试与 canonical 文档",
+        "改变权限、安全、隐私或其他信任边界",
+        "改变持久化数据、schema 或迁移路径",
+        "兼容/迁移验证",
+        "改变并发、顺序或一致性语义",
+        "对应竞态/顺序验证",
+        "产生不可恢复的代码外副作用",
+        "dry-run、幂等、补偿或恢复证据",
+        "性能回退或性能敏感路径变化",
+        "定向 profile、基线或前后对比",
+        "改动影响面广或失败可跨模块传播",
+        "扩大到受影响回归",
+        "连续性需要不是风险门槛",
+        "只增加单一临时 work 游标",
+        "成本最低且足够权威的验证",
+        "已有定向测试足够时不叠加全量套件、浏览器 smoke 与独立 review",
+    )
+
+    for skill_name in ORDINARY_TASK_SKILLS:
+        _, skill = _read_skill(SKILLS / skill_name / "SKILL.md")
+        for anchor in risk_mapping:
+            assert _contains_contract(skill, anchor), (
+                f"{skill_name}: missing assurance mapping {anchor!r}"
+            )
+
+    _, feat = _read_skill(SKILLS / "cs-feat/SKILL.md")
+    assert "出现任何一条，走设计对齐再动手" not in feat
+    assert "高风险任务的 work 文档在设计对齐时已建立" not in feat
+
+    _, refactor = _read_skill(SKILLS / "cs-refactor/SKILL.md")
+    assert "全部完成后跑完整验证" not in refactor
+    assert _contains_contract(
+        refactor,
+        "全部完成后必须运行覆盖受影响调用点和模块的回归",
+    )
+    assert _contains_contract(
+        refactor,
+        "只有全量套件按独立风险决定是否叠加",
+    )
+    assert _contains_contract(
+        refactor,
+        "全部改动完成后始终执行上述受影响回归",
+    )
+    assert "## 验证范围" in refactor
+    assert "## 审查协议" in refactor
+
+
+def test_minimum_assurance_preserves_task_specific_safety_contracts() -> None:
+    _, issue = _read_skill(SKILLS / "cs-issue/SKILL.md")
+    for anchor in (
+        "根因超出已授权 scope",
+        "请 owner 决定",
+        "不得借修复擅自扩大改动",
+    ):
+        assert _contains_contract(issue, anchor)
+
+    _, feat = _read_skill(SKILLS / "cs-feat/SKILL.md")
+    design_contract = (
+        "design 被触发时",
+        "改什么、契约变化或不变、真实取舍",
+        "必须修改 / 需要验证 / 仍待调查",
+        "packet 形式也必须包含这些内容",
+    )
+    for skill_name in ORDINARY_TASK_SKILLS:
+        _, skill = _read_skill(SKILLS / skill_name / "SKILL.md")
+        for anchor in design_contract:
+            assert _contains_contract(skill, anchor), (skill_name, anchor)
+
+
+def test_design_review_accepts_file_or_frozen_packet_text() -> None:
+    target_contract = (
+        "仓库内已有 design 文档版本",
+        "task packet 内原样全文 + SHA-256",
+        "reviewer 审查的目标就是该文本",
+        "最新全文、前后 hash 与修复摘要",
+    )
+    for skill_name in (*TASK_SKILLS, "cs-review"):
+        _, skill = _read_skill(SKILLS / skill_name / "SKILL.md")
+        for anchor in target_contract:
+            assert _contains_contract(skill, anchor), (
+                f"{skill_name}: missing packet design target contract {anchor!r}"
+            )
+
+    _, epic = _read_skill(SKILLS / "cs-epic/SKILL.md")
+    assert "Epic design review 优先冻结永久文档版本" in epic
+
+
+def test_cs_routes_owner_without_preselecting_assurance_strength() -> None:
+    _, cs = _read_skill(SKILLS / "cs/SKILL.md")
+    for anchor in (
+        "任务类型只决定工程方法，实际风险决定保障强度",
+        "只选择 owning skill，不预选流程强度",
+        "直接调用 owning skill 时得到同一语义",
+        "按风险或 Epic 契约触发的可用保障",
+    ):
+        assert _contains_contract(cs, anchor)
+    assert "设计与需求澄清是 cs-feat / cs-epic 的内置步骤" not in cs
+
+    _, epic = _read_skill(SKILLS / "cs-epic/SKILL.md")
+    assert "子项通过其 owning skill 选定的保障与验证后" in epic
+    assert "子项通过其 owning skill 的验证与审查后" not in epic
 
 
 def test_epic_final_acceptance_starts_a_separate_fresh_reviewer_lineage() -> None:
@@ -696,6 +912,82 @@ def test_epic_continues_without_a_per_item_owner_gate() -> None:
     assert "`remote_publish: each-milestone` 只能搭配 `milestone_commit: authorized`" in epic
     assert "`authorized + per-item` 是合法的显式逐项暂停策略" in epic
     assert "每次只推进一个已确认子项" not in epic
+
+
+def test_epic_wayfinding_publishes_route_map_frontier_and_hitl_contract() -> None:
+    _, cs = _read_skill(SKILLS / "cs/SKILL.md")
+    _, epic = _read_skill(SKILLS / "cs-epic/SKILL.md")
+    wayfinding = (SKILLS / "cs-epic/references/wayfinding.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert "大而路线仍不清晰时也只交给 `cs-epic`" in cs
+    for anchor in (
+        "路线尚不清晰时才读取 `references/wayfinding.md`",
+        "永久 Epic 文档就是唯一路线文档",
+        "proposed 阶段就是低分辨率文档内路线地图",
+        "路线清晰、可审查、可执行",
+        "route clear 不是新的 owner gate",
+        "批准后再把 `current_item` 设为第一个依赖已满足的子项",
+        "起草 proposed 永久 Epic 文档时，同时创建或复用对应 work 游标",
+        "先在项目已有明确的 Epic、RFC 或 initiative 归宿中按任务关键词扫描 `status: proposed` 的在途 Epic",
+        "存在 `.codestable/epics/` 时也按相同条件扫描其中候选",
+        "两类归宿并存时都纳入候选，项目已有归宿优先",
+        "仍不能唯一确定时列出候选并请 owner 选择",
+        "不自动合并、补游标或新建 Epic",
+        "清退 `待决策` 与 `尚未明确` 两节",
+        "route clear 前不得保留未解决的 HITL 节点",
+        "只把剩余 AFK 局部未知写入对应子项契约",
+    ):
+        assert _contains_contract(epic, anchor), anchor
+
+    permanent = epic.split("永久文档最小结构", 1)[1].split(
+        "work 游标最小结构", 1
+    )[0]
+    assert "## 待决策" in permanent
+    assert "## 尚未明确" in permanent
+    assert "[AFK|HITL]" in permanent
+    assert "depends_on" in permanent
+
+    cursor = epic.split("work 游标最小结构", 1)[1].split(
+        "永久 `status`", 1
+    )[0]
+    assert "current_item: null" in cursor
+    assert "## 待决策" not in cursor
+    assert "## 尚未明确" not in cursor
+    assert "[AFK|HITL]" not in cursor
+    assert "depends_on" not in cursor
+
+    for anchor in (
+        "目的地先于路线",
+        "广度优先",
+        "frontier 只派生、不持久化",
+        "待决策",
+        "尚未明确",
+        "范围之外",
+        "仓库事实、外部资料以及能由已批准约束唯一推出的工程判断由 agent 自行解决",
+        "存在真实取舍的路线选择必须由 owner 决定",
+        "每个待决策节点必须标为 `AFK` 或 `HITL`",
+        "不得替 owner 回答 HITL 问题",
+        "不得把沉默当作选择",
+        "一次只向 owner 提交一个 HITL frontier 节点",
+        "route clear 前不得保留 `HITL` 节点",
+        "agent 不得单方判定 HITL 节点超出范围或失效",
+        "只有 `AFK` 的局部未知可以下放",
+        "涉及外部权限、代码外副作用或不可逆动作的 prerequisite 一律标为 `HITL`",
+        "仍须另获对应权限或确认",
+        "同一事项只能位于 `待决策`、`尚未明确`、`关键决策` 或 `非目标` 之一",
+        "重新计算 frontier",
+        "不把决策问题一对一变成 Epic 子项",
+        "不创建独立 issue、map 或第三套状态",
+        "不得把探索代码留在产品工作树或里程碑",
+        "探索产物不自动晋升为交付",
+        "未验证输入",
+        "不能再改变目标、范围、非目标、验收、子项边界、依赖或重大风险",
+        "完整 proposed Epic",
+        "现有 design review",
+    ):
+        assert _contains_contract(wayfinding, anchor), anchor
 
 
 def test_epic_separates_durable_record_from_execution_cursor() -> None:
