@@ -24,23 +24,28 @@ proportionate verification + necessary review / owner gates
    ↓ code results + the project's canonical knowledge
 ```
 
-Explicit actions dispatch in the same turn by default; they do not acquire a discussion gate first.
+For team workflows, combine them by responsibility:
 
-Task type determines the engineering method; actual risk determines assurance strength:
+- **Stable coding**: use CodeStable to make task boundaries, assurance, evidence, and project memory explicit.
+- **Team context sharing**: use [Threadshare](https://github.com/team-harness/threadshare) to turn Codex,
+  Claude Code, and other agent conversations into read-only links for teammates and later agents.
+- **Multi-agent coding collaboration**: use [cs-agent](https://github.com/codestable/cs-agent-mcp) to create,
+  invoke, and manage Codex, Claude, and other subagents during implementation, including independent review.
 
-```text
-Execution flow = minimum complete loop + the least assurance required by each unexcluded risk
-```
+The three complement one another: CodeStable does not publish conversations or orchestrate agents, while
+Threadshare and cs-agent do not replace CodeStable's engineering contracts.
 
-Independent review is not a default step. Each risk adds only the assurance directly required by that risk.
+You only need to tell `cs` what you want to accomplish:
 
-Requests to discuss first converge in the current session and hand off in the same turn.
+- **When the request is clear**: it starts directly and delivers the result with enough verification.
+- **When it finds a concrete risk**: it adds only the confirmation, tests, or review needed for that risk; it
+  does not enable the whole workflow.
+- **When you want to discuss first**: it aligns goals, terms, and boundaries with you. It will not change code
+  without execution authorization.
+- **When terminology could cause misunderstanding**: it aligns the meaning as the shared language for this task;
+  otherwise it reuses the project's existing language.
 
-`cs` aligns facts, language, and boundaries; with existing execution authorization it enters `cs-feat`, `cs-issue`, or `cs-epic`. Discussion itself grants no authorization.
-
-Discussion creates no work cursor or transcript. Unresolved discussion is not recoverable across sessions. Advice requests only advise, and an overview writes no files.
-
-A shared language activates only for material ambiguity: ordinary changes reuse existing terms with zero new artifacts, Features align local semantics, and Epics align cross-concept relationships as part of Route Clear.
+Pure discussion, advice, and overview requests write no project files by default. CodeStable does not persist unfinished discussions or guarantee automatic recovery in a later session.
 
 ## Start in 5 Minutes
 

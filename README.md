@@ -24,21 +24,24 @@ feat · issue · refactor · epic
    ↓ 代码结果 + 项目已有的 canonical knowledge
 ```
 
-明确行动默认同轮直转，不先增加讨论 gate。
+团队使用时，可以按职责组合：
 
-任务类型只决定工程方法，实际风险决定保障强度：
+- **稳定编码**：使用 CodeStable 明确任务边界、保障、证据和项目记忆；
+- **团队上下文共享**：推荐使用 [Threadshare](https://github.com/team-harness/threadshare)，把 Codex、Claude Code
+  等 Agent 会话转换成只读链接，供团队成员和后续 Agent 阅读、交接；
+- **多 Agent 编码协同**：推荐使用 [cs-agent](https://github.com/codestable/cs-agent-mcp)，在编码过程中统一创建、
+  调用和管理 Codex、Claude 等子 Agent，也可承担异构独立 review。
 
-```text
-执行流程 = 最小闭环 + 每个未排除风险所要求的最少保障
-```
+三者互补：CodeStable 不负责发布会话或编排 Agent，Threadshare 和 cs-agent 也不替代 CodeStable 的工程契约。
 
-独立 review 不是默认步骤。一个风险只增加与它直接对应的保障，不自动打开整套流程。
+你只需要告诉 `cs` 想完成什么：
 
-先讨论的请求在当前会话收敛后同轮移交。`cs` 对齐事实、术语和边界；已有执行授权时进入 `cs-feat`、`cs-issue` 或 `cs-epic`，讨论本身不产生授权。
+- **需求清楚时**：它直接开始，并用足够的验证交付结果；
+- **遇到具体风险时**：它只增加与风险对应的确认、测试或 review，不自动启用整套流程；
+- **你想先讨论时**：它先和你对齐目标、术语和边界；未经明确授权，不会修改代码；
+- **名词可能影响理解时**：它先对齐含义，形成当前任务的共享语言；没有歧义时，直接沿用项目已有说法。
 
-讨论不创建 work 游标或 transcript，未收敛讨论不承诺跨会话恢复。咨询请求只给建议，体系导览不写文件。
-
-共享语言按歧义触发：普通改动沿用已有术语时零新增产物；Feature 对齐局部语义，Epic 对齐跨概念关系并纳入 Route Clear。
+纯讨论、咨询和体系导览默认不写项目文件。还没讨论清楚的内容，CodeStable 不会专门保存，也不保证下次会话自动恢复。
 
 ## 5 分钟开始
 

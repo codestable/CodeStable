@@ -179,8 +179,8 @@ def test_readme_is_a_compact_first_evaluator_entry() -> None:
         "轻量 skill 契约",
         "不编排 Agent 团队",
         "不为项目建立第二套文档系统",
-        "明确行动默认同轮直转",
-        "未收敛讨论不承诺跨会话恢复",
+        "你只需要告诉 `cs` 想完成什么",
+        "还没讨论清楚的内容",
         "直接执行 / 当前会话讨论 / 给出建议",
         "thin harness, thick context",
         "证据先于结论",
@@ -194,8 +194,8 @@ def test_readme_is_a_compact_first_evaluator_entry() -> None:
         "lightweight skill contracts",
         "does not orchestrate agent teams",
         "does not create a second documentation system",
-        "Explicit actions dispatch in the same turn by default",
-        "Unresolved discussion is not recoverable across sessions",
+        "You only need to tell `cs` what you want to accomplish",
+        "does not persist unfinished discussions",
         "execute directly / discuss in this session / advise",
         "thin harness, thick context",
         "Evidence before conclusions",
@@ -451,9 +451,10 @@ def test_cs_session_discussion_and_handoff_contract_is_bilingual() -> None:
     en_readme = _read("README.en.md")
     zh_catalog = _read("SKILL_CATALOG.md")
     en_catalog = _read("SKILL_CATALOG.en.md")
-    assert "先讨论的请求在当前会话收敛后同轮移交" in zh_readme
+    assert "未经明确授权，不会修改代码" in zh_readme
     assert "先讨论的请求在当前会话收敛后同轮移交" in zh_catalog
-    assert "Requests to discuss first converge in the current session and hand off in the same turn" in en_readme
+    assert "It will not change code" in en_readme
+    assert "without execution authorization" in en_readme
     assert "Requests to discuss first converge in the current session and hand off in the same turn" in en_catalog
     assert "稳定资产由 owning skill 按 canonical 归宿毕业" in zh_catalog
     assert "stable assets graduate through the owning skill into their canonical homes" in en_catalog
@@ -494,14 +495,31 @@ def test_issue_diagnosis_and_authorized_fix_contract_is_bilingual() -> None:
 
 
 def test_minimum_sufficient_assurance_contract_is_bilingual() -> None:
+    zh_readme = _read("README.md")
+    en_readme = _read("README.en.md")
+    for anchor in (
+        "需求清楚时",
+        "直接开始，并用足够的验证交付结果",
+        "遇到具体风险时",
+        "只增加与风险对应的确认、测试或 review",
+        "不自动启用整套流程",
+    ):
+        assert _contains_contract(zh_readme, anchor)
+    for anchor in (
+        "When the request is clear",
+        "delivers the result with enough verification",
+        "When it finds a concrete risk",
+        "only the confirmation, tests, or review needed for that risk",
+        "does not enable the whole workflow",
+    ):
+        assert _contains_contract(en_readme, anchor)
+
     zh_docs = (
-        _read("README.md"),
         _read("WORKFLOW.md"),
         _read("SKILL_CATALOG.md"),
         _read("docs/why-codestable.md"),
     )
     en_docs = (
-        _read("README.en.md"),
         _read("WORKFLOW.en.md"),
         _read("SKILL_CATALOG.en.md"),
         _read("docs/why-codestable.en.md"),
