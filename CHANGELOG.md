@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.0.2
+
+- Added the owner-gated `item_progression: parallel` policy to `cs-epic`: the main workflow stays the
+  sole orchestrator and cursor writer, workers execute dependency-independent items in host-provided
+  isolated workspaces, and integration is serialized without advancing mainline history until per-item
+  re-verification passes (protocol in `references/parallel-execution.md`).
+- Scoped the skill-coupling rule to file-level dependencies; mentioning or routing to another skill by
+  name remains allowed.
+
 ## 2.0.1
 
 - Replaced task-shape workflow tiers with minimum sufficient assurance selected from unexcluded risks.
