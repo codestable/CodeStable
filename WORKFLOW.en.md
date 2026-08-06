@@ -140,10 +140,10 @@ a full suite, browser smoke, or independent review.
   assurance first. A review gate is required only when review was actually triggered, and a formal semantic
   milestone also requires existing commit authorization; a WIP/checkpoint exists only for recovery or an isolated
   baseline and does not mean approval.
-- An Epic allows only one `current_item` at a time. This is a serialization constraint, not a per-item owner gate.
+- With `continuous` or `per-item`, an Epic allows only one `current_item` at a time. This is a serialization constraint, not a per-item owner gate.
   Under the continuous policy, an ordinary item milestone advances automatically; it must not ask whether
   to continue to the next item or return as a terminal result. Per-item pauses require an explicit owner policy
-  or a real gate.
+  or a real gate. Under `parallel`, the main workflow stays the sole orchestrator and cursor writer, advancing dependency-independent items concurrently and serializing integration and milestones.
 - A healthy running reviewer remains bound to its run and target.
   When Awaiting carries the same queryable run identity and remains active, keep waiting;
   discovering a better creation method later does not justify cancellation, duplicate creation, or parallel
@@ -216,7 +216,7 @@ When the route is still unclear during `proposed + planning`, `cs-epic` performs
   points, key decisions, final delivery index, overall acceptance, residual risks, and durable `status`.
 - The **temporary execution cursor** at `.codestable/work/epic-{slug}.md` stores only the permanent
   document pointer, `approved_revision`, execution `phase`, current item ID, per-ID progress, next action,
-  `blocked_by`, `item_progression`, `milestone_commit`, `remote_publish`, temporary decisions, and
+  `blocked_by`, `item_progression`, `milestone_commit`, `remote_publish`, the `active_items` recovery records under `parallel`, temporary decisions, and
   evidence/commit pointers. It must not duplicate goals, acceptance criteria, item definitions, or final
   conclusions. After owner confirmation, the full permanent-document SHA-256 fixes the approved revision.
   The active permanent document stays frozen; routine progress and execution policies change only the cursor.
@@ -240,14 +240,14 @@ the decomposition does not itself grant version-control authorization. Store tho
 and reuse them on recovery; only missing or invalid values pause once for repair. An owner-explicit policy change
 updates only the cursor, not the approved hash. `milestone_commit: manual` requires
 `item_progression: per-item` and `remote_publish: manual`; `remote_publish: each-milestone` requires
-`milestone_commit: authorized`.
+`milestone_commit: authorized`; `item_progression: parallel` requires `milestone_commit: authorized`.
 
 With `item_progression: continuous`, after a non-final item completes, choose the first incomplete item in
 permanent-document order whose dependencies are satisfied and continue in the same entrusted workflow. An
 ordinary item completion is not an owner gate; the workflow must not ask whether to continue to the next item
 or return that completion as terminal. With `per-item`, pause under the recorded per-item checkpoint policy.
 Owning-skill gates, important findings requiring owner acceptance, real blockers, new authorization, and the
-final owner gate may still pause execution.
+final owner gate may still pause execution. With `parallel`, workers execute dependency-independent items in host-provided isolated workspaces while the main workflow remains the sole cursor writer and serializes integration: it merges each delivery without advancing mainline history, re-verifies on the merged result, and only then creates the semantic milestone; when isolation or every qualified worker-creation capability is unavailable, execution degrades to serial within the session without changing the recorded policy, and parallel execution adds no owner gate (see `references/parallel-execution.md` in `cs-epic`).
 
 With `remote_publish: each-milestone`, publish after every semantic commit using the branch/remote policy
 already selected by the project, host, or owner. With `final`, publish once after integration verification and

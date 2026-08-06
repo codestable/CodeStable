@@ -106,7 +106,7 @@ CodeStable v2 是 8 个独立安装的 thin-harness skill，加一个项目记�
 - `cs-review` 是只读叶子执行器，也承接模块或全仓 audit；修复与复审由外层主流程负责。
 - 有 blocking 或未被用户明确接受的 important 时不提交当前候选，也不创建正式里程碑。主流程处理 findings 后修复、重新验证并冻结新的完整目标；仅因 findings 修复产生的复审沿用同一 reviewer 的同一 session，以 follow-up 继续。复审检查完整当前候选与本轮修复增量，逐项报告 `resolved` / `unresolved` / `new findings`，不得只核对旧 finding 或机械打勾。
 - 同一审查阶段累计最多 3 个有终态报告的轮次，更换 reviewer 不重置计数。只有原 run/session 失败或不可恢复、能力不满足、目标、范围、设计或核心路径发生重大变化、reviewer 声明无法继续独立判断，或 owner 要求第二意见时才更换 reviewer；更换时重新创建 fresh reviewer。完成所选保障后，实际触发 review 时才要求通过审查门槛，并且只有已有 commit 授权时才形成语义原子里程碑；WIP/checkpoint 只作恢复或隔离基线，不代表通过。
-- Epic 同一时间只允许一个 `current_item`；这是串行约束，不是每个子项的人工 gate。连续策略下，普通子项达到语义原子里程碑后自动进入下一项，不得询问“是否继续下一项”或终态返回；逐项暂停必须是 owner 明示策略或真实门槛。
+- `continuous` 与 `per-item` 策略下，Epic 同一时间只允许一个 `current_item`；这是串行约束，不是每个子项的人工 gate。连续策略下，普通子项达到语义原子里程碑后自动进入下一项，不得询问“是否继续下一项”或终态返回；逐项暂停必须是 owner 明示策略或真实门槛。`parallel` 策略下，主流程是唯一编排者与游标 writer，并行推进依赖互不阻塞的子项并串行集成里程碑。
 - 健康运行中的 reviewer 与原 run/target 绑定；running，或 Awaiting 携带同一可查询 run identity 且仍为活动态时继续等待，不因后来发现更优创建方式而取消、重复创建或并行补发。只有终止无报告、run identity 不可恢复、能力不满足或目标失效时，本轮才失败且不计审查轮次；外层主流程先诊断再决定有界重试、更换创建方式或上交，不盲目重发。
 - `cs-keep` 把高频事实压进 attention，把尚未被更强 owner 承接的经验暂存为 lesson，并推动它们
   毕业到机械 guard、项目文档或 ADR。
@@ -160,7 +160,8 @@ Epic 把长期产品意图与短期执行状态分成两层，并且只保留一
   关键决策、最终交付索引、整体验收、遗留风险和长期 `status`。
 - **临时执行游标** `.codestable/work/epic-{slug}.md` 只保存永久文档指针、
   `approved_revision`、执行 `phase`、当前子项 ID、各 ID 进度、下一步、`blocked_by`、临时
-  决策、`item_progression`、`milestone_commit`、`remote_publish` 以及证据/commit 指针；不得复制
+  决策、`item_progression`、`milestone_commit`、`remote_publish`、parallel 策略下的
+  `active_items` 恢复记录以及证据/commit 指针；不得复制
   目标、验收、子项定义或最终结论。owner 确认后以永久文档完整 SHA-256 固定批准 revision；
   active 期间永久文档冻结，日常进度与执行策略只更新游标。
 
@@ -180,12 +181,16 @@ Epic 保留三道 owner gate：
 策略写入 work 游标并在恢复时直接沿用，缺失或非法才暂停一次补记；owner 显式改变策略只更新游标，
 不改变批准 hash。`milestone_commit: manual` 只能搭配 `item_progression: per-item`，
 且只能搭配 `remote_publish: manual`；`remote_publish: each-milestone` 只能搭配
-`milestone_commit: authorized`。
+`milestone_commit: authorized`；`item_progression: parallel` 只能搭配 `milestone_commit: authorized`。
 
 `item_progression: continuous` 时，非最终子项完成后按永久文档顺序选择第一个依赖已满足的未完成
 子项，并在同一受托主流程继续。普通子项完成不是 owner gate；不得询问“是否继续下一项”，也
 不得把它作为终态返回。`per-item` 时按已记录的逐项 checkpoint 策略暂停。子项 owning skill 自身的
 门槛、需要 owner 明确接受的 important findings、真实阻塞、新增权限与最终 owner gate 仍可暂停。
+`parallel` 时，主流程把依赖互不阻塞的子项委派给隔离工作区中的 worker 并发执行（隔离与
+branch 策略仍由宿主提供），自己保持唯一游标 writer，按完成顺序串行集成：以不推进主历史的方式合入、在合并结果上重跑该
+子项权威验证，验证通过后才创建语义原子里程碑；全部合格 worker 创建能力或隔离能力均不可用时，
+本会话内退化为串行推进，不改变已记录的策略字段。并行不新增 owner gate，协议细节见 `cs-epic` 的 `references/parallel-execution.md`。
 
 `remote_publish: each-milestone` 在每个语义原子 commit 后按项目、宿主或 owner 已确定的
 branch/remote 策略发布；`final` 在集成验证与 final acceptance review 通过后、请求 owner 最终接受前

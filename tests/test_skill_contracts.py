@@ -914,6 +914,67 @@ def test_epic_continues_without_a_per_item_owner_gate() -> None:
     assert "每次只推进一个已确认子项" not in epic
 
 
+def test_epic_parallel_progression_is_policy_gated_with_single_writer() -> None:
+    _, epic = _read_skill(SKILLS / "cs-epic/SKILL.md")
+    reference = (
+        SKILLS / "cs-epic/references/parallel-execution.md"
+    ).read_text(encoding="utf-8")
+
+    for anchor in (
+        "`item_progression: continuous | per-item | parallel`",
+        "`item_progression: parallel` 只能搭配 `milestone_commit: authorized`",
+        "唯一编排者与唯一游标 writer",
+        "`active_items`",
+        "references/parallel-execution.md",
+        "并行允许并发但不强制",
+        "退化为串行推进，不改变游标策略字段",
+        "初始化 `active_items: []` 并保持 `current_item: null`",
+        "验证通过后才创建语义原子里程碑 commit",
+    ):
+        assert anchor in epic, anchor
+    # 串行条款只约束串行策略，不得回到无条件串行。
+    assert "`continuous` 与 `per-item` 策略下，同一时间只允许一个 `current_item`" in epic
+
+    for anchor in (
+        "并行不新增 owner gate",
+        "只有主流程一个唯一 writer",
+        "worker 只在自己的隔离工作区内改动",
+        "集成按完成顺序串行",
+        "不把多个子项堆进同一 diff",
+        "正式里程碑 commit 只由主流程创建",
+        "reviewer 是叶子执行器，不得再创建子 agent",
+        "worker 不得派发其他执行 agent",
+        "worktree/branch 策略归宿主",
+        "`milestone_commit: authorized`",
+        "不得只扫 PATH",
+        "最强稳定 model",
+        "不为 worker 追求异构",
+        "禁止依赖默认模型",
+        "拿不准时不降档",
+        "dispatched -> delivered | blocked",
+        "delivered -> integrating | blocked",
+        "integrating -> integrated | blocked",
+        "只保留非终态项",
+        "验证通过前不推进主历史",
+        "不提前推进 HEAD、不引入 worker WIP 历史",
+        "验证通过后才创建唯一的语义原子里程碑 commit",
+        "恢复到集成前基线",
+        "`item-local`",
+        "`epic-global`",
+        "运行仍健康则继续绑定等待，不重复派发",
+        "只有确认旧 run 不可恢复且交付不可核实时，才重派 fresh worker",
+    ):
+        assert anchor in reference, anchor
+    # 并行是调度层扩展：不得另造 owner gate、策略字段或第二个游标 writer。
+    assert "新增 owner gate" not in reference.replace("不新增 owner gate", "")
+    # 退化条件在主契约与协议中保持同一语义：全部合格能力不可用才退化。
+    for text in (epic, reference):
+        assert "全部合格 worker 创建能力或隔离能力均不可用" in text
+    # skill 是独立安装单元：reference 不得引用不随包分发的仓库文档或具体后端。
+    assert "ADR-" not in reference
+    assert "docs/adr" not in reference
+
+
 def test_epic_wayfinding_publishes_route_map_frontier_and_hitl_contract() -> None:
     _, cs = _read_skill(SKILLS / "cs/SKILL.md")
     _, epic = _read_skill(SKILLS / "cs-epic/SKILL.md")

@@ -20,9 +20,9 @@
 
 ## Epic 生命周期
 
-- 永久 Epic 文档是目标、范围、非目标、验收、已批准子项、关键决策、最终交付、整体验收、遗留风险和长期状态的唯一 owner；`.codestable/work/epic-{slug}.md` 只是临时执行游标，只写永久文档指针、批准 revision、phase、子项进度、下一步、阻塞、`item_progression`、`milestone_commit`、`remote_publish` 和证据，不复制稳定契约或最终结论。
+- 永久 Epic 文档是目标、范围、非目标、验收、已批准子项、关键决策、最终交付、整体验收、遗留风险和长期状态的唯一 owner；`.codestable/work/epic-{slug}.md` 只是临时执行游标，只写永久文档指针、批准 revision、phase、子项进度、下一步、阻塞、`item_progression`、`milestone_commit`、`remote_publish`、parallel 策略下的 `active_items` 和证据，不复制稳定契约或最终结论。
 - 保留三道 owner gate：fresh design review 后确认拆解；目标、边界、验收、子项定义或重大风险变化时重新 review 并确认；全部子项完成后由 fresh reviewer 对最新 owner 已批准的验收标准做 final acceptance review，再由 owner 最终接受。
-- 普通子项完成不是 owner gate：`continuous` 策略下串行自动推进下一项，不询问是否继续或终态返回；只有显式 `per-item` 策略、owning-skill 门槛、真实阻塞、新权限或最终验收才暂停。
+- 普通子项完成不是 owner gate：`continuous` 策略下串行自动推进下一项，`parallel` 策略下主流程唯一编排并行推进依赖互不阻塞的子项并串行集成里程碑，均不询问是否继续或终态返回；只有显式 `per-item` 策略、owning-skill 门槛、真实阻塞、新权限或最终验收才暂停。
 - Epic 进入 `accepted`、`superseded` 或 `cancelled` 终态后保留永久文档，幂等清理临时 Epic/子项 work；不恢复 `cs-goal` 入口、goal package、`state.yaml`、逐轮 iteration 报告或 legacy runtime gate。
 
 ## 验证

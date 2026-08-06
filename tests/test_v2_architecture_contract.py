@@ -65,6 +65,9 @@ def test_v2_runtime_ownership_supersedes_v1_distribution() -> None:
         assert "".join(anchor.split()) in adr5_compact
     for field in ("item_progression", "milestone_commit", "remote_publish"):
         assert field in adr5_text
+    assert "`item_progression: parallel` 只能搭配 `milestone_commit: authorized`" in adr5_flat
+    assert "唯一编排者与唯一游标 writer" in adr5_flat
+    assert "并行推进不改变 owner gate 与文档职责" in adr5_flat
     assert "不恢复 `cs-goal` 入口" in adr5_text
     assert "`state.yaml`" in adr5_text
     assert "逐轮 iteration 报告" in adr5_text

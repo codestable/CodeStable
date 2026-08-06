@@ -12,7 +12,7 @@ skill files or a centralized onboard runtime.
 | Feature | `cs-feat` | Implement new capability; scale design confirmation and independent review with risk |
 | Issue | `cs-issue` | Diagnose problems; once repair is authorized, fix with red-to-green evidence |
 | Refactor | `cs-refactor` | Change structure or performance under verifiable behavioral equivalence |
-| Epic | `cs-epic` | Decompose, confirm, and advance multiple deliverable items serially and continuously through a permanent Epic doc and temporary work cursor |
+| Epic | `cs-epic` | Decompose, confirm, and advance multiple deliverable items serially and continuously through a permanent Epic doc and temporary work cursor, or concurrently for dependency-independent items under an owner-approved `parallel` policy |
 | Review | `cs-review` | Read-only leaf executor for one change, design, module, or repository review |
 | Memory | `cs-keep` | Manage evidence-backed project facts, lesson lifecycle, and canonical homes |
 

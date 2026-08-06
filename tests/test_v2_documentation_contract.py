@@ -648,6 +648,11 @@ def test_workflow_owns_epic_and_legacy_knowledge_contracts() -> None:
         "不得询问“是否继续下一项”",
         "不得把它作为终态返回",
         "`item_progression`",
+        "`item_progression: parallel` 只能搭配 `milestone_commit: authorized`",
+        "唯一编排者与游标 writer",
+        "退化为串行推进",
+        "全部合格 worker 创建能力或隔离能力均不可用",
+        "`active_items`",
         "不恢复 `cs-goal` 入口",
     ):
         assert anchor in zh_workflow
@@ -670,6 +675,11 @@ def test_workflow_owns_epic_and_legacy_knowledge_contracts() -> None:
         "must not ask whether to continue to the next item",
         "return that completion as terminal",
         "`item_progression`",
+        "`item_progression: parallel` requires `milestone_commit: authorized`",
+        "sole orchestrator and cursor writer",
+        "degrades to serial within the session",
+        "every qualified worker-creation capability is unavailable",
+        "`active_items`",
         "Do not restore the `cs-goal` entry",
     ):
         assert anchor in en_workflow
@@ -692,6 +702,8 @@ def test_workflow_owns_epic_and_legacy_knowledge_contracts() -> None:
     assert "temporary work cursor" in en_readme
     assert "串行连续推进" in zh_catalog
     assert "serially and continuously" in en_catalog
+    assert "`parallel` 策略时并行推进依赖互不阻塞的子项" in zh_catalog
+    assert "owner-approved `parallel` policy" in en_catalog
 
 
 def test_epic_wayfinding_contract_is_bilingual_and_keeps_one_document_owner() -> None:

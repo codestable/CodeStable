@@ -61,10 +61,11 @@ Epic 同时需要长期可读的产品意图和短期可变的执行状态。把
   `cancelled`，被后继 Epic 取代时可转为 `superseded`。work 的 `phase` 只允许
   `planning -> executing -> acceptance`；阻塞只写 `blocked_by`，解除后仍处于原 phase，不另造状态。
 - `approved_revision` 在 planning 时为 `pending`。拆解确认本身不等于版本控制授权；首次 owner
-  gate 同时一次性确定 `item_progression: continuous | per-item`、
+  gate 同时一次性确定 `item_progression: continuous | per-item | parallel`、
   `milestone_commit: authorized | manual` 与 `remote_publish: each-milestone | final | manual`。
   `milestone_commit: manual` 只能搭配 `item_progression: per-item` 和 `remote_publish: manual`，
-  `remote_publish: each-milestone` 只能搭配 `milestone_commit: authorized`；进入 executing 前不得保留
+  `remote_publish: each-milestone` 只能搭配 `milestone_commit: authorized`，
+  `item_progression: parallel` 只能搭配 `milestone_commit: authorized`；进入 executing 前不得保留
   `pending` 或非法组合。
   owner 确认 proposed 文档和策略后，主流程机械地把永久文档置为 `active`，以
   `shasum -a 256 <epic-file>` 得到完整文件 SHA-256，只写入 work 游标并把 phase 推进为 executing；
@@ -80,11 +81,17 @@ Epic 同时需要长期可读的产品意图和短期可变的执行状态。把
   范围、非目标、验收、子项增删/定义或重大风险变化时重新确认；全部子项完成并由 fresh
   reviewer 对最新 owner 已批准的验收标准做整体验收后，由 owner 最终接受。边界内的日常技术
   选择和不改变依赖/验收的子项顺序微调不新增人工 gate。
-- 本 ADR 经实际 Epic 执行反馈补充连续推进语义：同一时间只有一个 `current_item` 是
+- 本 ADR 经实际 Epic 执行反馈补充连续推进语义：`continuous` 与 `per-item` 下同一时间只有一个 `current_item` 是
   串行约束，不是每个子项的人工 gate。`item_progression: continuous` 时，非最终子项成为语义原子里程碑后，
   按永久文档顺序自动选择第一个依赖已满足的未完成子项并在同一受托主流程继续；普通子项完成
   不得成为终态返回或“是否继续下一项”的人工 checkpoint。逐项暂停只来自 owner 明示的
   `per-item` 策略、既有 owner/owning-skill gate、真实阻塞、新增权限或需 owner 接受的 findings。
+- 并行推进不改变 owner gate 与文档职责：`item_progression: parallel` 由首次 gate 批准，主流程是
+  唯一编排者与唯一游标 writer，把依赖互不阻塞的子项委派给隔离工作区中的 worker（隔离与
+  branch 策略仍归宿主，见 ADR-002），并按完成顺序串行集成：以不推进主历史的方式合入、在合并
+  结果上重跑该子项权威验证，验证通过后才创建语义原子里程碑；全部合格 worker 创建能力或隔离能力均不可用时本会话内
+  退化为串行推进，不改变已记录的策略字段。并发子项的恢复记录（run identity、隔离工作区、基线）
+  持久化在游标 `active_items`；协议细节归 `cs-epic` 的 `references/parallel-execution.md`。
 - 远端发布不接管项目的 branch/remote 策略：`each-milestone` 在每个语义原子 commit 后按项目、
   宿主或 owner 已确定的策略发布，`final` 在集成验证与 final acceptance review 通过后、请求 owner
   最终接受前发布一次，`manual` 由 owner 自行处理。branch/remote 未明确或发布失败时写入阻塞并暂停，

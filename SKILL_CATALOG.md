@@ -12,7 +12,7 @@ runtime。
 | 功能 | `cs-feat` | 实现新功能；按风险决定是否先确认设计或做独立 review |
 | 问题 | `cs-issue` | 诊断问题；获授权后用红到绿证据修复 |
 | 重构 | `cs-refactor` | 在可核验的行为等价约束下调整结构或性能 |
-| 大需求 | `cs-epic` | 用永久 Epic 文档与临时 work 游标拆解、确认并串行连续推进多个可交付子项 |
+| 大需求 | `cs-epic` | 用永久 Epic 文档与临时 work 游标拆解、确认并串行连续推进多个可交付子项；owner 批准 `parallel` 策略时并行推进依赖互不阻塞的子项 |
 | 审查 | `cs-review` | 只读叶子执行器；单轮审查，不创建子 agent |
 | 记忆 | `cs-keep` | 管理有证据的项目事实、lesson 生命周期与 canonical 归宿 |
 
