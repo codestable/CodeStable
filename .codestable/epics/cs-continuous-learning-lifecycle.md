@@ -1,7 +1,7 @@
 ---
-status: active
+status: cancelled
 created: 2026-08-01
-work: ../work/epic-cs-continuous-learning-lifecycle.md
+updated: 2026-08-10
 ---
 
 # CodeStable 持续学习生命周期
@@ -222,14 +222,18 @@ README 精简结构、全部 Markdown ≤300、plugin/package/distribution tests
 
 ## 最终交付索引
 
-待执行后以 ADR、diff、测试与 `experiments/cs-learning-transfer-001/` 指针填写，不复制完整日志。
+- `LEARN-1` 已交付：`45521f9`，项目学习生命周期、晶化候选与 task skill read-repair 契约。
+- `LEARN-2` 已交付：`1d78fdd`，lesson 三态生命周期、canonical owner 路由与双语公开契约。
+- `LEARN-3` 未完成：仅完成 runner、fixture、隔离与离线校验准备；真实跨模型实验未执行，不形成接受证据。
 
 ## 整体验收
 
-待全部子项完成后填写。
+owner 于 2026-08-10 明确终止本 Epic，不继续 `LEARN-3`。未执行 final acceptance review，也不声称满足
+原定整体验收标准；本 Epic 以 `cancelled` 终态关闭，不得恢复执行。
 
 ## 遗留风险
 
+- 缺少 `LEARN-3` 的真实跨模型实验，尚无 lesson 能改善 fresh 后续任务的因果证据。
 - 模型可能漏掉信号；以低打扰换取较低召回，不用 transcript 扫描补偿。
 - thin harness 无 runtime 强制；契约测试与 paired eval 是主要回退防线。
 - 校准小样本可能只能给 `[underpowered]` 证据；必须扩大最终运行后才能接受，不得隐藏该标签。
