@@ -125,6 +125,7 @@ def check_catalog_contracts(root: Path, findings: list[Finding]) -> None:
         (".claude-plugin/marketplace.json", ["description"], "CodeStable AI coding workflow skills."),
         (".claude-plugin/marketplace.json", ["plugins", 0, "source"], "./plugins/codestable"),
         ("plugins/codestable/.claude-plugin/plugin.json", ["author", "name"], "CodeStable"),
+        ("plugins/codestable/.codex-plugin/plugin.json", ["author", "name"], "CodeStable"),
         ("plugins/codestable/.codex-plugin/plugin.json", ["skills"], "./skills/"),
     ]
     cache: dict[str, Any | None] = {}
@@ -149,6 +150,48 @@ def check_catalog_contracts(root: Path, findings: list[Finding]) -> None:
             findings.append(Finding(".agents/plugins/marketplace.json", "plugins.0.category is required"))
         if not nested(codex_marketplace, ["plugins", 0, "interface", "displayName"]):
             findings.append(Finding(".agents/plugins/marketplace.json", "plugins.0.interface.displayName is required"))
+
+    codex_manifest = cache.get("plugins/codestable/.codex-plugin/plugin.json")
+    if codex_manifest is not None:
+        interface = nested(codex_manifest, ["interface"])
+        if not isinstance(interface, dict):
+            findings.append(Finding("plugins/codestable/.codex-plugin/plugin.json", "interface is required"))
+        else:
+            for field in (
+                "displayName",
+                "shortDescription",
+                "longDescription",
+                "developerName",
+                "category",
+            ):
+                value = interface.get(field)
+                if not isinstance(value, str) or not value.strip():
+                    findings.append(
+                        Finding(
+                            "plugins/codestable/.codex-plugin/plugin.json",
+                            f"interface.{field} is required",
+                        )
+                    )
+            capabilities = interface.get("capabilities")
+            if not isinstance(capabilities, list) or not all(
+                isinstance(value, str) and value.strip() for value in capabilities
+            ):
+                findings.append(
+                    Finding(
+                        "plugins/codestable/.codex-plugin/plugin.json",
+                        "interface.capabilities must be an array of strings",
+                    )
+                )
+            default_prompt = interface.get("defaultPrompt")
+            if not isinstance(default_prompt, list) or not all(
+                isinstance(value, str) and value.strip() for value in default_prompt
+            ):
+                findings.append(
+                    Finding(
+                        "plugins/codestable/.codex-plugin/plugin.json",
+                        "interface.defaultPrompt must be an array of strings",
+                    )
+                )
 
 
 def check_skill_layout(root: Path, findings: list[Finding]) -> None:

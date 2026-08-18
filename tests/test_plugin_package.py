@@ -76,7 +76,22 @@ def make_repo(tmp_path: Path) -> Path:
     )
     write_json(
         repo / "plugins/codestable/.codex-plugin/plugin.json",
-        {"name": "codestable", "version": "0.1.0", "skills": "./skills/"},
+        {
+            "name": "codestable",
+            "version": "0.1.0",
+            "description": "CodeStable AI coding workflow skills.",
+            "author": {"name": "CodeStable"},
+            "skills": "./skills/",
+            "interface": {
+                "displayName": "CodeStable",
+                "shortDescription": "Stable engineering workflows for AI coding.",
+                "longDescription": "Workflow skills for scoped AI-assisted software development.",
+                "developerName": "CodeStable",
+                "category": "development",
+                "capabilities": ["Interactive", "Write"],
+                "defaultPrompt": ["Use CodeStable to handle this software task."],
+            },
+        },
     )
     write_json(
         repo / "plugins/codestable/.claude-plugin/plugin.json",
@@ -194,6 +209,41 @@ def test_invalid_manifest_contract_fails(tmp_path: Path) -> None:
     findings = checker.check_repo(repo)
 
     assert any("skills must equal './skills/'" in message for message in messages(findings))
+
+
+def test_codex_manifest_requires_ingestion_metadata(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path)
+    path = repo / "plugins/codestable/.codex-plugin/plugin.json"
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    manifest.pop("author")
+    manifest.pop("interface")
+    write_json(path, manifest)
+
+    finding_messages = messages(checker.check_repo(repo))
+
+    assert "author.name must equal 'CodeStable'" in finding_messages
+    assert "interface is required" in finding_messages
+
+
+def test_codex_manifest_requires_complete_interface_metadata(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path)
+    path = repo / "plugins/codestable/.codex-plugin/plugin.json"
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    manifest["interface"] = {}
+    write_json(path, manifest)
+
+    finding_messages = messages(checker.check_repo(repo))
+
+    for field in (
+        "displayName",
+        "shortDescription",
+        "longDescription",
+        "developerName",
+        "category",
+    ):
+        assert f"interface.{field} is required" in finding_messages
+    assert "interface.capabilities must be an array of strings" in finding_messages
+    assert "interface.defaultPrompt must be an array of strings" in finding_messages
 
 
 def test_codex_catalog_contract_fails(tmp_path: Path) -> None:

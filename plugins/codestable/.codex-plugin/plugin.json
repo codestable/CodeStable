@@ -2,5 +2,24 @@
   "name": "codestable",
   "version": "2.0.2",
   "description": "CodeStable AI coding workflow skills.",
-  "skills": "./skills/"
+  "author": {
+    "name": "CodeStable"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "CodeStable",
+    "shortDescription": "Stable engineering workflows for AI coding.",
+    "longDescription": "Workflow skills for scoped implementation, diagnosis, review, refactoring, epics, onboarding, and durable project learning.",
+    "developerName": "CodeStable",
+    "category": "development",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Use CodeStable to implement this change with scoped verification.",
+      "Diagnose and fix this issue with red-to-green evidence.",
+      "Review the current diff for concrete risks and missing tests."
+    ]
+  }
 }

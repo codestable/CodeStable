@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Added complete Codex plugin publisher and interface metadata, with package checks that prevent
+  future manifests from passing without the fields required by generic plugin validation.
+
 ## 2.0.2
 
 - Added the owner-gated `item_progression: parallel` policy to `cs-epic`: the main workflow stays the
